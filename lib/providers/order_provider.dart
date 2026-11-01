@@ -1,6 +1,7 @@
 // providers/order_provider.dart
 
 import 'package:flutter/foundation.dart';
+import 'package:pos_system/core/constants/app_constants.dart';
 import 'package:pos_system/core/services/api_service.dart';
 import 'package:pos_system/data/enum/order_status_enum.dart';
 import 'package:pos_system/data/models/order_model.dart';
@@ -197,6 +198,24 @@ class OrderProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  int get totalItemsSold {
+    // 1. If order items are loaded for the current order, use that
+    if (_orderItems.isNotEmpty) {
+      return _orderItems.fold(
+        0,
+        (sum, item) => sum + (item['quantity'] as int),
+      );
+    }
+
+    // 2. Otherwise, look up from mock data
+    return _salesHistory.fold(0, (sum, order) {
+      final items = MockData.orderItemsJson
+          .where((i) => i['order_id'] == order.id)
+          .toList();
+      return sum + items.fold(0, (s, item) => s + (item['quantity'] as int));
+    });
   }
 
   // Add this inside OrderProvider class

@@ -323,11 +323,6 @@ class _StockScreenState extends State<StockScreen> {
                                 color: c.textSecondary,
                               ),
                             ),
-                            Icon(
-                              Icons.tune_rounded,
-                              color: c.primaryCoral,
-                              size: 20,
-                            ),
                           ],
                         ),
                       ),

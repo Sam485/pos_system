@@ -90,11 +90,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     // 👇 FIX: Calculate items sold from actual order items
     // Since we don't have the order items here, use a rough estimate
-    final int itemsSold = orderProvider.salesHistory.fold(
-      0,
-      (sum, o) => sum + (o.id.hashCode % 5) + 1,
-    );
-
+    // 👇 FIX: Use real items sold count
+    final int itemsSold = orderProvider.totalItemsSold;
     final int lowStockCount = inventoryProvider.lowStockAlerts.length;
     final int customerCount = customerProvider.customers.length;
 
