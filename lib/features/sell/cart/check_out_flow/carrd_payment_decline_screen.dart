@@ -1,0 +1,334 @@
+// features/sell/cart/check_out_flow/card_payment_decline_screen.dart
+
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/routes/route_names.dart';
+import 'package:pos_system/core/theme/app_colors.dart';
+import 'package:pos_system/core/theme/app_text_style_x.dart';
+import 'package:pos_system/shared/helper/safe_pop.dart';
+
+class CardPaymentDeclineScreen extends StatefulWidget {
+  const CardPaymentDeclineScreen({super.key});
+
+  @override
+  State<CardPaymentDeclineScreen> createState() =>
+      _CardPaymentDeclineScreenState();
+}
+
+class _CardPaymentDeclineScreenState extends State<CardPaymentDeclineScreen> {
+  // Data from Router (fallback values for demo)
+  String _orderId = '#1048';
+  double _amount = 130.68;
+  String _customerName = 'Emma Miller';
+  String _cardInfo = 'Visa •••• 4242';
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final extra = GoRouterState.of(context).extra;
+    if (extra is Map<String, dynamic>) {
+      _orderId = extra['orderId'] as String? ?? _orderId;
+      _amount = (extra['amount'] as num?)?.toDouble() ?? _amount;
+      _customerName = extra['customerName'] as String? ?? _customerName;
+      _cardInfo = extra['cardInfo'] as String? ?? _cardInfo;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final textStyles = AppTextStylesX(context);
+
+    return Scaffold(
+      backgroundColor: c.background,
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            // ── Top App Bar ──
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 12.0,
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () => context.safePop(),
+                    icon: Icon(Icons.arrow_back, color: c.textSecondary),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Card payment',
+                        style: textStyles.heading2.copyWith(fontSize: 24),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '$_orderId · Alternative checkout state',
+                        style: textStyles.bodySmall.copyWith(
+                          color: c.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Main Scrollable Content ──
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 32),
+
+                    // Icon (Red card)
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFFEF2F2), // Light red/pink
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.credit_card_outlined,
+                        color: Color(0xFFDC2626), // Red
+                        size: 40,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Headings
+                    Text(
+                      'Card declined.',
+                      style: textStyles.heading1.copyWith(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'The bank didn\'t approve this payment. Ask $_customerName to try again or use a different card.',
+                      textAlign: TextAlign.center,
+                      style: textStyles.bodyMedium.copyWith(
+                        color: c.textSecondary,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+
+                    // ── Receipt Summary Card ──
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8F9FA), // Light grey
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Still to pay',
+                                style: textStyles.labelMedium.copyWith(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                '\$${_amount.toStringAsFixed(2)}',
+                                style: textStyles.heading1.copyWith(
+                                  color: c.primaryCoral,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          Divider(
+                            color: c.border.withValues(alpha: 0.5),
+                            height: 1,
+                          ),
+                          const SizedBox(height: 16),
+
+                          _buildSummaryRow(
+                            'Card attempted',
+                            _cardInfo,
+                            c,
+                            textStyles,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildSummaryRow(
+                            'Customer',
+                            _customerName,
+                            c,
+                            textStyles,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildSummaryRow(
+                            'Payment status',
+                            'Unpaid',
+                            c,
+                            textStyles,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildSummaryRow(
+                            'Reader',
+                            'Reader 01',
+                            c,
+                            textStyles,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // ── Warning Banner ──
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF4E5), // Light orange
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            color: const Color(0xFFD97706),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'No payment taken. This sale is not complete and stock has not changed.',
+                              style: textStyles.bodySmall.copyWith(
+                                color: const Color(0xFFD97706),
+                                height: 1.4,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // ── Footer Note ──
+                    Text(
+                      'Alternative to the cash checkout for $_orderId, not a second charge.',
+                      style: textStyles.bodySmall.copyWith(
+                        color: c.textMuted,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ),
+
+            // ── Bottom Action Buttons ──
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+              child: Column(
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      // Retry logic: likely pop back to the card payment screen
+                      context.pop();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: c.primaryCoral,
+                      foregroundColor: c.textLight,
+                      minimumSize: const Size(double.infinity, 54),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.refresh_rounded,
+                          size: 20,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Retry card payment',
+                          style: textStyles.labelMedium.copyWith(
+                            color: c.textLight,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () {
+                      // Go back to checkout to choose another method
+                      context.goNamed(RouteNames.checkoutName);
+                    },
+                    style: TextButton.styleFrom(
+                      backgroundColor: const Color(0xFFF4F8FF),
+                      foregroundColor: c.primaryCoral,
+                      minimumSize: const Size(double.infinity, 54),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      'Choose another method',
+                      style: textStyles.labelMedium.copyWith(
+                        color: c.primaryCoral,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Helper Widget ──
+  Widget _buildSummaryRow(
+    String label,
+    String value,
+    AppThemeColors c,
+    AppTextStylesX textStyles,
+  ) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: textStyles.bodyMedium.copyWith(color: c.textSecondary),
+        ),
+        Text(
+          value,
+          style: textStyles.labelMedium.copyWith(fontWeight: FontWeight.w600),
+        ),
+      ],
+    );
+  }
+}

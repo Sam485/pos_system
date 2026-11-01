@@ -1,0 +1,1 @@
+enum RegisterSessionEnum { open, close }

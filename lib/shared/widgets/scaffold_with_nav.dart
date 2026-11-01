@@ -1,0 +1,185 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
+import '../../core/routes/route_names.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_text_style_x.dart';
+
+class ScaffoldWithNav extends StatelessWidget {
+  final Widget child;
+  const ScaffoldWithNav({super.key, required this.child});
+
+  // Use your actual named routes here
+  static const _tabs = [
+    RouteNames.home,
+    RouteNames.sell,
+    RouteNames.sale,
+    RouteNames.stock,
+    RouteNames.more, // Make sure this matches your actual route name
+  ];
+
+  // FIX: Match the paths your routes actually use
+  static int _indexFromRoute(String location) {
+    // If your RouteNames.sellName path is '/sell', this will work.
+    // If your path is different (e.g. '/sellScreen'), update this string to match.
+    if (location.startsWith('/sell')) return 1;
+    if (location.startsWith('/sales')) return 2;
+    if (location.startsWith('/stock')) return 3;
+    if (location.startsWith('/more')) return 4;
+    return 0; // Default to Home
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // This gets the current URL path, e.g. '/sell'
+    final location = GoRouterState.of(context).uri.toString();
+    final currentIndex = _indexFromRoute(location);
+
+    return Scaffold(
+      body: child,
+      bottomNavigationBar: _BottomNav(
+        currentIndex: currentIndex,
+        onTap: (index) {
+          // Navigate using the route name
+          context.go(_tabs[index]);
+        },
+      ),
+    );
+  }
+}
+
+// ── Nav item model ────────────────────────────────────────────────
+class _NavItemData {
+  final IconData activeIcon;
+  final IconData inactiveIcon;
+  final String labelKey;
+
+  const _NavItemData({
+    required this.activeIcon,
+    required this.inactiveIcon,
+    required this.labelKey,
+  });
+}
+
+// ── Custom bottom nav bar ─────────────────────────────────────────
+class _BottomNav extends StatelessWidget {
+  final int currentIndex;
+  final void Function(int) onTap;
+
+  const _BottomNav({required this.currentIndex, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+
+    final items = [
+      const _NavItemData(
+        activeIcon: Icons.home_rounded,
+        inactiveIcon: Icons.home_outlined,
+        labelKey: 'home',
+      ),
+      const _NavItemData(
+        activeIcon: Icons.point_of_sale_rounded,
+        inactiveIcon: Icons.point_of_sale_outlined,
+        labelKey: 'sell',
+      ),
+      const _NavItemData(
+        activeIcon: Icons.receipt_long_rounded,
+        inactiveIcon: Icons.receipt_long_outlined,
+        labelKey: 'sales',
+      ),
+      const _NavItemData(
+        activeIcon: Icons.inventory_2_rounded,
+        inactiveIcon: Icons.inventory_2_outlined,
+        labelKey: 'stock',
+      ),
+      const _NavItemData(
+        activeIcon: Icons.more_horiz_rounded,
+        inactiveIcon: Icons.more_horiz_rounded,
+        labelKey: 'more',
+      ),
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: c.background,
+        border: Border(
+          top: BorderSide(color: c.border.withValues(alpha: 0.5), width: 1),
+        ),
+      ),
+      padding: EdgeInsets.only(
+        top: 12,
+        bottom: MediaQuery.of(context).padding.bottom + 12,
+        left: 8,
+        right: 8,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: List.generate(items.length, (index) {
+          return _NavItem(
+            data: items[index],
+            isActive: currentIndex == index,
+            onTap: () => onTap(index),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+// ── Nav item widget ───────────────────────────────────────────────
+class _NavItem extends StatelessWidget {
+  final _NavItemData item;
+  final bool isActive;
+  final VoidCallback onTap;
+
+  const _NavItem({
+    required _NavItemData data,
+    required this.isActive,
+    required this.onTap,
+  }) : item = data;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final textStyles = AppTextStylesX(context);
+
+    final activeColor = c.primaryCoral;
+    final inactiveColor = c.textMuted;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: isActive ? const Color(0xFFF4F8FF) : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                isActive ? item.activeIcon : item.inactiveIcon,
+                size: 24,
+                color: isActive ? activeColor : inactiveColor,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              context.t(item.labelKey),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: textStyles.labelSmall.copyWith(
+                fontSize: 11,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                color: isActive ? activeColor : inactiveColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
