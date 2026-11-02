@@ -120,7 +120,9 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => _AddVariantSheet(product: _product!),
     ).then((_) {
+      // ignore: use_build_context_synchronously
       context.read<InventoryProvider>().fetchFullInventory();
+      // ignore: use_build_context_synchronously
       context.read<InventoryProvider>().fetchLowStockAlerts();
     });
   }

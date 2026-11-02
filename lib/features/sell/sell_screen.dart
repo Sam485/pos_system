@@ -132,18 +132,22 @@ class _SellScreenState extends State<SellScreen> {
       }
 
       if (copied == 0) {
+        // ignore: use_build_context_synchronously
         _showSnack(context.t('sell_snack_nothing_copied'), isError: true);
         return;
       }
 
       if (copied == 1) {
+        // ignore: use_build_context_synchronously
         _showSnack(context.t('sell_snack_copied_one'));
       } else {
+        // ignore: use_build_context_synchronously
         _showSnack(context.tp('sell_snack_copied_many', {'count': '$copied'}));
       }
       _exitSelectionMode();
     } catch (e) {
       _showSnack(
+        // ignore: use_build_context_synchronously
         context.tp('sell_snack_copy_failed', {'error': '$e'}),
         isError: true,
       );

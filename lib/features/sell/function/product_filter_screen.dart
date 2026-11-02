@@ -328,7 +328,7 @@ class _ProductFilterScreenState extends State<ProductFilterScreen> {
                           value: _inStockOnly,
                           onChanged: (val) =>
                               setState(() => _inStockOnly = val),
-                          activeColor: c.textLight,
+                          activeThumbColor: c.textLight,
                           activeTrackColor: c.primaryCoral,
                           inactiveThumbColor: c.textLight,
                           inactiveTrackColor: c.surfaceLight,

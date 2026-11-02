@@ -93,18 +93,22 @@ class _SaleFilterDateRangeScreenState extends State<SaleFilterDateRangeScreen> {
   int _getMatchingCount(OrderProvider provider) {
     return provider.salesHistory.where((order) {
       // Status — comparison against English state values
-      if (_selectedStatus == 'Completed' && order.status.name != 'completed')
+      if (_selectedStatus == 'Completed' && order.status.name != 'completed') {
         return false;
+      }
       if (_selectedStatus == 'Refunded' &&
-          order.status.name != 'partiallyRefunded')
+          order.status.name != 'partiallyRefunded') {
         return false;
+      }
 
       // Date
-      if (_fromDate != null && order.createdAt.isBefore(_fromDate!))
+      if (_fromDate != null && order.createdAt.isBefore(_fromDate!)) {
         return false;
+      }
       if (_toDate != null &&
-          order.createdAt.isAfter(_toDate!.add(const Duration(days: 1))))
+          order.createdAt.isAfter(_toDate!.add(const Duration(days: 1)))) {
         return false;
+      }
 
       return true;
     }).length;

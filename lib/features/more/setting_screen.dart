@@ -387,12 +387,14 @@ class _SettingScreenState extends State<SettingScreen> {
               for (final m in ThemeMode.values)
                 RadioListTile<ThemeMode>(
                   value: m,
+                  // ignore: deprecated_member_use
                   groupValue: provider.themeMode,
                   activeColor: sheetColors.primaryCoral,
                   title: Text(
                     _themeLabel(ctx, m),
                     style: sheetStyles.bodyMedium,
                   ),
+                  // ignore: deprecated_member_use
                   onChanged: (v) async {
                     if (v != null) {
                       await provider.setThemeMode(v);
@@ -432,12 +434,14 @@ class _SettingScreenState extends State<SettingScreen> {
               for (final code in LanguageProvider.languageNames.keys)
                 RadioListTile<String>(
                   value: code,
+                  // ignore: deprecated_member_use
                   groupValue: provider.currentLanguage,
                   activeColor: sheetColors.primaryCoral,
                   title: Text(
                     LanguageProvider.languageNames[code] ?? code,
                     style: sheetStyles.bodyMedium,
                   ),
+                  // ignore: deprecated_member_use
                   onChanged: (v) async {
                     if (v != null) {
                       await provider.setLanguage(v);
