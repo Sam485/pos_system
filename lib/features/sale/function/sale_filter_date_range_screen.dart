@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:provider/provider.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
 import 'package:pos_system/core/theme/app_text_style_x.dart';
@@ -16,7 +17,7 @@ class SaleFilterDateRangeScreen extends StatefulWidget {
 }
 
 class _SaleFilterDateRangeScreenState extends State<SaleFilterDateRangeScreen> {
-  // UI state
+  // UI state — these stay English; they're the source of truth for the provider.
   String _selectedDateRange = 'Custom';
   final List<String> _dateRanges = [
     'Today',
@@ -42,7 +43,6 @@ class _SaleFilterDateRangeScreenState extends State<SaleFilterDateRangeScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_isInitialized) {
-      // Load current filters from provider
       final provider = context.read<OrderProvider>();
       _selectedDateRange = provider.filterDateRange;
       _selectedStatus = provider.filterStatus;
@@ -69,26 +69,30 @@ class _SaleFilterDateRangeScreenState extends State<SaleFilterDateRangeScreen> {
   }
 
   String _formatDate(DateTime date) {
-    final months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
+    final monthKeys = [
+      'sale_filter_month_jan',
+      'sale_filter_month_feb',
+      'sale_filter_month_mar',
+      'sale_filter_month_apr',
+      'sale_filter_month_may',
+      'sale_filter_month_jun',
+      'sale_filter_month_jul',
+      'sale_filter_month_aug',
+      'sale_filter_month_sep',
+      'sale_filter_month_oct',
+      'sale_filter_month_nov',
+      'sale_filter_month_dec',
     ];
-    return '${months[date.month - 1]} ${date.day}, ${date.year}';
+    return context.tp('sale_filter_date_format', {
+      'month': context.t(monthKeys[date.month - 1]),
+      'day': '${date.day}',
+      'year': '${date.year}',
+    });
   }
 
   int _getMatchingCount(OrderProvider provider) {
     return provider.salesHistory.where((order) {
-      // Status
+      // Status — comparison against English state values
       if (_selectedStatus == 'Completed' && order.status.name != 'completed')
         return false;
       if (_selectedStatus == 'Refunded' &&
@@ -140,6 +144,51 @@ class _SaleFilterDateRangeScreenState extends State<SaleFilterDateRangeScreen> {
     context.pop();
   }
 
+  // ── Display-label helpers ──
+  // The state values must stay English (they're passed to the provider and
+  // compared against DB values). These helpers translate the *display* only.
+
+  String _localizedRange(String englishValue) {
+    switch (englishValue) {
+      case 'Today':
+        return context.t('sale_filter_range_today');
+      case 'Yesterday':
+        return context.t('sale_filter_range_yesterday');
+      case 'This week':
+        return context.t('sale_filter_range_week');
+      case 'Custom':
+        return context.t('sale_filter_range_custom');
+      default:
+        return englishValue;
+    }
+  }
+
+  String _localizedStatus(String englishValue) {
+    switch (englishValue) {
+      case 'All sales':
+        return context.t('sale_filter_status_all');
+      case 'Completed':
+        return context.t('sale_filter_status_completed');
+      case 'Refunded':
+        return context.t('sale_filter_status_refunded');
+      default:
+        return englishValue;
+    }
+  }
+
+  String _localizedMethod(String englishValue) {
+    switch (englishValue) {
+      case 'All methods':
+        return context.t('sale_filter_method_all');
+      case 'Cash':
+        return context.t('sale_filter_method_cash');
+      case 'Card':
+        return context.t('sale_filter_method_card');
+      default:
+        return englishValue;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -173,12 +222,12 @@ class _SaleFilterDateRangeScreenState extends State<SaleFilterDateRangeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Filter sales',
+                        context.t('sale_filter_title'),
                         style: textStyles.heading2.copyWith(fontSize: 24),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'SoHo store',
+                        context.t('sale_filter_store_default'),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textMuted,
                         ),
@@ -200,14 +249,17 @@ class _SaleFilterDateRangeScreenState extends State<SaleFilterDateRangeScreen> {
                     const SizedBox(height: 12),
 
                     // Date Range
-                    _buildSectionTitle('Date range', textStyles),
+                    _buildSectionTitle(
+                      context.t('sale_filter_date_range_title'),
+                      textStyles,
+                    ),
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: _dateRanges.map((label) {
                         return _buildChip(
-                          label,
+                          _localizedRange(label),
                           label == _selectedDateRange,
                           () => setState(() => _selectedDateRange = label),
                           c,
@@ -222,7 +274,7 @@ class _SaleFilterDateRangeScreenState extends State<SaleFilterDateRangeScreen> {
                       children: [
                         Expanded(
                           child: _buildDateInput(
-                            label: 'From',
+                            label: context.t('sale_filter_from_label'),
                             controller: _fromDateController,
                             onTap: () => _pickDate(isFrom: true),
                             c: c,
@@ -232,7 +284,7 @@ class _SaleFilterDateRangeScreenState extends State<SaleFilterDateRangeScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: _buildDateInput(
-                            label: 'To',
+                            label: context.t('sale_filter_to_label'),
                             controller: _toDateController,
                             onTap: () => _pickDate(isFrom: false),
                             c: c,
@@ -243,7 +295,7 @@ class _SaleFilterDateRangeScreenState extends State<SaleFilterDateRangeScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Includes the full day · New York store time',
+                      context.t('sale_filter_date_note'),
                       style: textStyles.bodySmall.copyWith(
                         color: c.textMuted,
                         fontSize: 12,
@@ -252,14 +304,17 @@ class _SaleFilterDateRangeScreenState extends State<SaleFilterDateRangeScreen> {
                     const SizedBox(height: 24),
 
                     // Status
-                    _buildSectionTitle('Sale status', textStyles),
+                    _buildSectionTitle(
+                      context.t('sale_filter_status_title'),
+                      textStyles,
+                    ),
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: _statuses.map((label) {
                         return _buildChip(
-                          label,
+                          _localizedStatus(label),
                           label == _selectedStatus,
                           () => setState(() => _selectedStatus = label),
                           c,
@@ -269,7 +324,7 @@ class _SaleFilterDateRangeScreenState extends State<SaleFilterDateRangeScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'All sales includes partially refunded transactions.',
+                      context.t('sale_filter_status_note'),
                       style: textStyles.bodySmall.copyWith(
                         color: c.textMuted,
                         fontSize: 12,
@@ -278,14 +333,17 @@ class _SaleFilterDateRangeScreenState extends State<SaleFilterDateRangeScreen> {
                     const SizedBox(height: 24),
 
                     // Payment Method
-                    _buildSectionTitle('Payment method', textStyles),
+                    _buildSectionTitle(
+                      context.t('sale_filter_method_title'),
+                      textStyles,
+                    ),
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: _paymentMethods.map((label) {
                         return _buildChip(
-                          label,
+                          _localizedMethod(label),
                           label == _selectedPaymentMethod,
                           () => setState(() => _selectedPaymentMethod = label),
                           c,
@@ -297,7 +355,7 @@ class _SaleFilterDateRangeScreenState extends State<SaleFilterDateRangeScreen> {
 
                     // Staff
                     Text(
-                      'Staff member',
+                      context.t('sale_filter_staff_label'),
                       style: textStyles.labelSmall.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -320,7 +378,10 @@ class _SaleFilterDateRangeScreenState extends State<SaleFilterDateRangeScreen> {
                             size: 20,
                           ),
                           const SizedBox(width: 12),
-                          Text('All staff', style: textStyles.bodyLarge),
+                          Text(
+                            context.t('sale_filter_staff_all'),
+                            style: textStyles.bodyLarge,
+                          ),
                         ],
                       ),
                     ),
@@ -330,7 +391,7 @@ class _SaleFilterDateRangeScreenState extends State<SaleFilterDateRangeScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF4F8FF),
+                        color: c.surfaceTint,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -344,9 +405,9 @@ class _SaleFilterDateRangeScreenState extends State<SaleFilterDateRangeScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'Oct 19 snapshot after refund #RF-0108: \$1,941.50 net sales across 25 transactions.',
+                              context.t('sale_filter_info_banner'),
                               style: textStyles.bodySmall.copyWith(
-                                color: c.primaryCoral,
+                                color: c.textSecondary,
                                 height: 1.4,
                                 fontSize: 13,
                               ),
@@ -378,7 +439,9 @@ class _SaleFilterDateRangeScreenState extends State<SaleFilterDateRangeScreen> {
                       elevation: 0,
                     ),
                     child: Text(
-                      'Show $matchingCount transactions',
+                      context.tp('sale_filter_show_button', {
+                        'count': '$matchingCount',
+                      }),
                       style: textStyles.labelMedium.copyWith(
                         color: c.textLight,
                         fontSize: 16,
@@ -401,7 +464,7 @@ class _SaleFilterDateRangeScreenState extends State<SaleFilterDateRangeScreen> {
                       context.read<OrderProvider>().clearFilters();
                     },
                     style: TextButton.styleFrom(
-                      backgroundColor: const Color(0xFFF4F8FF),
+                      backgroundColor: c.surfaceTint,
                       foregroundColor: c.primaryCoral,
                       minimumSize: const Size(double.infinity, 54),
                       shape: RoundedRectangleBorder(
@@ -409,7 +472,7 @@ class _SaleFilterDateRangeScreenState extends State<SaleFilterDateRangeScreen> {
                       ),
                     ),
                     child: Text(
-                      'Reset filters',
+                      context.t('sale_filter_reset_button'),
                       style: textStyles.labelMedium.copyWith(
                         color: c.primaryCoral,
                         fontSize: 16,

@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:provider/provider.dart';
 import 'package:pos_system/core/routes/route_names.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
@@ -26,7 +27,7 @@ class _LowStockScreenState extends State<LowStockScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-       context.read<InventoryProvider>().fetchFullInventory();
+      context.read<InventoryProvider>().fetchFullInventory();
       context.read<InventoryProvider>().fetchLowStockAlerts();
       context.read<ProductProvider>().fetchProducts();
     });
@@ -40,7 +41,7 @@ class _LowStockScreenState extends State<LowStockScreen> {
     final inventoryProvider = context.watch<InventoryProvider>();
     final productProvider = context.watch<ProductProvider>();
 
-    // 👇 Build the list with the CORRECT product per inventory item
+    // Build the list with the CORRECT product per inventory item
     final List<Map<String, dynamic>> combinedAlerts = [];
     for (final inv in inventoryProvider.lowStockAlerts) {
       final variant = inventoryProvider.getVariantById(inv.variantId);
@@ -53,7 +54,7 @@ class _LowStockScreenState extends State<LowStockScreen> {
             : ProductModel(
                 id: '',
                 storeId: '',
-                name: 'Unknown',
+                name: context.t('low_stock_unknown_product'),
                 description: '',
                 collectionName: '',
                 imageUrl: '',
@@ -79,7 +80,7 @@ class _LowStockScreenState extends State<LowStockScreen> {
       return true;
     }).toList();
 
-    // 👇 Correct counts
+    // Correct counts
     final int lowStockCount = combinedAlerts.where((a) {
       final inv = a['inventory'] as InventoryModel;
       return inv.quantityAvailable > 0 &&
@@ -116,12 +117,15 @@ class _LowStockScreenState extends State<LowStockScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Stock alerts',
+                        context.t('low_stock_title'),
                         style: textStyles.heading2.copyWith(fontSize: 24),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${combinedAlerts.length} variants need attention · SoHo',
+                        context.tp('low_stock_subtitle', {
+                          'count': '${combinedAlerts.length}',
+                          'store': context.t('low_stock_store_fallback'),
+                        }),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textMuted,
                         ),
@@ -147,7 +151,9 @@ class _LowStockScreenState extends State<LowStockScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         children: [
                           _buildFilterChip(
-                            'All alerts · ${combinedAlerts.length}',
+                            context.tp('low_stock_filter_all', {
+                              'count': '${combinedAlerts.length}',
+                            }),
                             isActive: _selectedFilterIndex == 0,
                             onTap: () =>
                                 setState(() => _selectedFilterIndex = 0),
@@ -155,7 +161,9 @@ class _LowStockScreenState extends State<LowStockScreen> {
                             textStyles: textStyles,
                           ),
                           _buildFilterChip(
-                            'Low stock · $lowStockCount',
+                            context.tp('low_stock_filter_low', {
+                              'count': '$lowStockCount',
+                            }),
                             isActive: _selectedFilterIndex == 1,
                             onTap: () =>
                                 setState(() => _selectedFilterIndex = 1),
@@ -163,7 +171,9 @@ class _LowStockScreenState extends State<LowStockScreen> {
                             textStyles: textStyles,
                           ),
                           _buildFilterChip(
-                            'Out · $outOfStockCount',
+                            context.tp('low_stock_filter_out', {
+                              'count': '$outOfStockCount',
+                            }),
                             isActive: _selectedFilterIndex == 2,
                             onTap: () =>
                                 setState(() => _selectedFilterIndex = 2),
@@ -181,7 +191,9 @@ class _LowStockScreenState extends State<LowStockScreen> {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20.0),
                       child: Text(
-                        'AVAILABILITY · OCT 19, 10:30 AM',
+                        context.tp('low_stock_header_availability', {
+                          'date': 'OCT 19, 10:30 AM',
+                        }),
                         style: textStyles.labelSmall.copyWith(
                           color: c.textSecondary,
                           letterSpacing: 1.0,
@@ -199,7 +211,7 @@ class _LowStockScreenState extends State<LowStockScreen> {
                         padding: const EdgeInsets.all(40.0),
                         child: Center(
                           child: Text(
-                            'No alerts match this filter.',
+                            context.t('low_stock_empty'),
                             style: textStyles.bodyMedium.copyWith(
                               color: c.textMuted,
                             ),
@@ -274,9 +286,8 @@ class _LowStockScreenState extends State<LowStockScreen> {
     final VariantModel variant = alert['variant'];
 
     final bool isOut = inventory.quantityAvailable == 0;
-    final Color statusColor = isOut
-        ? const Color(0xFFDC2626)
-        : const Color(0xFFD97706);
+    // ✅ FIXED: was 0xFFDC2626 / 0xFFD97706
+    final Color statusColor = isOut ? c.dangerFg : c.warningFg;
 
     return InkWell(
       onTap: () {
@@ -303,7 +314,10 @@ class _LowStockScreenState extends State<LowStockScreen> {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: const Color(0xFFE8EBEE),
+                // ✅ FIXED: was 0xFFE8EBEE
+                color: c.isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : const Color(0xFFE8EBEE),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: ClipRRect(
@@ -344,7 +358,11 @@ class _LowStockScreenState extends State<LowStockScreen> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  isOut ? 'Out' : '${inventory.quantityAvailable} left',
+                  isOut
+                      ? context.t('low_stock_status_out')
+                      : context.tp('low_stock_status_left', {
+                          'count': '${inventory.quantityAvailable}',
+                        }),
                   style: textStyles.labelMedium.copyWith(
                     color: statusColor,
                     fontWeight: FontWeight.w700,
@@ -353,7 +371,9 @@ class _LowStockScreenState extends State<LowStockScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Min. ${inventory.lowStockThreshold}',
+                  context.tp('low_stock_status_min', {
+                    'count': '${inventory.lowStockThreshold}',
+                  }),
                   style: textStyles.bodySmall.copyWith(
                     color: c.textMuted,
                     fontSize: 11,

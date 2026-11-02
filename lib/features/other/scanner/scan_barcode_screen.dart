@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:pos_system/providers/inventory_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:pos_system/core/routes/route_names.dart';
@@ -63,8 +64,8 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('No product found for barcode: $code'),
-            backgroundColor: Colors.red,
+            content: Text(context.tp('scan_error_no_barcode', {'code': code})),
+            backgroundColor: context.colors.dangerFg,
           ),
         );
         setState(() => _isProcessing = false);
@@ -89,9 +90,9 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No product found with that SKU'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: Text(context.t('scan_error_no_sku')),
+          backgroundColor: context.colors.dangerFg,
         ),
       );
     }
@@ -131,12 +132,15 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Scan a barcode',
+                        context.t('scan_title'),
                         style: textStyles.heading2.copyWith(fontSize: 24),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'New sale · Register 01',
+                        context.tp('scan_subtitle', {
+                          'mode': context.t('scan_mode_sell'),
+                          'register': context.t('scan_register_default'),
+                        }),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textMuted,
                         ),
@@ -177,22 +181,17 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                           Positioned.fill(
                             child: ColorFiltered(
                               colorFilter: ColorFilter.mode(
-                                Colors.black.withValues(
-                                  alpha: 0.7,
-                                ), // Dark overlay
-                                BlendMode
-                                    .srcOut, // This punches a hole based on the children
+                                Colors.black.withValues(alpha: 0.7),
+                                BlendMode.srcOut,
                               ),
                               child: Stack(
                                 children: [
-                                  // The background must be black for srcOut to work
                                   Container(
                                     decoration: const BoxDecoration(
                                       color: Colors.black,
                                       backgroundBlendMode: BlendMode.dstOut,
                                     ),
                                   ),
-                                  // The hole
                                   Positioned(
                                     left: scanFrameRect.left,
                                     top: scanFrameRect.top,
@@ -200,8 +199,7 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                                     height: scanFrameRect.height,
                                     child: Container(
                                       decoration: BoxDecoration(
-                                        color: Colors
-                                            .white, // The shape of the hole
+                                        color: Colors.white,
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
@@ -242,7 +240,7 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
-                                  'Place barcode inside the frame',
+                                  context.t('scan_instructions'),
                                   style: textStyles.labelSmall.copyWith(
                                     color: Colors.white,
                                   ),
@@ -266,7 +264,7 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Or enter barcode / SKU manually',
+                    context.t('scan_manual_label'),
                     style: textStyles.labelSmall.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -281,7 +279,7 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                         color: c.textMuted,
                         size: 20,
                       ),
-                      hintText: 'CT-WHT-M',
+                      hintText: context.t('scan_manual_hint'),
                       hintStyle: textStyles.bodyMedium.copyWith(
                         color: c.textMuted,
                       ),
@@ -335,7 +333,7 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Find product',
+                          context.t('scan_find_button'),
                           style: textStyles.labelMedium.copyWith(
                             color: c.textLight,
                             fontSize: 16,
@@ -349,7 +347,7 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                   TextButton(
                     onPressed: () => context.pop(),
                     style: TextButton.styleFrom(
-                      backgroundColor: const Color(0xFFF4F8FF),
+                      backgroundColor: c.surfaceTint,
                       foregroundColor: c.primaryCoral,
                       minimumSize: const Size(double.infinity, 54),
                       shape: RoundedRectangleBorder(
@@ -357,7 +355,7 @@ class _ScanBarcodeScreenState extends State<ScanBarcodeScreen> {
                       ),
                     ),
                     child: Text(
-                      'Back to catalog',
+                      context.t('scan_back_button'),
                       style: textStyles.labelMedium.copyWith(
                         color: c.primaryCoral,
                         fontSize: 16,

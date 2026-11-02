@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pos_system/core/extensions/context_extensions.dart';
+import 'package:pos_system/providers/language_provider.dart';
+import 'package:provider/provider.dart';
+
 import '../../core/routes/route_names.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_style_x.dart';
@@ -9,29 +12,24 @@ class ScaffoldWithNav extends StatelessWidget {
   final Widget child;
   const ScaffoldWithNav({super.key, required this.child});
 
-  // Use your actual named routes here
   static const _tabs = [
     RouteNames.home,
     RouteNames.sell,
     RouteNames.sale,
     RouteNames.stock,
-    RouteNames.more, // Make sure this matches your actual route name
+    RouteNames.more,
   ];
 
-  // FIX: Match the paths your routes actually use
   static int _indexFromRoute(String location) {
-    // If your RouteNames.sellName path is '/sell', this will work.
-    // If your path is different (e.g. '/sellScreen'), update this string to match.
     if (location.startsWith('/sell')) return 1;
     if (location.startsWith('/sales')) return 2;
     if (location.startsWith('/stock')) return 3;
     if (location.startsWith('/more')) return 4;
-    return 0; // Default to Home
+    return 0;
   }
 
   @override
   Widget build(BuildContext context) {
-    // This gets the current URL path, e.g. '/sell'
     final location = GoRouterState.of(context).uri.toString();
     final currentIndex = _indexFromRoute(location);
 
@@ -40,7 +38,6 @@ class ScaffoldWithNav extends StatelessWidget {
       bottomNavigationBar: _BottomNav(
         currentIndex: currentIndex,
         onTap: (index) {
-          // Navigate using the route name
           context.go(_tabs[index]);
         },
       ),
@@ -70,33 +67,36 @@ class _BottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 👇 Rebuild when language changes
+    context.watch<LanguageProvider>();
+
     final c = context.colors;
 
     final items = [
       const _NavItemData(
         activeIcon: Icons.home_rounded,
         inactiveIcon: Icons.home_outlined,
-        labelKey: 'home',
+        labelKey: 'nav_home',
       ),
       const _NavItemData(
         activeIcon: Icons.point_of_sale_rounded,
         inactiveIcon: Icons.point_of_sale_outlined,
-        labelKey: 'sell',
+        labelKey: 'nav_sell',
       ),
       const _NavItemData(
         activeIcon: Icons.receipt_long_rounded,
         inactiveIcon: Icons.receipt_long_outlined,
-        labelKey: 'sales',
+        labelKey: 'nav_sales',
       ),
       const _NavItemData(
         activeIcon: Icons.inventory_2_rounded,
         inactiveIcon: Icons.inventory_2_outlined,
-        labelKey: 'stock',
+        labelKey: 'nav_stock',
       ),
       const _NavItemData(
         activeIcon: Icons.more_horiz_rounded,
         inactiveIcon: Icons.more_horiz_rounded,
-        labelKey: 'more',
+        labelKey: 'nav_more',
       ),
     ];
 

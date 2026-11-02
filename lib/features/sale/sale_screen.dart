@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:pos_system/core/routes/route_names.dart';
@@ -23,7 +24,7 @@ class SaleScreen extends StatefulWidget {
 class _SaleScreenState extends State<SaleScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  int _selectedFilterIndex = 0; // 0: All, 1: Completed, 2: Refunded
+  int _selectedFilterIndex = 0;
 
   @override
   void initState() {
@@ -43,6 +44,22 @@ class _SaleScreenState extends State<SaleScreen> {
     super.dispose();
   }
 
+  // Helper for the date range label — displays localized version
+  String _localizedDateRange(String englishValue) {
+    switch (englishValue) {
+      case 'Today':
+        return context.t('sales_range_today');
+      case 'Yesterday':
+        return context.t('sales_range_yesterday');
+      case 'This week':
+        return context.t('sales_range_week');
+      case 'Custom':
+        return context.t('sales_date_today');
+      default:
+        return englishValue;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -50,21 +67,24 @@ class _SaleScreenState extends State<SaleScreen> {
     final orderProvider = context.watch<OrderProvider>();
     final customerProvider = context.watch<CustomerProvider>();
 
+    // Pre-compute guest fallback once, then reference in the where() loop
+    final guestFallback = CustomerModel(
+      id: '',
+      storeId: '',
+      firstName: context.t('sales_guest_first'),
+      lastName: context.t('sales_guest_last'),
+      email: '',
+      marketingOtpIn: false,
+      totalVisit: 0,
+      lifeTimeSpend: 0,
+    );
+
     final baseSales = orderProvider.filteredSales;
 
     final filteredSales = baseSales.where((sale) {
       final customer = customerProvider.customers.firstWhere(
         (c) => c.id == sale.customerId,
-        orElse: () => CustomerModel(
-          id: '',
-          storeId: '',
-          firstName: 'Guest',
-          lastName: 'Customer',
-          email: '',
-          marketingOtpIn: false,
-          totalVisit: 0,
-          lifeTimeSpend: 0,
-        ),
+        orElse: () => guestFallback,
       );
 
       final customerName = '${customer.firstName} ${customer.lastName}'
@@ -113,7 +133,7 @@ class _SaleScreenState extends State<SaleScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Sales',
+                        context.t('sales_title'),
                         style: textStyles.heading2.copyWith(fontSize: 24),
                       ),
                       IconButton(
@@ -139,7 +159,7 @@ class _SaleScreenState extends State<SaleScreen> {
                     controller: _searchController,
                     style: textStyles.bodyMedium,
                     decoration: InputDecoration(
-                      hintText: 'Search order or customer',
+                      hintText: context.t('sales_search_hint'),
                       hintStyle: textStyles.bodyMedium.copyWith(
                         color: c.textMuted,
                       ),
@@ -185,21 +205,21 @@ class _SaleScreenState extends State<SaleScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
                     children: [
                       _buildFilterChip(
-                        'All sales',
+                        context.t('sales_filter_all'),
                         _selectedFilterIndex == 0,
                         () => setState(() => _selectedFilterIndex = 0),
                         c,
                         textStyles,
                       ),
                       _buildFilterChip(
-                        'Completed',
+                        context.t('sales_filter_completed'),
                         _selectedFilterIndex == 1,
                         () => setState(() => _selectedFilterIndex = 1),
                         c,
                         textStyles,
                       ),
                       _buildFilterChip(
-                        'Refunded',
+                        context.t('sales_filter_refunded'),
                         _selectedFilterIndex == 2,
                         () => setState(() => _selectedFilterIndex = 2),
                         c,
@@ -237,9 +257,7 @@ class _SaleScreenState extends State<SaleScreen> {
                           ),
                           const SizedBox(width: 12),
                           Text(
-                            orderProvider.filterDateRange == 'Custom'
-                                ? 'Today · Oct 19, 2026'
-                                : orderProvider.filterDateRange,
+                            _localizedDateRange(orderProvider.filterDateRange),
                             style: textStyles.labelMedium.copyWith(
                               fontWeight: FontWeight.w600,
                             ),
@@ -266,7 +284,7 @@ class _SaleScreenState extends State<SaleScreen> {
                     children: [
                       Expanded(
                         child: _buildSummaryCard(
-                          'Net sales',
+                          context.t('sales_summary_net'),
                           '\$${totalSales.toStringAsFixed(2)}',
                           c,
                           textStyles,
@@ -275,7 +293,7 @@ class _SaleScreenState extends State<SaleScreen> {
                       const SizedBox(width: 16),
                       Expanded(
                         child: _buildSummaryCard(
-                          'Transactions',
+                          context.t('sales_summary_transactions'),
                           '$totalTransactions',
                           c,
                           textStyles,
@@ -292,7 +310,9 @@ class _SaleScreenState extends State<SaleScreen> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Text(
-                    'TODAY · $totalTransactions TRANSACTIONS',
+                    context.tp('sales_section_header', {
+                      'count': '$totalTransactions',
+                    }),
                     style: textStyles.labelSmall.copyWith(
                       color: c.textSecondary,
                       letterSpacing: 1.0,
@@ -310,7 +330,7 @@ class _SaleScreenState extends State<SaleScreen> {
                     padding: const EdgeInsets.all(40.0),
                     child: Center(
                       child: Text(
-                        'No transactions found.',
+                        context.t('sales_empty'),
                         style: textStyles.bodyMedium.copyWith(
                           color: c.textMuted,
                         ),
@@ -329,6 +349,7 @@ class _SaleScreenState extends State<SaleScreen> {
                         customerProvider,
                         c,
                         textStyles,
+                        guestFallback,
                       );
                     }, childCount: filteredSales.length),
                   ),
@@ -382,7 +403,6 @@ class _SaleScreenState extends State<SaleScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        // 👇 theme-aware
         color: c.surfaceTint,
         borderRadius: BorderRadius.circular(12),
       ),
@@ -411,22 +431,14 @@ class _SaleScreenState extends State<SaleScreen> {
     CustomerProvider customerProvider,
     AppThemeColors c,
     AppTextStylesX textStyles,
+    CustomerModel guestFallback,
   ) {
     final customer = customerProvider.customers.firstWhere(
       (c) => c.id == sale.customerId,
-      orElse: () => CustomerModel(
-        id: '',
-        storeId: '',
-        firstName: 'Guest',
-        lastName: 'Customer',
-        email: '',
-        marketingOtpIn: false,
-        totalVisit: 0,
-        lifeTimeSpend: 0,
-      ),
+      orElse: () => guestFallback,
     );
     final customerName = customer.id.isEmpty
-        ? 'Guest customer'
+        ? context.t('sales_guest_full')
         : '${customer.firstName} ${customer.lastName}';
 
     final isFullyRefunded = sale.status == OrderStatusEnum.fullyrefunded;
@@ -434,7 +446,6 @@ class _SaleScreenState extends State<SaleScreen> {
         sale.status == OrderStatusEnum.partitallyrefunded;
     final isRefunded = isFullyRefunded || isPartiallyRefunded;
 
-    // 👇 Theme-aware status colors
     Color statusColor;
     Color textColor;
     String statusLabel;
@@ -442,15 +453,15 @@ class _SaleScreenState extends State<SaleScreen> {
     if (isFullyRefunded) {
       statusColor = c.dangerBg;
       textColor = c.dangerFg;
-      statusLabel = 'Fully refunded';
+      statusLabel = context.t('sales_status_fully_refunded');
     } else if (isPartiallyRefunded) {
       statusColor = c.warningBg;
       textColor = c.warningFg;
-      statusLabel = 'Partially refunded';
+      statusLabel = context.t('sales_status_partially_refunded');
     } else {
       statusColor = c.successBg;
       textColor = c.successFg;
-      statusLabel = 'Completed';
+      statusLabel = context.t('sales_status_completed');
     }
 
     final time =
@@ -503,7 +514,9 @@ class _SaleScreenState extends State<SaleScreen> {
                     ),
                     if (isRefunded)
                       Text(
-                        'Was \$${sale.totalAmount.toStringAsFixed(2)}',
+                        context.tp('sales_item_was', {
+                          'amount': sale.totalAmount.toStringAsFixed(2),
+                        }),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textMuted,
                           fontSize: 11,
@@ -531,7 +544,7 @@ class _SaleScreenState extends State<SaleScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '$time · Payment via card',
+                      context.tp('sales_item_time_payment', {'time': time}),
                       style: textStyles.bodySmall.copyWith(
                         color: c.textMuted,
                         fontSize: 12,

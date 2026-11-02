@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:go_router/go_router.dart';
 import 'package:hyper_render_clipboard/hyper_render_clipboard.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -13,6 +14,7 @@ import 'package:pos_system/core/routes/route_names.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
 import 'package:pos_system/core/theme/app_text_style_x.dart';
 import 'package:pos_system/providers/cart_provider.dart';
+import 'package:pos_system/providers/language_provider.dart';
 import 'package:pos_system/providers/product_provider.dart';
 import 'package:pos_system/providers/register_provider.dart';
 import 'package:pos_system/data/models/product_model.dart';
@@ -130,20 +132,21 @@ class _SellScreenState extends State<SellScreen> {
       }
 
       if (copied == 0) {
-        _showSnack('Nothing was copied', isError: true);
+        _showSnack(context.t('sell_snack_nothing_copied'), isError: true);
         return;
       }
 
       if (copied == 1) {
-        _showSnack('Image copied to clipboard');
+        _showSnack(context.t('sell_snack_copied_one'));
       } else {
-        _showSnack(
-          'Copied $copied images sequentially. The clipboard keeps only the LAST image.',
-        );
+        _showSnack(context.tp('sell_snack_copied_many', {'count': '$copied'}));
       }
       _exitSelectionMode();
     } catch (e) {
-      _showSnack('Copy failed: $e', isError: true);
+      _showSnack(
+        context.tp('sell_snack_copy_failed', {'error': '$e'}),
+        isError: true,
+      );
     } finally {
       if (mounted) setState(() => _isBusy = false);
     }
@@ -166,6 +169,9 @@ class _SellScreenState extends State<SellScreen> {
   // ─────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    // 👇 Rebuild when language changes
+    context.watch<LanguageProvider>();
+
     final c = context.colors;
     final textStyles = AppTextStylesX(context);
     final productProvider = context.watch<ProductProvider>();
@@ -190,12 +196,12 @@ class _SellScreenState extends State<SellScreen> {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'No open register',
+                    context.t('sell_guard_title'),
                     style: textStyles.heading2.copyWith(fontSize: 22),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'You need to open a register before starting a new sale.',
+                    context.t('sell_guard_hint'),
                     textAlign: TextAlign.center,
                     style: textStyles.bodyMedium.copyWith(color: c.textMuted),
                   ),
@@ -214,7 +220,7 @@ class _SellScreenState extends State<SellScreen> {
                       ),
                     ),
                     child: Text(
-                      'Open a Register',
+                      context.t('sell_guard_button'),
                       style: textStyles.labelMedium.copyWith(
                         color: c.textLight,
                         fontSize: 16,
@@ -265,15 +271,22 @@ class _SellScreenState extends State<SellScreen> {
                           children: [
                             Text(
                               _isSelectionMode
-                                  ? '${_selectedUrls.length} selected'
-                                  : 'New sale',
+                                  ? context.tp('sell_title_selected', {
+                                      'count': '${_selectedUrls.length}',
+                                    })
+                                  : context.t('sell_title_new'),
                               style: textStyles.heading2.copyWith(fontSize: 24),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               _isSelectionMode
-                                  ? 'Long-press done · tap to toggle'
-                                  : 'SoHo store · Register 01',
+                                  ? context.t('sell_subtitle_selection_hint')
+                                  : context.tp('sell_subtitle_store_register', {
+                                      'store': context.t('sell_store_default'),
+                                      'register': context.t(
+                                        'sell_register_default',
+                                      ),
+                                    }),
                               style: textStyles.bodySmall.copyWith(
                                 color: c.textMuted,
                               ),
@@ -298,7 +311,7 @@ class _SellScreenState extends State<SellScreen> {
                         TextButton(
                           onPressed: () => _selectAll(displayProducts),
                           child: Text(
-                            'Select all',
+                            context.t('sell_select_all'),
                             style: textStyles.labelMedium.copyWith(
                               color: c.primaryCoral,
                               fontWeight: FontWeight.w600,
@@ -318,7 +331,7 @@ class _SellScreenState extends State<SellScreen> {
                       onTap: () =>
                           context.pushNamed(RouteNames.searchProductName),
                       decoration: InputDecoration(
-                        hintText: 'Search products or scan a barcode',
+                        hintText: context.t('sell_search_hint'),
                         hintStyle: textStyles.bodyMedium.copyWith(
                           color: c.textMuted,
                         ),
@@ -369,7 +382,9 @@ class _SellScreenState extends State<SellScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'Failed to load products: ${productProvider.error}',
+                              context.tp('sell_error_load', {
+                                'error': '${productProvider.error}',
+                              }),
                               style: textStyles.bodySmall.copyWith(
                                 color: Colors.red,
                               ),
@@ -414,7 +429,7 @@ class _SellScreenState extends State<SellScreen> {
                               side: BorderSide(color: c.surfaceLight),
                             ),
                             child: Text(
-                              'Cancel',
+                              context.t('sell_cancel'),
                               style: textStyles.labelMedium.copyWith(
                                 color: c.textSecondary,
                                 fontWeight: FontWeight.w600,
@@ -452,8 +467,10 @@ class _SellScreenState extends State<SellScreen> {
                                   )
                                 : Text(
                                     _selectedUrls.length <= 1
-                                        ? 'Copy image'
-                                        : 'Copy ${_selectedUrls.length} images',
+                                        ? context.t('sell_copy_image')
+                                        : context.tp('sell_copy_images', {
+                                            'count': '${_selectedUrls.length}',
+                                          }),
                                     style: textStyles.labelMedium.copyWith(
                                       color: c.textLight,
                                       fontWeight: FontWeight.w600,
@@ -491,7 +508,9 @@ class _SellScreenState extends State<SellScreen> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'View cart · ${cartProvider.itemCount} items',
+                                context.tp('sell_view_cart', {
+                                  'count': '${cartProvider.itemCount}',
+                                }),
                                 style: textStyles.labelMedium.copyWith(
                                   color: c.textLight,
                                   fontWeight: FontWeight.w600,
@@ -545,7 +564,9 @@ class _SellScreenState extends State<SellScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '${displayProducts.length} products',
+                context.tp('sell_products_count', {
+                  'count': '${displayProducts.length}',
+                }),
                 style: textStyles.bodySmall.copyWith(color: c.textSecondary),
               ),
               InkWell(
@@ -573,14 +594,14 @@ class _SellScreenState extends State<SellScreen> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'No products available',
+                        context.t('sell_empty_title'),
                         style: textStyles.bodyMedium.copyWith(
                           color: c.textMuted,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Pull down to refresh',
+                        context.t('sell_empty_hint'),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textMuted,
                         ),

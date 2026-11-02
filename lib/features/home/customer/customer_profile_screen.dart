@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:pos_system/core/routes/route_names.dart';
@@ -50,7 +51,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
 
     final fullName = _customer != null
         ? '${_customer!.firstName} ${_customer!.lastName}'
-        : 'Guest Customer';
+        : context.t('profile_guest_name');
 
     final initials = _customer != null
         ? '${_customer!.firstName.isNotEmpty ? _customer!.firstName[0] : ''}${_customer!.lastName.isNotEmpty ? _customer!.lastName[0] : ''}'
@@ -82,7 +83,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Customer profile',
+                        context.t('profile_title'),
                         style: textStyles.heading2.copyWith(fontSize: 24),
                       ),
                       const SizedBox(height: 2),
@@ -114,19 +115,21 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                         ),
                         child: Row(
                           children: [
-                            // Avatar
+                            // Avatar — ✅ theme-aware
                             Container(
                               width: 64,
                               height: 64,
                               alignment: Alignment.center,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFE8F0FE), // Light blue
+                              decoration: BoxDecoration(
+                                color: c.isDark
+                                    ? Colors.white.withValues(alpha: 0.10)
+                                    : const Color(0xFFE8F0FE),
                                 shape: BoxShape.circle,
                               ),
                               child: Text(
                                 initials,
                                 style: textStyles.heading2.copyWith(
-                                  color: const Color(0xFF1967D2),
+                                  color: c.primaryCoral,
                                   fontWeight: FontWeight.w700,
                                   fontSize: 22,
                                 ),
@@ -147,7 +150,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    _customer?.email ?? 'No email',
+                                    _customer?.email ??
+                                        context.t('profile_no_email'),
                                     style: textStyles.bodySmall.copyWith(
                                       color: c.textSecondary,
                                       fontSize: 13,
@@ -155,7 +159,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    _customer?.phone ?? 'No phone',
+                                    _customer?.phone ??
+                                        context.t('profile_no_phone'),
                                     style: textStyles.bodySmall.copyWith(
                                       color: c.textMuted,
                                       fontSize: 13,
@@ -170,7 +175,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                     ),
                     const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-                    // 2. Summary Cards
+                    // 2. Summary Cards — ✅ theme-aware bg
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -180,9 +185,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                             horizontal: 20,
                           ),
                           decoration: BoxDecoration(
-                            color: const Color(
-                              0xFFF4F8FF,
-                            ), // Light blue background
+                            color: c.surfaceTint,
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Row(
@@ -201,7 +204,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Visits',
+                                      context.t('profile_stat_visits'),
                                       style: textStyles.bodySmall.copyWith(
                                         color: c.textSecondary,
                                       ),
@@ -230,7 +233,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Lifetime net spend',
+                                      context.t('profile_stat_lifetime'),
                                       style: textStyles.bodySmall.copyWith(
                                         color: c.textSecondary,
                                       ),
@@ -250,7 +253,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Text(
-                          'After Oct 19 partial refund: Previously 8 visits / \$624.00. Order #1048 adds \$99.00 net.',
+                          context.t('profile_info_note'),
                           style: textStyles.bodySmall.copyWith(
                             color: c.textMuted,
                             height: 1.5,
@@ -265,7 +268,10 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: Text(
-                          'PURCHASE HISTORY · LATEST ${customerOrders.length} OF ${_customer?.totalVisit ?? 0}',
+                          context.tp('profile_history_header', {
+                            'shown': '${customerOrders.length}',
+                            'total': '${_customer?.totalVisit ?? 0}',
+                          }),
                           style: textStyles.labelSmall.copyWith(
                             color: c.textSecondary,
                             letterSpacing: 1.0,
@@ -283,7 +289,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                           padding: const EdgeInsets.all(40.0),
                           child: Center(
                             child: Text(
-                              'No recent orders for this customer.',
+                              context.t('profile_history_empty'),
                               style: textStyles.bodyMedium.copyWith(
                                 color: c.textMuted,
                               ),
@@ -312,7 +318,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
               ),
             ),
 
-            // ── Bottom Action Button ──
+            // ── Bottom Action Button — ✅ theme-aware bg
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
               child: ElevatedButton(
@@ -324,9 +330,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(
-                    0xFFF4F8FF,
-                  ), // Light blue background
+                  backgroundColor: c.surfaceTint,
                   foregroundColor: c.primaryCoral,
                   minimumSize: const Size(double.infinity, 54),
                   shape: RoundedRectangleBorder(
@@ -340,7 +344,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                     Icon(Icons.edit_outlined, size: 20, color: c.primaryCoral),
                     const SizedBox(width: 8),
                     Text(
-                      'Edit customer',
+                      context.t('profile_edit_button'),
                       style: textStyles.labelMedium.copyWith(
                         color: c.primaryCoral,
                         fontSize: 16,
@@ -377,9 +381,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isRefunded
-            ? const Color(0xFFF8F9FA)
-            : Colors.transparent, // Grey bg for refunded
+        // ✅ FIXED: was 0xFFF8F9FA
+        color: isRefunded ? c.surfaceLight : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         border: isRefunded
             ? null
@@ -432,7 +435,8 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF4F8FF),
+                    // ✅ FIXED: was 0xFFF4F8FF
+                    color: c.surfaceTint,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
@@ -451,7 +455,7 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                   children: [
                     if (isRefunded)
                       Text(
-                        'Payment via card', // Ideally pull from payment model
+                        context.t('profile_payment_via_card'),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textSecondary,
                           fontSize: 13,
@@ -465,13 +469,15 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFFF4E5), // Light orange
+                          // ✅ FIXED: was 0xFFFFF4E5
+                          color: c.warningBg,
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
-                          'Partially refunded',
+                          context.t('profile_status_partially_refunded'),
                           style: textStyles.labelSmall.copyWith(
-                            color: const Color(0xFFD97706),
+                            // ✅ FIXED: was 0xFFD97706
+                            color: c.warningFg,
                             fontWeight: FontWeight.w600,
                             fontSize: 11,
                           ),
@@ -479,7 +485,11 @@ class _CustomerProfileScreenState extends State<CustomerProfileScreen> {
                       ),
                     if (!isRefunded)
                       Text(
-                        '${order.status.name} · ${order.createdAt.hour}:${order.createdAt.minute.toString().padLeft(2, '0')}',
+                        context.tp('profile_status_short', {
+                          'status': order.status.name,
+                          'time':
+                              '${order.createdAt.hour}:${order.createdAt.minute.toString().padLeft(2, '0')}',
+                        }),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textSecondary,
                           fontSize: 13,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:provider/provider.dart';
 import 'package:pos_system/core/routes/route_names.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
@@ -60,6 +61,20 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
     super.dispose();
   }
 
+  // Localized display name for the payment method
+  String _localizedPaymentMethod(String method) {
+    switch (method.toLowerCase()) {
+      case 'cash':
+        return context.t('sale_complete_method_cash');
+      case 'card':
+        return context.t('sale_complete_method_card');
+      case 'khqr':
+        return context.t('sale_complete_method_khqr');
+      default:
+        return method.toLowerCase();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -81,7 +96,7 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Sale complete',
+                    context.t('sale_complete_title'),
                     style: textStyles.heading2.copyWith(fontSize: 24),
                   ),
                   IconButton(
@@ -107,7 +122,6 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const SizedBox(height: 16),
-                    // ✅ FIXED: success icon bg — surfaceTint (was 0xFFF4F8FF)
                     Container(
                       width: 80,
                       height: 80,
@@ -123,7 +137,7 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      'All wrapped up.',
+                      context.t('sale_complete_heading'),
                       style: textStyles.heading1.copyWith(
                         fontSize: 28,
                         fontWeight: FontWeight.w500,
@@ -131,7 +145,9 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Payment confirmed at ${TimeOfDay.now().format(context)}',
+                      context.tp('sale_complete_confirmed_at', {
+                        'time': TimeOfDay.now().format(context),
+                      }),
                       style: textStyles.bodySmall.copyWith(color: c.textMuted),
                     ),
                     const SizedBox(height: 32),
@@ -141,7 +157,6 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        // ✅ FIXED: was hardcoded 0xFFF8F9FA
                         color: c.surfaceLight,
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -151,7 +166,11 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Paid in ${_paymentMethod.toLowerCase()}',
+                                context.tp('sale_complete_paid_in', {
+                                  'method': _localizedPaymentMethod(
+                                    _paymentMethod,
+                                  ),
+                                }),
                                 style: textStyles.labelMedium.copyWith(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -177,14 +196,14 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                           if (_paymentMethod == 'Cash' &&
                               _cashReceived != null) ...[
                             _buildSummaryRow(
-                              'Cash received',
+                              context.t('sale_complete_cash_received'),
                               '\$${_cashReceived!.toStringAsFixed(2)}',
                               c,
                               textStyles,
                             ),
                             const SizedBox(height: 12),
                             _buildSummaryRow(
-                              'Change given',
+                              context.t('sale_complete_change_given'),
                               '\$${(_changeGiven ?? 0).toStringAsFixed(2)}',
                               c,
                               textStyles,
@@ -193,15 +212,17 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                           ],
 
                           _buildSummaryRow(
-                            'Customer',
-                            _customerName ?? 'Guest Customer',
+                            context.t('sale_complete_customer'),
+                            _customerName ?? context.t('sale_complete_guest'),
                             c,
                             textStyles,
                           ),
                           const SizedBox(height: 12),
                           _buildSummaryRow(
-                            'Items sold',
-                            '$_itemsSold items',
+                            context.t('sale_complete_items_sold'),
+                            context.tp('sale_complete_items_count', {
+                              'count': '$_itemsSold',
+                            }),
                             c,
                             textStyles,
                           ),
@@ -214,7 +235,7 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'Send their receipt',
+                        context.t('sale_complete_send_receipt'),
                         style: textStyles.heading2.copyWith(fontSize: 18),
                       ),
                     ),
@@ -222,7 +243,7 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'Email receipt',
+                        context.t('sale_complete_email_label'),
                         style: textStyles.labelSmall.copyWith(
                           fontWeight: FontWeight.w600,
                           color: c.textPrimary,
@@ -271,16 +292,16 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                  'Receipt sent to ${_emailController.text}',
+                                  context.tp('sale_complete_sent_toast', {
+                                    'email': _emailController.text,
+                                  }),
                                 ),
-                                // ✅ FIXED: success snackbar — use palette
                                 backgroundColor: c.successFg,
                               ),
                             );
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          // ✅ FIXED: was 0xFFF4F8FF
                           backgroundColor: c.surfaceTint,
                           foregroundColor: c.primaryCoral,
                           shape: RoundedRectangleBorder(
@@ -298,7 +319,7 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Send email receipt',
+                              context.t('sale_complete_send_button'),
                               style: textStyles.labelMedium.copyWith(
                                 color: c.primaryCoral,
                                 fontWeight: FontWeight.w600,
@@ -332,7 +353,7 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'Print receipt',
+                                  context.t('sale_complete_print_button'),
                                   style: textStyles.labelMedium.copyWith(
                                     color: c.textPrimary,
                                     fontWeight: FontWeight.w500,
@@ -364,7 +385,7 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'Share receipt',
+                                  context.t('sale_complete_share_button'),
                                   style: textStyles.labelMedium.copyWith(
                                     color: c.textPrimary,
                                     fontWeight: FontWeight.w500,
@@ -404,7 +425,7 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                         Icon(Icons.add, size: 20, color: c.textLight),
                         const SizedBox(width: 8),
                         Text(
-                          'Start a new sale',
+                          context.t('sale_complete_start_new'),
                           style: textStyles.labelMedium.copyWith(
                             color: c.textLight,
                             fontSize: 16,
@@ -421,7 +442,6 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                       final cartProvider = context.read<CartProvider>();
                       final currentOrder = orderProvider.currentOrder;
 
-                      // 👇 Pass the exact order that was just created
                       context.pushNamed(
                         RouteNames.transactionDetailName,
                         extra: {
@@ -431,7 +451,6 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                       );
                     },
                     style: TextButton.styleFrom(
-                      // ✅ FIXED: was 0xFFF4F8FF
                       backgroundColor: c.surfaceTint,
                       foregroundColor: c.primaryCoral,
                       minimumSize: const Size(double.infinity, 54),
@@ -440,7 +459,7 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                       ),
                     ),
                     child: Text(
-                      'View transaction',
+                      context.t('sale_complete_view_txn'),
                       style: textStyles.labelMedium.copyWith(
                         color: c.primaryCoral,
                         fontSize: 16,

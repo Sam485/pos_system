@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:pos_system/core/routes/route_names.dart';
@@ -65,7 +66,7 @@ class _SettingScreenState extends State<SettingScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Your store',
+                        context.t('settings_title'),
                         style: textStyles.heading2.copyWith(fontSize: 24),
                       ),
                       IconButton(
@@ -94,7 +95,7 @@ class _SettingScreenState extends State<SettingScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: c.surfaceTint, // 👈 theme-aware
+                      color: c.surfaceTint,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Row(
@@ -117,14 +118,15 @@ class _SettingScreenState extends State<SettingScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                store?.name ?? 'Loading...',
+                                store?.name ?? context.t('settings_loading'),
                                 style: textStyles.heading2.copyWith(
                                   fontSize: 20,
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                store?.addressLine ?? 'No address set',
+                                store?.addressLine ??
+                                    context.t('settings_no_address'),
                                 style: textStyles.bodySmall.copyWith(
                                   color: c.textSecondary,
                                 ),
@@ -136,15 +138,15 @@ class _SettingScreenState extends State<SettingScreen> {
                                     width: 8,
                                     height: 8,
                                     decoration: BoxDecoration(
-                                      color: c.successFg, // 👈 theme-aware
+                                      color: c.successFg,
                                       shape: BoxShape.circle,
                                     ),
                                   ),
                                   const SizedBox(width: 6),
                                   Text(
-                                    'All systems online',
+                                    context.t('settings_all_systems_online'),
                                     style: textStyles.labelSmall.copyWith(
-                                      color: c.successFg, // 👈 theme-aware
+                                      color: c.successFg,
                                       fontWeight: FontWeight.w600,
                                       fontSize: 12,
                                     ),
@@ -166,7 +168,7 @@ class _SettingScreenState extends State<SettingScreen> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Text(
-                    'STORE OPERATIONS',
+                    context.t('settings_section_operations'),
                     style: textStyles.labelSmall.copyWith(
                       color: c.textSecondary,
                       letterSpacing: 1.0,
@@ -181,18 +183,24 @@ class _SettingScreenState extends State<SettingScreen> {
                 delegate: SliverChildListDelegate([
                   _buildMenuTile(
                     icon: Icons.store_outlined,
-                    title: 'Store details',
+                    title: context.t('settings_menu_store_details'),
                     subtitle: store != null
-                        ? '${store.currency} · ${store.timeZone}'
-                        : 'Loading...',
+                        ? context.tp('settings_menu_store_details_sub', {
+                            'currency': store.currency,
+                            'timezone': store.timeZone,
+                          })
+                        : context.t('settings_loading'),
                     c: c,
                     textStyles: textStyles,
                     onTap: () => context.pushNamed(RouteNames.storeDetailsName),
                   ),
                   _buildMenuTile(
                     icon: Icons.percent_rounded,
-                    title: 'Taxes & discounts',
-                    subtitle: 'Sales tax 10% · 3 active discounts',
+                    title: context.t('settings_menu_taxes'),
+                    subtitle: context.tp('settings_menu_taxes_sub', {
+                      'rate': '10',
+                      'count': '3',
+                    }),
                     c: c,
                     textStyles: textStyles,
                     onTap: () =>
@@ -200,8 +208,8 @@ class _SettingScreenState extends State<SettingScreen> {
                   ),
                   _buildMenuTile(
                     icon: Icons.receipt_long_outlined,
-                    title: 'Receipt preferences',
-                    subtitle: 'Logo, footer & digital receipts',
+                    title: context.t('settings_menu_receipt'),
+                    subtitle: context.t('settings_menu_receipt_sub'),
                     c: c,
                     textStyles: textStyles,
                     onTap: () =>
@@ -209,8 +217,8 @@ class _SettingScreenState extends State<SettingScreen> {
                   ),
                   _buildMenuTile(
                     icon: Icons.print_outlined,
-                    title: 'Connected devices',
-                    subtitle: 'Reader 01 · Receipt printer',
+                    title: context.t('settings_menu_devices'),
+                    subtitle: context.t('settings_menu_devices_sub'),
                     c: c,
                     textStyles: textStyles,
                     showDivider: false,
@@ -226,7 +234,7 @@ class _SettingScreenState extends State<SettingScreen> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Text(
-                    'PREFERENCES',
+                    context.t('settings_section_preferences'),
                     style: textStyles.labelSmall.copyWith(
                       color: c.textSecondary,
                       letterSpacing: 1.0,
@@ -241,15 +249,15 @@ class _SettingScreenState extends State<SettingScreen> {
                 delegate: SliverChildListDelegate([
                   _buildMenuTile(
                     icon: _themeIcon(themeProvider.themeMode),
-                    title: 'Theme',
-                    subtitle: _themeLabel(themeProvider.themeMode),
+                    title: context.t('settings_menu_theme'),
+                    subtitle: _themeLabel(context, themeProvider.themeMode),
                     c: c,
                     textStyles: textStyles,
                     onTap: () => _showThemeSheet(context, themeProvider),
                   ),
                   _buildMenuTile(
                     icon: Icons.translate_rounded,
-                    title: 'Language',
+                    title: context.t('settings_menu_language'),
                     subtitle: languageProvider.currentLanguageName,
                     c: c,
                     textStyles: textStyles,
@@ -265,7 +273,7 @@ class _SettingScreenState extends State<SettingScreen> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: Text(
-                    'TEAM & ACCOUNT',
+                    context.t('settings_section_team'),
                     style: textStyles.labelSmall.copyWith(
                       color: c.textSecondary,
                       letterSpacing: 1.0,
@@ -280,8 +288,11 @@ class _SettingScreenState extends State<SettingScreen> {
                 delegate: SliverChildListDelegate([
                   _buildMenuTile(
                     icon: Icons.people_outline_rounded,
-                    title: 'Staff & permissions',
-                    subtitle: 'Alex Morgan · Store manager',
+                    title: context.t('settings_menu_staff'),
+                    subtitle: context.tp('settings_menu_staff_sub', {
+                      'name': context.t('settings_menu_staff_name_fallback'),
+                      'role': context.t('settings_menu_staff_role_fallback'),
+                    }),
                     c: c,
                     textStyles: textStyles,
                     onTap: () =>
@@ -289,10 +300,13 @@ class _SettingScreenState extends State<SettingScreen> {
                   ),
                   _buildMenuTile(
                     icon: Icons.account_balance_wallet_outlined,
-                    title: 'Close register',
+                    title: context.t('settings_menu_close_register'),
                     subtitle: isOpen && session != null
-                        ? 'Register 01 · Open since ${session.openAt.hour}:${session.openAt.minute.toString().padLeft(2, '0')}'
-                        : 'No active register',
+                        ? context.tp('settings_menu_close_register_open', {
+                            'time':
+                                '${session.openAt.hour}:${session.openAt.minute.toString().padLeft(2, '0')}',
+                          })
+                        : context.t('settings_menu_close_register_closed'),
                     c: c,
                     textStyles: textStyles,
                     onTap: () =>
@@ -300,7 +314,7 @@ class _SettingScreenState extends State<SettingScreen> {
                   ),
                   _buildMenuTile(
                     icon: Icons.logout_rounded,
-                    title: 'Sign out',
+                    title: context.t('settings_menu_sign_out'),
                     c: c,
                     textStyles: textStyles,
                     showDivider: false,
@@ -317,7 +331,9 @@ class _SettingScreenState extends State<SettingScreen> {
               SliverToBoxAdapter(
                 child: Center(
                   child: Text(
-                    'fold POS · Version 2.4.0 · Help & support',
+                    context.tp('settings_footer', {
+                      'version': context.t('settings_footer_version'),
+                    }),
                     style: textStyles.bodySmall.copyWith(
                       color: c.textMuted,
                       fontSize: 12,
@@ -340,17 +356,18 @@ class _SettingScreenState extends State<SettingScreen> {
     ThemeMode.system => Icons.brightness_auto_outlined,
   };
 
-  String _themeLabel(ThemeMode mode) => switch (mode) {
-    ThemeMode.light => 'Light',
-    ThemeMode.dark => 'Dark',
-    ThemeMode.system => 'System default',
+  // ✅ FIXED: now takes BuildContext so labels can be localized
+  String _themeLabel(BuildContext context, ThemeMode mode) => switch (mode) {
+    ThemeMode.light => context.t('settings_theme_light'),
+    ThemeMode.dark => context.t('settings_theme_dark'),
+    ThemeMode.system => context.t('settings_theme_system'),
   };
 
   void _showThemeSheet(BuildContext context, ThemeProvider provider) {
     final c = context.colors;
     showModalBottomSheet(
       context: context,
-      backgroundColor: c.cardBackground, // 👈 dark-mode friendly
+      backgroundColor: c.cardBackground,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -363,7 +380,7 @@ class _SettingScreenState extends State<SettingScreen> {
             children: [
               const SizedBox(height: 12),
               Text(
-                'Choose theme',
+                ctx.t('settings_theme_sheet_title'),
                 style: sheetStyles.heading2.copyWith(fontSize: 18),
               ),
               const SizedBox(height: 8),
@@ -371,8 +388,11 @@ class _SettingScreenState extends State<SettingScreen> {
                 RadioListTile<ThemeMode>(
                   value: m,
                   groupValue: provider.themeMode,
-                  activeColor: sheetColors.primaryCoral, // 👈 theme-aware
-                  title: Text(_themeLabel(m), style: sheetStyles.bodyMedium),
+                  activeColor: sheetColors.primaryCoral,
+                  title: Text(
+                    _themeLabel(ctx, m),
+                    style: sheetStyles.bodyMedium,
+                  ),
                   onChanged: (v) async {
                     if (v != null) {
                       await provider.setThemeMode(v);
@@ -392,7 +412,7 @@ class _SettingScreenState extends State<SettingScreen> {
     final c = context.colors;
     showModalBottomSheet(
       context: context,
-      backgroundColor: c.cardBackground, // 👈 dark-mode friendly
+      backgroundColor: c.cardBackground,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -405,7 +425,7 @@ class _SettingScreenState extends State<SettingScreen> {
             children: [
               const SizedBox(height: 12),
               Text(
-                'Choose language',
+                ctx.t('settings_language_sheet_title'),
                 style: sheetStyles.heading2.copyWith(fontSize: 18),
               ),
               const SizedBox(height: 8),
@@ -413,7 +433,7 @@ class _SettingScreenState extends State<SettingScreen> {
                 RadioListTile<String>(
                   value: code,
                   groupValue: provider.currentLanguage,
-                  activeColor: sheetColors.primaryCoral, // 👈 theme-aware
+                  activeColor: sheetColors.primaryCoral,
                   title: Text(
                     LanguageProvider.languageNames[code] ?? code,
                     style: sheetStyles.bodyMedium,
@@ -457,7 +477,7 @@ class _SettingScreenState extends State<SettingScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: c.surfaceTint, // 👈 theme-aware
+                    color: c.surfaceTint,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(icon, color: c.primaryCoral, size: 22),

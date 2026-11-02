@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:provider/provider.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
 import 'package:pos_system/core/theme/app_text_style_x.dart';
@@ -65,6 +66,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
       return;
     }
 
+    final c = context.colors;
     final customerProvider = context.read<CustomerProvider>();
 
     // Build the payload
@@ -77,22 +79,23 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
       'marketing_otp_in': _isMarketingEnabled,
     };
 
-    // Note: You'll need to add an `updateCustomer` method to your CustomerProvider
     final success = await customerProvider.updateCustomer(_customer!.id, data);
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Customer updated successfully'),
-          backgroundColor: Color(0xFF137333),
+        SnackBar(
+          content: Text(context.t('edit_customer_update_success')),
+          backgroundColor: c.successFg,
         ),
       );
       context.pop(); // Go back to profile
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(customerProvider.error ?? 'Failed to update customer'),
-          backgroundColor: Colors.red,
+          content: Text(
+            customerProvider.error ?? context.t('edit_customer_update_failed'),
+          ),
+          backgroundColor: c.dangerFg,
         ),
       );
     }
@@ -106,8 +109,11 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
 
     // Build the subtitle text
     final subtitleText = _customer != null
-        ? '${_customer!.firstName} ${_customer!.lastName} · Customer since Jan 2026'
-        : 'Loading...';
+        ? context.tp('edit_customer_subtitle', {
+            'name': '${_customer!.firstName} ${_customer!.lastName}',
+            'date': context.t('edit_customer_subtitle_date'),
+          })
+        : context.t('edit_customer_loading');
 
     return Scaffold(
       backgroundColor: c.background,
@@ -134,7 +140,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Edit customer',
+                        context.t('edit_customer_title'),
                         style: textStyles.heading2.copyWith(fontSize: 24),
                       ),
                       const SizedBox(height: 2),
@@ -165,7 +171,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
                       children: [
                         Expanded(
                           child: _buildTextFieldGroup(
-                            label: 'First name',
+                            label: context.t('edit_customer_first_name'),
                             controller: _firstNameController,
                             c: c,
                             textStyles: textStyles,
@@ -174,7 +180,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: _buildTextFieldGroup(
-                            label: 'Last name',
+                            label: context.t('edit_customer_last_name'),
                             controller: _lastNameController,
                             c: c,
                             textStyles: textStyles,
@@ -186,7 +192,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
 
                     // ── Email Address ──
                     _buildTextFieldGroup(
-                      label: 'Email address',
+                      label: context.t('edit_customer_email'),
                       controller: _emailController,
                       icon: Icons.mail_outline_rounded,
                       c: c,
@@ -196,7 +202,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
 
                     // ── Phone Number ──
                     _buildTextFieldGroup(
-                      label: 'Phone number',
+                      label: context.t('edit_customer_phone'),
                       controller: _phoneController,
                       icon: Icons.phone_outlined,
                       c: c,
@@ -206,7 +212,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
 
                     // ── Customer Note ──
                     _buildTextFieldGroup(
-                      label: 'Customer note',
+                      label: context.t('edit_customer_note'),
                       controller: _noteController,
                       icon: Icons.edit_note_rounded,
                       c: c,
@@ -222,7 +228,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Email marketing',
+                              context.t('edit_customer_marketing_title'),
                               style: textStyles.labelMedium.copyWith(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 15,
@@ -231,8 +237,8 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
                             const SizedBox(height: 4),
                             Text(
                               _isMarketingEnabled
-                                  ? 'Subscribed · Customer opted in'
-                                  : 'Not subscribed · Ask for consent first',
+                                  ? context.t('edit_customer_marketing_on')
+                                  : context.t('edit_customer_marketing_off'),
                               style: textStyles.bodySmall.copyWith(
                                 color: c.textMuted,
                                 fontSize: 13,
@@ -240,6 +246,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
                             ),
                           ],
                         ),
+                        // ✅ FIXED: was activeColor + invalid params
                         Switch(
                           value: _isMarketingEnabled,
                           onChanged: (val) {
@@ -247,10 +254,15 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
                               _isMarketingEnabled = val;
                             });
                           },
-                          activeColor: c.textLight,
-                          activeTrackColor: c.primaryCoral,
-                          inactiveThumbColor: c.textLight,
-                          inactiveTrackColor: c.surfaceLight,
+                          thumbColor: WidgetStateProperty.resolveWith(
+                            (states) => c.textLight,
+                          ),
+                          trackColor: WidgetStateProperty.resolveWith((states) {
+                            if (states.contains(WidgetState.selected)) {
+                              return c.primaryCoral;
+                            }
+                            return c.surfaceLight;
+                          }),
                         ),
                       ],
                     ),
@@ -260,7 +272,8 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF4F8FF), // Light blue background
+                        // ✅ FIXED: was 0xFFF4F8FF
+                        color: c.surfaceTint,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -274,9 +287,10 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'Receipt emails are separate from marketing preferences.',
+                              context.t('edit_customer_info_banner'),
                               style: textStyles.bodySmall.copyWith(
-                                color: c.primaryCoral,
+                                // ✅ FIXED: was c.primaryCoral
+                                color: c.textSecondary,
                                 height: 1.4,
                                 fontSize: 13,
                               ),
@@ -289,7 +303,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
 
                     // ── Footer Note ──
                     Text(
-                      'Changes update the customer profile, not past receipts.',
+                      context.t('edit_customer_footer_note'),
                       style: textStyles.bodySmall.copyWith(
                         color: c.textMuted,
                         fontSize: 12,
@@ -338,7 +352,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
                               Icon(Icons.check, size: 20, color: c.textLight),
                               const SizedBox(width: 8),
                               Text(
-                                'Save customer',
+                                context.t('edit_customer_save_button'),
                                 style: textStyles.labelMedium.copyWith(
                                   color: c.textLight,
                                   fontSize: 16,
@@ -354,7 +368,8 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
                   TextButton(
                     onPressed: () => context.pop(),
                     style: TextButton.styleFrom(
-                      backgroundColor: const Color(0xFFF4F8FF), // Light blue
+                      // ✅ FIXED: was 0xFFF4F8FF
+                      backgroundColor: c.surfaceTint,
                       foregroundColor: c.primaryCoral,
                       minimumSize: const Size(double.infinity, 54),
                       shape: RoundedRectangleBorder(
@@ -362,7 +377,7 @@ class _EditCustomerScreenState extends State<EditCustomerScreen> {
                       ),
                     ),
                     child: Text(
-                      'Cancel changes',
+                      context.t('edit_customer_cancel_button'),
                       style: textStyles.labelMedium.copyWith(
                         color: c.primaryCoral,
                         fontSize: 16,

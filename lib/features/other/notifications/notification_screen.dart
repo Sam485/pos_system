@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:pos_system/data/models/notificatoin_model.dart';
 import 'package:pos_system/providers/notificatoin_provider.dart';
 import 'package:provider/provider.dart';
@@ -54,7 +55,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Notifications',
+                      context.t('notif_title'),
                       style: textStyles.heading2.copyWith(fontSize: 24),
                     ),
                   ),
@@ -62,7 +63,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     TextButton(
                       onPressed: () => provider.markAllAsRead(),
                       child: Text(
-                        'Mark all read',
+                        context.t('notif_mark_all_read'),
                         style: textStyles.labelSmall.copyWith(
                           color: c.primaryCoral,
                         ),
@@ -79,7 +80,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 child: provider.notifications.isEmpty && !provider.isLoading
                     ? Center(
                         child: Text(
-                          'No notifications yet.',
+                          context.t('notif_empty'),
                           style: textStyles.bodyMedium.copyWith(
                             color: c.textMuted,
                           ),
@@ -88,7 +89,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     : ListView.separated(
                         padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
                         itemCount: provider.notifications.length,
-                        // 👇 Cards have their own spacing — no dividers needed
                         separatorBuilder: (_, __) => const SizedBox(height: 10),
                         itemBuilder: (context, index) {
                           final notif = provider.notifications[index];
@@ -141,20 +141,14 @@ class _NotificationScreenState extends State<NotificationScreen> {
           provider.markAsRead(notif.id);
         }
       },
-      borderRadius: BorderRadius.circular(14), // 👈 match card radius
+      borderRadius: BorderRadius.circular(14),
       child: Container(
-        // 👈 margin creates the gap between cards
         margin: EdgeInsets.zero,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
-          // 👈 unread: tinted surface; read: transparent but still rounded
           color: notif.isRead ? Colors.transparent : c.surfaceTint,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            // subtle outline so read cards don't disappear on the bg
-            color: c.border.withValues(alpha: 0.6),
-            width: 1,
-          ),
+          border: Border.all(color: c.border.withValues(alpha: 0.6), width: 1),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,7 +198,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    '${notif.createdAt.hour}:${notif.createdAt.minute.toString().padLeft(2, '0')}',
+                    context.tp('notif_time', {
+                      'hour': '${notif.createdAt.hour}',
+                      'minute': notif.createdAt.minute.toString().padLeft(
+                        2,
+                        '0',
+                      ),
+                    }),
                     style: textStyles.bodySmall.copyWith(
                       color: c.textMuted,
                       fontSize: 11,

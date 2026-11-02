@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:pos_system/data/models/product_model.dart';
 import 'package:provider/provider.dart';
 import 'package:pos_system/core/routes/route_names.dart';
@@ -85,7 +86,6 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
         final unitPrice = (item['unit_price'] as num).toDouble();
         final itemTotalPrice = unitPrice * qtyToRefund;
 
-        // 👇 Calculate proportion based on ACTUAL order data
         final itemProportion = _order!.subTotal > 0
             ? itemTotalPrice / _order!.subTotal
             : 0.0;
@@ -93,7 +93,6 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
         final proportionalDiscount = _order!.discountAmount * itemProportion;
         final proportionalTax = _order!.taxAmount * itemProportion;
 
-        // 👇 Exact refund uses the actual discount and tax
         final exactRefund =
             itemTotalPrice - proportionalDiscount + proportionalTax;
 
@@ -108,9 +107,7 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
 
     if (itemsToRefund.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select at least one item to return.'),
-        ),
+        SnackBar(content: Text(context.t('return_refund_error_no_selection'))),
       );
       return;
     }
@@ -118,10 +115,8 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
     setState(() => _isProcessing = true);
 
     try {
-      // Calculate total based on order's actual discount and tax
       final subtotal = _calculateRefundSubtotal(orderItems, itemRefunds);
 
-      // 👇 Use proportional logic for the total as well
       final orderSubtotal = _order!.subTotal;
       final totalProportion = orderSubtotal > 0
           ? (subtotal / orderSubtotal)
@@ -174,7 +169,9 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
     final productProvider = context.watch<ProductProvider>();
 
     if (_order == null) {
-      return const Scaffold(body: Center(child: Text('Order not found')));
+      return Scaffold(
+        body: Center(child: Text(context.t('return_refund_not_found'))),
+      );
     }
 
     final orderItems = orderProvider.orderItems;
@@ -191,7 +188,6 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
     // ── Calculations for UI ──
     final subtotal = _calculateRefundSubtotal(orderItems, itemRefunds);
 
-    // 👇 Calculate proportional discount and tax for display
     final orderSubtotal = _order!.subTotal;
     final totalProportion = orderSubtotal > 0
         ? (subtotal / orderSubtotal)
@@ -226,12 +222,14 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Return items',
+                        context.t('return_refund_title'),
                         style: textStyles.heading2.copyWith(fontSize: 24),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Order ${_order!.orderNumber}',
+                        context.tp('return_refund_subtitle', {
+                          'orderNumber': _order!.orderNumber,
+                        }),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textMuted,
                         ),
@@ -252,7 +250,7 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
                   children: [
                     const SizedBox(height: 8),
                     Text(
-                      'Select the items coming back. Discounts and tax are included in the refund.',
+                      context.t('return_refund_intro'),
                       style: textStyles.bodyMedium.copyWith(
                         color: c.textSecondary,
                         height: 1.4,
@@ -311,12 +309,22 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
                                 : (val) => setState(
                                     () => _selectedItems[id] = val ?? false,
                                   ),
-                            title: product?.name ?? 'Unknown Product',
+                            title:
+                                product?.name ??
+                                context.t('return_refund_item_unknown'),
                             variant: variant != null
-                                ? '${variant.color} / ${variant.size} · $originalQty purchased'
-                                : '$originalQty purchased',
-                            price:
-                                '\$${(item['unit_price'] as num).toStringAsFixed(2)} each',
+                                ? context.tp('return_refund_item_variant', {
+                                    'color': variant.color,
+                                    'size': variant.size,
+                                    'qty': '$originalQty',
+                                  })
+                                : context.tp('return_refund_item_qty_only', {
+                                    'qty': '$originalQty',
+                                  }),
+                            price: context.tp('return_refund_item_price', {
+                              'price': (item['unit_price'] as num)
+                                  .toStringAsFixed(2),
+                            }),
                             quantity: _itemQuantities[id] ?? 1,
                             onQuantityChanged: (newQty) =>
                                 setState(() => _itemQuantities[id] = newQty),
@@ -338,7 +346,7 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
 
                     // ── Return Reason ──
                     Text(
-                      'Return reason',
+                      context.t('return_refund_reason_label'),
                       style: textStyles.labelSmall.copyWith(
                         fontWeight: FontWeight.w600,
                         color: c.textPrimary,
@@ -357,7 +365,10 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Size didn\'t fit', style: textStyles.bodyLarge),
+                          Text(
+                            context.t('return_refund_reason_default'),
+                            style: textStyles.bodyLarge,
+                          ),
                           Icon(
                             Icons.keyboard_arrow_down_rounded,
                             color: c.textMuted,
@@ -405,7 +416,7 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Return to available stock',
+                                context.t('return_refund_restock_title'),
                                 style: textStyles.labelMedium.copyWith(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 14,
@@ -413,7 +424,7 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Items will be added back to inventory',
+                                context.t('return_refund_restock_sub'),
                                 style: textStyles.bodySmall.copyWith(
                                   color: c.textMuted,
                                   fontSize: 12,
@@ -430,7 +441,6 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        // ✅ FIXED: was 0xFFF4F8FF
                         color: c.surfaceTint,
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -438,7 +448,7 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Refund summary',
+                            context.t('return_refund_summary_title'),
                             style: textStyles.labelMedium.copyWith(
                               fontWeight: FontWeight.w600,
                               fontSize: 16,
@@ -449,7 +459,7 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Subtotal',
+                                context.t('return_refund_summary_subtotal'),
                                 style: textStyles.bodySmall.copyWith(
                                   color: c.textSecondary,
                                 ),
@@ -467,13 +477,13 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Original discount',
+                                context.t('return_refund_summary_discount'),
                                 style: textStyles.bodySmall.copyWith(
                                   color: c.textSecondary,
                                 ),
                               ),
                               Text(
-                                '-\$${proportionalDiscount.toStringAsFixed(2)}', // 👈 Proportional
+                                '-\$${proportionalDiscount.toStringAsFixed(2)}',
                                 style: textStyles.labelSmall.copyWith(
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -485,13 +495,13 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Tax returned',
+                                context.t('return_refund_summary_tax'),
                                 style: textStyles.bodySmall.copyWith(
                                   color: c.textSecondary,
                                 ),
                               ),
                               Text(
-                                '\$${proportionalTax.toStringAsFixed(2)}', // 👈 Proportional
+                                '\$${proportionalTax.toStringAsFixed(2)}',
                                 style: textStyles.labelSmall.copyWith(
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -508,7 +518,7 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Refund to cash',
+                                context.t('return_refund_summary_total'),
                                 style: textStyles.labelMedium.copyWith(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -528,7 +538,9 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Original payment: cash · Eligible for return until Nov 18.',
+                      context.tp('return_refund_payment_note', {
+                        'date': context.t('return_refund_payment_note_date'),
+                      }),
                       style: textStyles.bodySmall.copyWith(
                         color: c.textMuted,
                         fontSize: 12,
@@ -585,7 +597,9 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'Refund \$${totalRefund.toStringAsFixed(2)} in cash',
+                                context.tp('return_refund_action', {
+                                  'amount': totalRefund.toStringAsFixed(2),
+                                }),
                                 style: textStyles.labelMedium.copyWith(
                                   color: c.textLight,
                                   fontSize: 16,
@@ -597,7 +611,7 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Confirm only after handing the cash to the customer.',
+                    context.t('return_refund_footer'),
                     style: textStyles.bodySmall.copyWith(
                       color: c.textMuted,
                       fontSize: 12,
@@ -668,7 +682,6 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
           height: 56,
           margin: const EdgeInsets.only(top: 4),
           decoration: BoxDecoration(
-            // ✅ FIXED: was 0xFFE8EBEE
             color: c.isDark
                 ? Colors.white.withValues(alpha: 0.08)
                 : const Color(0xFFE8EBEE),
@@ -722,16 +735,16 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    // ✅ FIXED: was 0xFFFFF4E5
                     color: c.warningBg,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     isFullyReturned
-                        ? 'Fully returned'
-                        : '$alreadyRefundedQty already returned',
+                        ? context.t('return_refund_item_fully_returned')
+                        : context.tp('return_refund_item_already_returned', {
+                            'qty': '$alreadyRefundedQty',
+                          }),
                     style: textStyles.labelSmall.copyWith(
-                      // ✅ FIXED: was 0xFFD97706
                       color: c.warningFg,
                       fontSize: 10,
                       fontWeight: FontWeight.w700,

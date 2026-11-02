@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
 import 'package:pos_system/core/theme/app_text_style_x.dart';
 
@@ -70,12 +71,12 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'New customer',
+                        context.t('add_customer_title'),
                         style: textStyles.heading2.copyWith(fontSize: 24),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Customer directory',
+                        context.t('add_customer_subtitle'),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textMuted,
                         ),
@@ -98,7 +99,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
 
                     // Intro Text
                     Text(
-                      'Create a profile for quicker checkouts, digital receipts and a more personal welcome.',
+                      context.t('add_customer_intro'),
                       style: textStyles.bodyMedium.copyWith(
                         color: c.textSecondary,
                         height: 1.4,
@@ -111,7 +112,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                       children: [
                         Expanded(
                           child: _buildTextFieldGroup(
-                            label: 'First name *',
+                            label: context.t('add_customer_first_name'),
                             controller: _firstNameController,
                             c: c,
                             textStyles: textStyles,
@@ -120,7 +121,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: _buildTextFieldGroup(
-                            label: 'Last name *',
+                            label: context.t('add_customer_last_name'),
                             controller: _lastNameController,
                             c: c,
                             textStyles: textStyles,
@@ -132,7 +133,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
 
                     // ── Email Address ──
                     _buildTextFieldGroup(
-                      label: 'Email address *',
+                      label: context.t('add_customer_email'),
                       controller: _emailController,
                       icon: Icons.mail_outline_rounded,
                       c: c,
@@ -142,7 +143,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
 
                     // ── Phone Number ──
                     _buildTextFieldGroup(
-                      label: 'Phone number',
+                      label: context.t('add_customer_phone'),
                       controller: _phoneController,
                       icon: Icons.phone_outlined,
                       c: c,
@@ -152,7 +153,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
 
                     // ── Customer Note ──
                     _buildTextFieldGroup(
-                      label: 'Customer note',
+                      label: context.t('add_customer_note'),
                       controller: _noteController,
                       icon: Icons.edit_note_rounded,
                       c: c,
@@ -201,7 +202,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Send news & special offers',
+                                context.t('add_customer_marketing_title'),
                                 style: textStyles.labelMedium.copyWith(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 14,
@@ -209,7 +210,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Only with the customer\'s permission. They can unsubscribe at any time.',
+                                context.t('add_customer_marketing_sub'),
                                 style: textStyles.bodySmall.copyWith(
                                   color: c.textMuted,
                                   height: 1.4,
@@ -226,7 +227,8 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF4F8FF), // Light blue background
+                        // ✅ FIXED: was 0xFFF4F8FF
+                        color: c.surfaceTint,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -240,9 +242,10 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'An email is used for receipts, not marketing, unless the customer opts in.',
+                              context.t('add_customer_privacy_info'),
                               style: textStyles.bodySmall.copyWith(
-                                color: c.primaryCoral,
+                                // ✅ FIXED: was c.primaryCoral
+                                color: c.textSecondary,
                                 height: 1.4,
                                 fontSize: 13,
                               ),
@@ -276,7 +279,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                       elevation: 0,
                     ),
                     child: Text(
-                      'Save customer & add to sale',
+                      context.t('add_customer_save_button'),
                       style: textStyles.labelMedium.copyWith(
                         color: c.textLight,
                         fontSize: 16,
@@ -286,7 +289,7 @@ class _AddCustomerScreenState extends State<AddCustomerScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Customer details stay private and secure.',
+                    context.t('add_customer_privacy_note'),
                     style: textStyles.bodySmall.copyWith(
                       color: c.textMuted,
                       fontSize: 12,

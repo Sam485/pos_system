@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; // 👈 for context.watch
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
 import 'package:pos_system/core/theme/app_text_style_x.dart';
+import 'package:pos_system/providers/language_provider.dart'; // 👈 ADD THIS
 
 class HelpSupportScreen extends StatefulWidget {
   const HelpSupportScreen({super.key});
@@ -12,6 +15,9 @@ class HelpSupportScreen extends StatefulWidget {
 class _HelpSupportScreenState extends State<HelpSupportScreen> {
   @override
   Widget build(BuildContext context) {
+    // 👇 Rebuild when the language changes
+    context.watch<LanguageProvider>();
+
     final c = context.colors;
     final textStyles = AppTextStylesX(context);
 
@@ -40,12 +46,12 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Help & support',
+                        context.t('help_title'),
                         style: textStyles.heading2.copyWith(fontSize: 24),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Here for you and your store',
+                        context.t('help_subtitle'),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textMuted,
                         ),
@@ -68,7 +74,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
 
                     // Heading
                     Text(
-                      'A little help goes a long\nway.',
+                      context.t('help_heading'),
                       style: textStyles.heading1.copyWith(
                         fontSize: 26,
                         height: 1.2,
@@ -79,7 +85,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
 
                     // ── Search Help Center ──
                     Text(
-                      'Search the help center',
+                      context.t('help_search_label'),
                       style: textStyles.labelSmall.copyWith(
                         fontWeight: FontWeight.w600,
                         color: c.textPrimary,
@@ -91,7 +97,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                       onTap: () {},
                       style: textStyles.bodyMedium,
                       decoration: InputDecoration(
-                        hintText: 'What can we help you with?',
+                        hintText: context.t('help_search_hint'),
                         hintStyle: textStyles.bodyMedium.copyWith(
                           color: c.textMuted,
                         ),
@@ -118,7 +124,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
 
                     // ── Popular Guides Section ──
                     Text(
-                      'POPULAR GUIDES',
+                      context.t('help_guides_header'),
                       style: textStyles.labelSmall.copyWith(
                         color: c.textSecondary,
                         letterSpacing: 1.0,
@@ -130,29 +136,29 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                     // Guides List
                     _buildGuideItem(
                       icon: Icons.credit_card_outlined,
-                      title: 'Connect your card reader',
-                      subtitle: 'Pair, test and troubleshoot Reader 01',
+                      title: context.t('help_guide_reader_title'),
+                      subtitle: context.t('help_guide_reader_sub'),
                       c: c,
                       textStyles: textStyles,
                     ),
                     _buildGuideItem(
                       icon: Icons.undo_rounded,
-                      title: 'Returns & refunds',
-                      subtitle: 'Find a sale and refund an item',
+                      title: context.t('help_guide_returns_title'),
+                      subtitle: context.t('help_guide_returns_sub'),
                       c: c,
                       textStyles: textStyles,
                     ),
                     _buildGuideItem(
                       icon: Icons.receipt_long_outlined,
-                      title: 'Reconcile your cash drawer',
-                      subtitle: 'Count cash and close with confidence',
+                      title: context.t('help_guide_reconcile_title'),
+                      subtitle: context.t('help_guide_reconcile_sub'),
                       c: c,
                       textStyles: textStyles,
                     ),
                     _buildGuideItem(
                       icon: Icons.wifi_off_rounded,
-                      title: 'Selling while offline',
-                      subtitle: 'Keep carts safe during connection issues',
+                      title: context.t('help_guide_offline_title'),
+                      subtitle: context.t('help_guide_offline_sub'),
                       c: c,
                       textStyles: textStyles,
                       showDivider: false,
@@ -163,14 +169,14 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: c.surfaceTint, // 👈 theme-aware
+                        color: c.surfaceTint,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Prefer email?',
+                            context.t('help_email_title'),
                             style: textStyles.labelMedium.copyWith(
                               fontWeight: FontWeight.w600,
                               fontSize: 15,
@@ -178,7 +184,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'support@foldstore.com',
+                            context.t('help_email_address'),
                             style: textStyles.bodyLarge.copyWith(
                               color: c.primaryCoral,
                               fontWeight: FontWeight.w500,
@@ -186,7 +192,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Include your store, register and order number.',
+                            context.t('help_email_hint'),
                             style: textStyles.bodySmall.copyWith(
                               color: c.textMuted,
                               fontSize: 13,
@@ -200,7 +206,11 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                     // ── Footer Version ──
                     Center(
                       child: Text(
-                        'fold POS · Version 2.4.0 · SoHo · Register 01',
+                        context.tp('help_footer_version', {
+                          'version': context.t('help_footer_version_number'),
+                          'store': context.t('help_footer_store'),
+                          'register': context.t('help_footer_register'),
+                        }),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textMuted,
                           fontSize: 12,
@@ -241,7 +251,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Chat with support',
+                          context.t('help_chat_button'),
                           style: textStyles.labelMedium.copyWith(
                             color: c.textLight,
                             fontSize: 16,
@@ -253,7 +263,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Daily, 8 AM–8 PM ET · Usually replies in 5 minutes',
+                    context.t('help_chat_hours'),
                     style: textStyles.bodySmall.copyWith(
                       color: c.textMuted,
                       fontSize: 12,
@@ -289,7 +299,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: c.surfaceTint, // 👈 theme-aware
+                    color: c.surfaceTint,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(icon, color: c.primaryCoral, size: 22),

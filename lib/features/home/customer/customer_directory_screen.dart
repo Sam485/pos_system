@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:pos_system/core/routes/route_names.dart';
@@ -100,12 +101,14 @@ class _CustomerDirectoryScreenState extends State<CustomerDirectoryScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Customers',
+                        context.t('customers_title'),
                         style: textStyles.heading2.copyWith(fontSize: 24),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${customerProvider.customers.length} people in your community',
+                        context.tp('customers_subtitle', {
+                          'count': '${customerProvider.customers.length}',
+                        }),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textMuted,
                         ),
@@ -132,7 +135,7 @@ class _CustomerDirectoryScreenState extends State<CustomerDirectoryScreen> {
                           children: [
                             const SizedBox(height: 8),
                             Text(
-                              'Search your customers',
+                              context.t('customers_search_label'),
                               style: textStyles.labelSmall.copyWith(
                                 fontWeight: FontWeight.w600,
                                 color: c.textSecondary,
@@ -142,7 +145,7 @@ class _CustomerDirectoryScreenState extends State<CustomerDirectoryScreen> {
                             TextFormField(
                               controller: _searchController,
                               decoration: InputDecoration(
-                                hintText: 'Name, email or phone',
+                                hintText: context.t('customers_search_hint'),
                                 hintStyle: textStyles.bodyMedium.copyWith(
                                   color: c.textMuted,
                                 ),
@@ -188,7 +191,7 @@ class _CustomerDirectoryScreenState extends State<CustomerDirectoryScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 20.0),
                           children: [
                             _buildFilterChip(
-                              'All customers',
+                              context.t('customers_filter_all'),
                               isActive: _selectedFilterIndex == 0,
                               onTap: () =>
                                   setState(() => _selectedFilterIndex = 0),
@@ -196,7 +199,7 @@ class _CustomerDirectoryScreenState extends State<CustomerDirectoryScreen> {
                               textStyles: textStyles,
                             ),
                             _buildFilterChip(
-                              'Recently added',
+                              context.t('customers_filter_recent'),
                               isActive: _selectedFilterIndex == 1,
                               onTap: () =>
                                   setState(() => _selectedFilterIndex = 1),
@@ -204,7 +207,7 @@ class _CustomerDirectoryScreenState extends State<CustomerDirectoryScreen> {
                               textStyles: textStyles,
                             ),
                             _buildFilterChip(
-                              'Returning',
+                              context.t('customers_filter_returning'),
                               isActive: _selectedFilterIndex == 2,
                               onTap: () =>
                                   setState(() => _selectedFilterIndex = 2),
@@ -225,7 +228,7 @@ class _CustomerDirectoryScreenState extends State<CustomerDirectoryScreen> {
                           padding: const EdgeInsets.all(40.0),
                           child: Center(
                             child: Text(
-                              'No customers found.',
+                              context.t('customers_empty'),
                               style: textStyles.bodyMedium.copyWith(
                                 color: c.textMuted,
                               ),
@@ -280,7 +283,7 @@ class _CustomerDirectoryScreenState extends State<CustomerDirectoryScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Add a customer',
+                      context.t('customers_add_button'),
                       style: textStyles.labelMedium.copyWith(
                         color: c.textLight,
                         fontSize: 16,
@@ -356,19 +359,21 @@ class _CustomerDirectoryScreenState extends State<CustomerDirectoryScreen> {
         ),
         child: Row(
           children: [
-            // Avatar
+            // Avatar — ✅ theme-aware now
             Container(
               width: 48,
               height: 48,
               alignment: Alignment.center,
-              decoration: const BoxDecoration(
-                color: Color(0xFFE8F0FE), // Light blue
+              decoration: BoxDecoration(
+                color: c.isDark
+                    ? Colors.white.withValues(alpha: 0.10)
+                    : const Color(0xFFE8F0FE),
                 shape: BoxShape.circle,
               ),
               child: Text(
                 initials,
                 style: textStyles.labelMedium.copyWith(
-                  color: const Color(0xFF1967D2), // Dark blue text
+                  color: c.primaryCoral,
                   fontWeight: FontWeight.w700,
                   fontSize: 16,
                 ),
@@ -398,7 +403,10 @@ class _CustomerDirectoryScreenState extends State<CustomerDirectoryScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${customer.totalVisit} visits · Lifetime \$${customer.lifeTimeSpend.toStringAsFixed(2)}',
+                    context.tp('customers_visits_lifetime', {
+                      'visits': '${customer.totalVisit}',
+                      'amount': customer.lifeTimeSpend.toStringAsFixed(2),
+                    }),
                     style: textStyles.bodySmall.copyWith(
                       color: c.textMuted,
                       fontSize: 12,

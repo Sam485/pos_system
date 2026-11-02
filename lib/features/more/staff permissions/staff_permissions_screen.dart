@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:pos_system/core/routes/route_names.dart';
 import 'package:pos_system/shared/helper/safe_pop.dart';
 import 'package:provider/provider.dart';
@@ -46,7 +47,7 @@ class _StaffPermissionsScreenState extends State<StaffPermissionsScreen> {
           : StaffModel(
               id: '',
               storeId: '',
-              name: 'Unknown',
+              name: context.t('staff_unknown_name'),
               email: '',
               role: RoleEnum.associate,
               isActive: false,
@@ -80,12 +81,15 @@ class _StaffPermissionsScreenState extends State<StaffPermissionsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Staff & permissions',
+                          context.t('staff_title'),
                           style: textStyles.heading2.copyWith(fontSize: 24),
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${staffProvider.staffList.length} active staff · SoHo store',
+                          context.tp('staff_subtitle', {
+                            'count': '${staffProvider.staffList.length}',
+                            'store': context.t('staff_store_default'),
+                          }),
                           style: textStyles.bodySmall.copyWith(
                             color: c.textMuted,
                           ),
@@ -108,7 +112,7 @@ class _StaffPermissionsScreenState extends State<StaffPermissionsScreen> {
 
                       // ── Your Team Section ──
                       Text(
-                        'YOUR TEAM',
+                        context.t('staff_team_header'),
                         style: textStyles.labelSmall.copyWith(
                           color: c.textSecondary,
                           letterSpacing: 1.0,
@@ -133,7 +137,7 @@ class _StaffPermissionsScreenState extends State<StaffPermissionsScreen> {
                           padding: const EdgeInsets.all(20.0),
                           child: Center(
                             child: Text(
-                              'No staff members found.',
+                              context.t('staff_empty'),
                               style: textStyles.bodyMedium.copyWith(
                                 color: c.textMuted,
                               ),
@@ -148,7 +152,6 @@ class _StaffPermissionsScreenState extends State<StaffPermissionsScreen> {
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            // ✅ FIXED: was 0xFFF4F8FF
                             color: c.surfaceTint,
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -156,7 +159,13 @@ class _StaffPermissionsScreenState extends State<StaffPermissionsScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '${currentUser.role.name == 'manager' ? 'Store manager' : 'Sales associate'} permissions',
+                                currentUser.role.name == 'manager'
+                                    ? context.t(
+                                        'staff_permissions_title_manager',
+                                      )
+                                    : context.t(
+                                        'staff_permissions_title_associate',
+                                      ),
                                 style: textStyles.heading2.copyWith(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w500,
@@ -164,7 +173,9 @@ class _StaffPermissionsScreenState extends State<StaffPermissionsScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                '${currentUser.name} · Current role',
+                                context.tp('staff_permissions_subtitle', {
+                                  'name': currentUser.name,
+                                }),
                                 style: textStyles.bodySmall.copyWith(
                                   color: c.textSecondary,
                                   fontSize: 13,
@@ -172,26 +183,26 @@ class _StaffPermissionsScreenState extends State<StaffPermissionsScreen> {
                               ),
                               const SizedBox(height: 20),
 
-                              // Show all permissions if manager, otherwise only sell permissions
+                              // Show all permissions if manager, otherwise only sell
                               _buildPermissionItem(
-                                'Sell, refund & apply discounts',
+                                context.t('staff_permission_sell'),
                                 c,
                                 textStyles,
                               ),
 
                               if (currentUser.role.name == 'manager') ...[
                                 _buildPermissionItem(
-                                  'Open and close registers',
+                                  context.t('staff_permission_registers'),
                                   c,
                                   textStyles,
                                 ),
                                 _buildPermissionItem(
-                                  'Adjust inventory & manage customers',
+                                  context.t('staff_permission_inventory'),
                                   c,
                                   textStyles,
                                 ),
                                 _buildPermissionItem(
-                                  'Edit store settings & invite staff',
+                                  context.t('staff_permission_settings'),
                                   c,
                                   textStyles,
                                 ),
@@ -203,7 +214,7 @@ class _StaffPermissionsScreenState extends State<StaffPermissionsScreen> {
 
                       // ── Footer Note ──
                       Text(
-                        'Sales associates can sell and manage customers. Refunds, discounts above 20%, stock adjustments and register closing need manager approval.',
+                        context.t('staff_footer_note'),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textMuted,
                           fontSize: 12,
@@ -242,7 +253,7 @@ class _StaffPermissionsScreenState extends State<StaffPermissionsScreen> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Invite a staff member',
+                        context.t('staff_invite_button'),
                         style: textStyles.labelMedium.copyWith(
                           color: c.textLight,
                           fontSize: 16,
@@ -276,6 +287,14 @@ class _StaffPermissionsScreenState extends State<StaffPermissionsScreen> {
         .join()
         .toUpperCase();
 
+    final roleLabel = member.role.name == 'manager'
+        ? context.t('staff_role_manager')
+        : context.t('staff_role_associate');
+
+    final statusLabel = member.isActive
+        ? context.t('staff_status_active')
+        : context.t('staff_status_inactive');
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
       child: Row(
@@ -286,7 +305,6 @@ class _StaffPermissionsScreenState extends State<StaffPermissionsScreen> {
             height: 40,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              // ✅ FIXED: avatar bg — was 0xFFE8F0FE
               color: c.isDark
                   ? Colors.white.withValues(alpha: 0.10)
                   : const Color(0xFFE8F0FE),
@@ -295,7 +313,6 @@ class _StaffPermissionsScreenState extends State<StaffPermissionsScreen> {
             child: Text(
               initials,
               style: textStyles.labelSmall.copyWith(
-                // ✅ FIXED: avatar text — was 0xFF1967D2
                 color: c.primaryCoral,
                 fontWeight: FontWeight.w700,
                 fontSize: 14,
@@ -320,7 +337,7 @@ class _StaffPermissionsScreenState extends State<StaffPermissionsScreen> {
                     ),
                     if (isCurrentUser) ...[
                       Text(
-                        ' · You',
+                        context.t('staff_current_user_suffix'),
                         style: textStyles.labelMedium.copyWith(
                           color: c.textMuted,
                           fontSize: 15,
@@ -331,7 +348,10 @@ class _StaffPermissionsScreenState extends State<StaffPermissionsScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${member.role.name == 'manager' ? 'Store manager' : 'Sales associate'} · ${member.isActive ? 'Active' : 'Inactive'}',
+                  context.tp('staff_role_status', {
+                    'role': roleLabel,
+                    'status': statusLabel,
+                  }),
                   style: textStyles.bodySmall.copyWith(
                     color: c.textMuted,
                     fontSize: 13,
@@ -359,7 +379,7 @@ class _StaffPermissionsScreenState extends State<StaffPermissionsScreen> {
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
               child: Text(
-                'Manage',
+                context.t('staff_manage'),
                 style: textStyles.labelSmall.copyWith(
                   color: c.primaryCoral,
                   fontWeight: FontWeight.w600,

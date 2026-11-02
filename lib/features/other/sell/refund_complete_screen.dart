@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
 import 'package:pos_system/core/theme/app_text_style_x.dart';
 import 'package:pos_system/data/models/order_model.dart';
@@ -17,7 +18,7 @@ class _RefundCompleteScreenState extends State<RefundCompleteScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // 👇 FIX: Read the order passed in
+    // Read the order passed in
     if (_order == null) {
       final extra = GoRouterState.of(context).extra;
       if (extra is OrderModel) {
@@ -33,7 +34,9 @@ class _RefundCompleteScreenState extends State<RefundCompleteScreen> {
 
     // Fallback if no order was passed
     if (_order == null) {
-      return const Scaffold(body: Center(child: Text('No order data.')));
+      return Scaffold(
+        body: Center(child: Text(context.t('refund_complete_no_order'))),
+      );
     }
 
     final order = _order!;
@@ -56,12 +59,11 @@ class _RefundCompleteScreenState extends State<RefundCompleteScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Refund complete',
+                    context.t('refund_complete_title'),
                     style: textStyles.heading2.copyWith(fontSize: 24),
                   ),
                   IconButton(
-                    onPressed: () =>
-                        context.goNamed('sales'), // Route to sale screen
+                    onPressed: () => context.goNamed('sales'),
                     icon: Icon(
                       Icons.close_rounded,
                       color: c.primaryCoral,
@@ -83,7 +85,6 @@ class _RefundCompleteScreenState extends State<RefundCompleteScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const SizedBox(height: 16),
-                    // ✅ FIXED: success icon bg — surfaceTint (was 0xFFF4F8FF)
                     Container(
                       width: 80,
                       height: 80,
@@ -100,14 +101,13 @@ class _RefundCompleteScreenState extends State<RefundCompleteScreen> {
                     const SizedBox(height: 20),
 
                     Text(
-                      'Cash refunded',
+                      context.t('refund_complete_cash_refunded'),
                       style: textStyles.bodyMedium.copyWith(
                         color: c.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 8),
 
-                    // 👇 DYNAMIC: Real refunded amount
                     Text(
                       '\$${refundedAmount.toStringAsFixed(2)}',
                       style: textStyles.heading1.copyWith(
@@ -118,7 +118,6 @@ class _RefundCompleteScreenState extends State<RefundCompleteScreen> {
                     ),
                     const SizedBox(height: 12),
 
-                    // ✅ FIXED: "Partially refunded" badge — warningBg / warningFg
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
@@ -129,7 +128,7 @@ class _RefundCompleteScreenState extends State<RefundCompleteScreen> {
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
-                        'Partially refunded',
+                        context.t('refund_complete_partially_refunded'),
                         style: textStyles.labelSmall.copyWith(
                           color: c.warningFg,
                           fontWeight: FontWeight.w600,
@@ -139,7 +138,6 @@ class _RefundCompleteScreenState extends State<RefundCompleteScreen> {
                     ),
                     const SizedBox(height: 32),
 
-                    // ✅ FIXED: detail card bg — surfaceLight (was 0xFFF8F9FA)
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
@@ -150,29 +148,34 @@ class _RefundCompleteScreenState extends State<RefundCompleteScreen> {
                       child: Column(
                         children: [
                           _buildDetailRow(
-                            'Original order',
+                            context.t('refund_complete_original_order'),
                             order.orderNumber,
                             c,
                             textStyles,
                           ),
                           const SizedBox(height: 12),
                           _buildDetailRow(
-                            'Refund reference',
+                            context.t('refund_complete_reference'),
                             '#RF-${order.id.substring(order.id.length - 4)}',
                             c,
                             textStyles,
                           ),
                           const SizedBox(height: 12),
                           _buildDetailRow(
-                            'Refund method',
-                            'Cash',
+                            context.t('refund_complete_method'),
+                            context.t('refund_complete_method_cash'),
                             c,
                             textStyles,
                           ),
                           const SizedBox(height: 12),
                           _buildDetailRow(
-                            'Date & time',
-                            '${order.createdAt.month}/${order.createdAt.day} · ${order.createdAt.hour}:${order.createdAt.minute.toString().padLeft(2, '0')}',
+                            context.t('refund_complete_datetime'),
+                            context.tp('refund_complete_datetime_value', {
+                              'date':
+                                  '${order.createdAt.month}/${order.createdAt.day}',
+                              'time':
+                                  '${order.createdAt.hour}:${order.createdAt.minute.toString().padLeft(2, '0')}',
+                            }),
                             c,
                             textStyles,
                           ),
@@ -183,15 +186,14 @@ class _RefundCompleteScreenState extends State<RefundCompleteScreen> {
                           ),
                           const SizedBox(height: 16),
                           _buildDetailRow(
-                            'Original total',
+                            context.t('refund_complete_original_total'),
                             '\$${order.totalAmount.toStringAsFixed(2)}',
                             c,
                             textStyles,
                           ),
                           const SizedBox(height: 12),
-                          // 👇 DYNAMIC: Real refunded amount
                           _buildDetailRow(
-                            'Amount refunded',
+                            context.t('refund_complete_amount_refunded'),
                             '-\$${refundedAmount.toStringAsFixed(2)}',
                             c,
                             textStyles,
@@ -206,13 +208,12 @@ class _RefundCompleteScreenState extends State<RefundCompleteScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Net sale',
+                                context.t('refund_complete_net_sale'),
                                 style: textStyles.labelMedium.copyWith(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 16,
                                 ),
                               ),
-                              // 👇 DYNAMIC: Net sale
                               Text(
                                 '\$${netSale.toStringAsFixed(2)}',
                                 style: textStyles.heading2.copyWith(
@@ -254,7 +255,7 @@ class _RefundCompleteScreenState extends State<RefundCompleteScreen> {
                         Icon(Icons.send_rounded, size: 20, color: c.textLight),
                         const SizedBox(width: 8),
                         Text(
-                          'Send updated receipt',
+                          context.t('refund_complete_send_receipt'),
                           style: textStyles.labelMedium.copyWith(
                             color: c.textLight,
                             fontSize: 16,
@@ -268,7 +269,6 @@ class _RefundCompleteScreenState extends State<RefundCompleteScreen> {
                   TextButton(
                     onPressed: () => context.goNamed('sales'),
                     style: TextButton.styleFrom(
-                      // ✅ FIXED: was 0xFFF4F8FF
                       backgroundColor: c.surfaceTint,
                       foregroundColor: c.primaryCoral,
                       minimumSize: const Size(double.infinity, 54),
@@ -277,7 +277,7 @@ class _RefundCompleteScreenState extends State<RefundCompleteScreen> {
                       ),
                     ),
                     child: Text(
-                      'Back to sales',
+                      context.t('refund_complete_back_sales'),
                       style: textStyles.labelMedium.copyWith(
                         color: c.primaryCoral,
                         fontSize: 16,

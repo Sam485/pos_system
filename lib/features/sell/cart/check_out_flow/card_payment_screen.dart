@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:provider/provider.dart';
 import 'package:pos_system/core/routes/route_names.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
@@ -95,7 +96,9 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(orderProvider.error ?? 'Payment failed'),
+          content: Text(
+            orderProvider.error ?? context.t('card_payment_failed'),
+          ),
           backgroundColor: context.colors.dangerFg,
         ),
       );
@@ -137,14 +140,16 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Card payment',
+                        context.t('card_payment_title'),
                         style: textStyles.heading2.copyWith(fontSize: 24),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         _customerName != null
-                            ? 'For $_customerName · Alternative payment'
-                            : 'Alternative payment',
+                            ? context.tp('card_payment_subtitle_customer', {
+                                'name': _customerName!,
+                              })
+                            : context.t('card_payment_subtitle_generic'),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textMuted,
                         ),
@@ -187,7 +192,7 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'Reader connected',
+                            context.t('card_payment_reader_connected'),
                             style: textStyles.labelSmall.copyWith(
                               color: c.successFg,
                               fontWeight: FontWeight.w600,
@@ -201,7 +206,7 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
 
                     // Total Due
                     Text(
-                      'Total due',
+                      context.t('card_payment_total_due'),
                       style: textStyles.bodyMedium.copyWith(
                         color: c.textSecondary,
                       ),
@@ -280,7 +285,7 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      'Tap to pay',
+                                      context.t('card_payment_tap_to_pay'),
                                       style: textStyles.labelSmall.copyWith(
                                         color: c.primaryCoral,
                                         fontWeight: FontWeight.w600,
@@ -311,7 +316,9 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
 
                     // Status Text
                     Text(
-                      _isProcessing ? 'Processing...' : 'Ready when they are.',
+                      _isProcessing
+                          ? context.t('card_payment_processing')
+                          : context.t('card_payment_ready'),
                       style: textStyles.heading2.copyWith(
                         fontSize: 22,
                         fontWeight: FontWeight.w500,
@@ -320,8 +327,10 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
                     const SizedBox(height: 8),
                     Text(
                       _customerName != null
-                          ? 'Ask $_customerName to tap, insert or swipe their card on the reader.'
-                          : 'Ask the customer to tap, insert or swipe their card on the reader.',
+                          ? context.tp('card_payment_instruction_named', {
+                              'name': _customerName!,
+                            })
+                          : context.t('card_payment_instruction_generic'),
                       textAlign: TextAlign.center,
                       style: textStyles.bodyMedium.copyWith(
                         color: c.textSecondary,
@@ -345,8 +354,8 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
                         const SizedBox(width: 8),
                         Text(
                           _isProcessing
-                              ? 'Processing payment...'
-                              : 'Waiting for card...',
+                              ? context.t('card_payment_processing_payment')
+                              : context.t('card_payment_waiting_card'),
                           style: textStyles.labelMedium.copyWith(
                             color: c.primaryCoral,
                             fontWeight: FontWeight.w600,
@@ -364,13 +373,13 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Reader',
+                          context.t('card_payment_reader_label'),
                           style: textStyles.bodyMedium.copyWith(
                             color: c.textSecondary,
                           ),
                         ),
                         Text(
-                          'Fold Reader · 01',
+                          context.t('card_payment_reader_name'),
                           style: textStyles.labelMedium.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
@@ -397,7 +406,7 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'Accepts Visa, Mastercard, Amex, Apple Pay and Google Pay.',
+                              context.t('card_payment_accepted_cards'),
                               style: textStyles.bodySmall.copyWith(
                                 color: c.textSecondary,
                                 height: 1.4,
@@ -433,7 +442,9 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
                         elevation: 0,
                       ),
                       child: Text(
-                        'Simulate Card Tap · \$${_amount.toStringAsFixed(2)}',
+                        context.tp('card_payment_simulate_button', {
+                          'amount': _amount.toStringAsFixed(2),
+                        }),
                         style: textStyles.labelMedium.copyWith(
                           color: c.textLight,
                           fontSize: 16,
@@ -450,7 +461,7 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        'Processing...',
+                        context.t('card_payment_processing'),
                         style: textStyles.labelMedium.copyWith(
                           color: c.textLight,
                           fontSize: 16,
@@ -470,7 +481,7 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
                       ),
                     ),
                     child: Text(
-                      'Cancel & choose another method',
+                      context.t('card_payment_cancel_button'),
                       style: textStyles.labelMedium.copyWith(
                         color: c.primaryCoral,
                         fontSize: 16,
@@ -480,7 +491,7 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Do not close this screen while the payment is processing.',
+                    context.t('card_payment_footer'),
                     textAlign: TextAlign.center,
                     style: textStyles.bodySmall.copyWith(
                       color: c.textMuted,

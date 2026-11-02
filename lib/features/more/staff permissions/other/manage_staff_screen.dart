@@ -2,7 +2,9 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:pos_system/shared/helper/safe_pop.dart';
+import 'package:pos_system/providers/language_provider.dart'; // 👈 ADD
 import 'package:provider/provider.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
 import 'package:pos_system/core/theme/app_text_style_x.dart';
@@ -71,8 +73,7 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Staff member updated successfully'),
-          // ✅ FIXED: was const Color(0xFF137333)
+          content: Text(context.t('manage_staff_update_success')),
           backgroundColor: c.successFg,
         ),
       );
@@ -80,60 +81,63 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(staffProvider.error ?? 'Failed to update staff member'),
-          // ✅ FIXED: was Colors.red
+          content: Text(
+            staffProvider.error ?? context.t('manage_staff_update_failed'),
+          ),
           backgroundColor: c.dangerFg,
         ),
       );
     }
   }
 
-  // 👇 NEW: Handle delete with confirmation
+  // Handle delete with confirmation
   Future<void> _deleteStaff() async {
     if (_staff == null) return;
 
-    final c = context.colors;
-
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        // ✅ FIXED: dialog surfaces use palette
-        backgroundColor: c.cardBackground,
-        title: Text(
-          'Remove staff member?',
-          style: TextStyle(color: c.textPrimary),
-        ),
-        content: Text(
-          'Are you sure you want to remove ${_staff!.name}? This action cannot be undone.',
-          style: TextStyle(color: c.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: TextStyle(color: c.textSecondary)),
+      builder: (dialogContext) {
+        final dc = dialogContext.colors;
+        return AlertDialog(
+          backgroundColor: dc.cardBackground,
+          title: Text(
+            dialogContext.t('manage_staff_dialog_title'),
+            style: TextStyle(color: dc.textPrimary),
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(
-              // ✅ FIXED: was const Color(0xFFDC2626)
-              foregroundColor: c.dangerFg,
+          content: Text(
+            dialogContext.tp('manage_staff_dialog_body', {
+              'name': _staff!.name,
+            }),
+            style: TextStyle(color: dc.textSecondary),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(
+                dialogContext.t('manage_staff_dialog_cancel'),
+                style: TextStyle(color: dc.textSecondary),
+              ),
             ),
-            child: const Text('Remove'),
-          ),
-        ],
-      ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              style: TextButton.styleFrom(foregroundColor: dc.dangerFg),
+              child: Text(dialogContext.t('manage_staff_dialog_remove')),
+            ),
+          ],
+        );
+      },
     );
 
     if (confirmed != true || !mounted) return;
 
+    final c = context.colors;
     final staffProvider = context.read<StaffProvider>();
     final success = await staffProvider.deleteStaff(_staff!.id);
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Staff member removed'),
-          // ✅ FIXED: was const Color(0xFF137333)
+          content: Text(context.t('manage_staff_remove_success')),
           backgroundColor: c.successFg,
         ),
       );
@@ -141,8 +145,9 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(staffProvider.error ?? 'Failed to remove staff member'),
-          // ✅ FIXED: was Colors.red
+          content: Text(
+            staffProvider.error ?? context.t('manage_staff_remove_failed'),
+          ),
           backgroundColor: c.dangerFg,
         ),
       );
@@ -151,6 +156,9 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // 👇 Rebuild when language changes
+    context.watch<LanguageProvider>();
+
     final c = context.colors;
     final textStyles = AppTextStylesX(context);
     final staffProvider = context.watch<StaffProvider>();
@@ -158,7 +166,7 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
     if (_staff == null) {
       return Scaffold(
         backgroundColor: c.background,
-        body: const Center(child: Text('Staff member not found.')),
+        body: Center(child: Text(context.t('manage_staff_not_found'))),
       );
     }
 
@@ -191,7 +199,7 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    'Manage staff',
+                    context.t('manage_staff_title'),
                     style: textStyles.heading2.copyWith(fontSize: 24),
                   ),
                 ],
@@ -217,7 +225,6 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
                             height: 80,
                             alignment: Alignment.center,
                             decoration: BoxDecoration(
-                              // ✅ FIXED: avatar bg — was 0xFFE8F0FE
                               color: c.isDark
                                   ? Colors.white.withValues(alpha: 0.10)
                                   : const Color(0xFFE8F0FE),
@@ -226,7 +233,6 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
                             child: Text(
                               initials,
                               style: textStyles.heading2.copyWith(
-                                // ✅ FIXED: avatar text — was 0xFF1967D2
                                 color: c.primaryCoral,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 28,
@@ -252,7 +258,7 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
 
                     // ── Name Input ──
                     Text(
-                      'Full name',
+                      context.t('manage_staff_name_label'),
                       style: textStyles.labelSmall.copyWith(
                         fontWeight: FontWeight.w600,
                         color: c.textPrimary,
@@ -268,7 +274,7 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
 
                     // ── Email Input ──
                     Text(
-                      'Email address',
+                      context.t('manage_staff_email_label'),
                       style: textStyles.labelSmall.copyWith(
                         fontWeight: FontWeight.w600,
                         color: c.textPrimary,
@@ -288,7 +294,7 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
 
                     // ── Role Selection ──
                     Text(
-                      'Role',
+                      context.t('manage_staff_role_label'),
                       style: textStyles.labelSmall.copyWith(
                         fontWeight: FontWeight.w600,
                         color: c.textPrimary,
@@ -297,16 +303,16 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
                     const SizedBox(height: 12),
                     _buildRoleOption(
                       role: RoleEnum.associate,
-                      title: 'Sales associate',
-                      description: 'Can sell and manage customers',
+                      title: context.t('manage_staff_role_associate'),
+                      description: context.t('manage_staff_role_associate_sub'),
                       c: c,
                       textStyles: textStyles,
                     ),
                     const SizedBox(height: 12),
                     _buildRoleOption(
                       role: RoleEnum.manager,
-                      title: 'Store manager',
-                      description: 'Full access to all features',
+                      title: context.t('manage_staff_role_manager'),
+                      description: context.t('manage_staff_role_manager_sub'),
                       c: c,
                       textStyles: textStyles,
                     ),
@@ -320,7 +326,7 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Active staff member',
+                              context.t('manage_staff_active_title'),
                               style: textStyles.labelMedium.copyWith(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 15,
@@ -329,8 +335,8 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
                             const SizedBox(height: 4),
                             Text(
                               _isActive
-                                  ? 'Can log in and sell'
-                                  : 'Cannot log in',
+                                  ? context.t('manage_staff_active_on')
+                                  : context.t('manage_staff_active_off'),
                               style: textStyles.bodySmall.copyWith(
                                 color: c.textMuted,
                                 fontSize: 13,
@@ -338,11 +344,6 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
                             ),
                           ],
                         ),
-                        // ✅ FIXED: Switch — old `activeThumbColor` /
-                        // `inactiveThumbColor` params don't exist on
-                        // modern Flutter. Use `thumbColor` + `trackColor`
-                        // MaterialStateProperty, and theme-aware surface
-                        // for the inactive track.
                         Switch(
                           value: _isActive,
                           onChanged: (val) => setState(() => _isActive = val),
@@ -362,9 +363,8 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
 
                     // ── Danger Zone ──
                     Text(
-                      'DANGER ZONE',
+                      context.t('manage_staff_danger_header'),
                       style: textStyles.labelSmall.copyWith(
-                        // ✅ FIXED: was const Color(0xFFDC2626)
                         color: c.dangerFg,
                         letterSpacing: 1.0,
                         fontWeight: FontWeight.w600,
@@ -374,9 +374,7 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
                     TextButton(
                       onPressed: staffProvider.isLoading ? null : _deleteStaff,
                       style: TextButton.styleFrom(
-                        // ✅ FIXED: was 0xFFFEF2F2
                         backgroundColor: c.dangerBg,
-                        // ✅ FIXED: was 0xFFDC2626
                         foregroundColor: c.dangerFg,
                         minimumSize: const Size(double.infinity, 54),
                         shape: RoundedRectangleBorder(
@@ -384,9 +382,8 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
                         ),
                       ),
                       child: Text(
-                        'Remove staff member',
+                        context.t('manage_staff_remove_button'),
                         style: textStyles.labelMedium.copyWith(
-                          // ✅ FIXED: was 0xFFDC2626
                           color: c.dangerFg,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -431,7 +428,7 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
                           Icon(Icons.check, size: 20, color: c.textLight),
                           const SizedBox(width: 8),
                           Text(
-                            'Save changes',
+                            context.t('manage_staff_save_button'),
                             style: textStyles.labelMedium.copyWith(
                               color: c.textLight,
                               fontSize: 16,
@@ -462,7 +459,6 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          // ✅ FIXED: was 0xFFF4F8FF
           color: isSelected ? c.surfaceTint : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(

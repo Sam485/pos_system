@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:pos_system/shared/helper/safe_pop.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
@@ -68,10 +69,15 @@ class _StoreRegisterSelectionScreenState
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Choose your workspace', style: textStyles.heading2),
+                      Text(
+                        context.t('register_choose_workspace'),
+                        style: textStyles.heading2,
+                      ),
                       const SizedBox(height: 2),
                       Text(
-                        'Signed in as Alex Morgan',
+                        context.tp('register_signed_in_as', {
+                          'name': 'Alex Morgan',
+                        }),
                         style: textStyles.bodySmall,
                       ),
                     ],
@@ -89,7 +95,7 @@ class _StoreRegisterSelectionScreenState
                   children: [
                     const SizedBox(height: 16),
                     Text(
-                      "Let's get your store ready.",
+                      context.t('register_get_store_ready'),
                       style: textStyles.heading1.copyWith(
                         fontSize: 28,
                         letterSpacing: -0.5,
@@ -99,7 +105,7 @@ class _StoreRegisterSelectionScreenState
 
                     // ── YOUR STORE Section ──
                     Text(
-                      'YOUR STORE',
+                      context.t('register_your_store'),
                       style: textStyles.labelSmall.copyWith(
                         letterSpacing: 1.2,
                         fontWeight: FontWeight.w600,
@@ -112,7 +118,7 @@ class _StoreRegisterSelectionScreenState
 
                     // ── SELECT A REGISTER Section ──
                     Text(
-                      'SELECT A REGISTER',
+                      context.t('register_select_register'),
                       style: textStyles.labelSmall.copyWith(
                         letterSpacing: 1.2,
                         fontWeight: FontWeight.w600,
@@ -157,7 +163,7 @@ class _StoreRegisterSelectionScreenState
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: c.surfaceTint, // 👈 theme-aware
+                        color: c.surfaceTint,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -171,9 +177,9 @@ class _StoreRegisterSelectionScreenState
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'The selected register needs an opening float before you can start selling.',
+                              context.t('register_needs_float'),
                               style: textStyles.bodyMedium.copyWith(
-                                color: c.primaryCoral,
+                                color: c.textSecondary,
                                 height: 1.4,
                               ),
                             ),
@@ -220,8 +226,12 @@ class _StoreRegisterSelectionScreenState
                     ),
                     child: Text(
                       _selectedRegisterId == null
-                          ? 'Select a register'
-                          : 'Continue with ${_getRegisterName(registerProvider.registers)}',
+                          ? context.t('register_select_a_register')
+                          : context.tp('register_continue_with', {
+                              'name': _getRegisterName(
+                                registerProvider.registers,
+                              ),
+                            }),
                       style: textStyles.labelMedium.copyWith(
                         color: c.textLight,
                         fontSize: 16,
@@ -231,7 +241,9 @@ class _StoreRegisterSelectionScreenState
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Store manager • alex@foldstore.com',
+                    context.tp('register_manager_line', {
+                      'email': 'alex@foldstore.com',
+                    }),
                     style: textStyles.bodySmall.copyWith(color: c.textMuted),
                   ),
                 ],
@@ -244,7 +256,9 @@ class _StoreRegisterSelectionScreenState
   }
 
   String _getRegisterName(List<RegisterModel> registers) {
-    if (_selectedRegisterId == null) return 'Register';
+    if (_selectedRegisterId == null) {
+      return context.t('register_name_generic');
+    }
     final reg = registers.firstWhere(
       (r) => r.id == _selectedRegisterId,
       orElse: () => registers.first,
@@ -257,7 +271,7 @@ class _StoreRegisterSelectionScreenState
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: c.surfaceTint, // 👈 theme-aware
+        color: c.surfaceTint,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.transparent),
       ),
@@ -266,7 +280,7 @@ class _StoreRegisterSelectionScreenState
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: c.surfaceLight, // 👈 theme-aware (was Colors.white)
+              color: c.surfaceLight,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -288,7 +302,10 @@ class _StoreRegisterSelectionScreenState
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text('120 Spring St, New York', style: textStyles.bodySmall),
+                Text(
+                  context.t('register_store_address'),
+                  style: textStyles.bodySmall,
+                ),
               ],
             ),
           ),
@@ -309,11 +326,11 @@ class _StoreRegisterSelectionScreenState
 
     String subtitle;
     if (isInUse) {
-      subtitle = 'In use by another staff member';
+      subtitle = context.t('register_in_use');
     } else if (register.status == RegisterStatusEnum.ready) {
-      subtitle = 'Ready to open';
+      subtitle = context.t('register_ready_to_open');
     } else {
-      subtitle = 'Offline';
+      subtitle = context.t('register_offline');
     }
 
     return InkWell(
@@ -332,7 +349,6 @@ class _StoreRegisterSelectionScreenState
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                // 👇 theme-aware — same tile in both modes now
                 color: c.surfaceTint,
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -370,7 +386,7 @@ class _StoreRegisterSelectionScreenState
             // Right side status
             if (isInUse)
               Text(
-                'In use',
+                context.t('register_in_use_short'),
                 style: textStyles.labelSmall.copyWith(
                   color: c.primaryCoral,
                   fontWeight: FontWeight.w600,
@@ -400,12 +416,12 @@ class _StoreRegisterSelectionScreenState
             Icon(Icons.devices_other_rounded, size: 48, color: c.textMuted),
             const SizedBox(height: 16),
             Text(
-              'No registers found',
+              context.t('register_no_registers'),
               style: textStyles.heading2.copyWith(fontSize: 18),
             ),
             const SizedBox(height: 8),
             Text(
-              'Please contact your store manager.',
+              context.t('register_no_registers_hint'),
               style: textStyles.bodySmall.copyWith(color: c.textMuted),
             ),
           ],

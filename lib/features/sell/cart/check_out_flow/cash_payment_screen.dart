@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:provider/provider.dart';
 import 'package:pos_system/core/routes/route_names.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
@@ -122,8 +123,10 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(orderProvider.error ?? 'Payment failed'),
-          backgroundColor: Colors.red,
+          content: Text(
+            orderProvider.error ?? context.t('cash_payment_failed'),
+          ),
+          backgroundColor: context.colors.dangerFg,
         ),
       );
       setState(() => _isProcessing = false);
@@ -135,7 +138,6 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
     final c = context.colors;
     final textStyles = AppTextStylesX(context);
 
-    // 👇 compute once so we can reference in both the panel and pill
     final isSufficient = _changeToGive >= 0;
     final changeColor = isSufficient ? c.successFg : c.warningFg;
     final changeBg = isSufficient ? c.successBg : c.warningBg;
@@ -164,14 +166,16 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Cash payment',
+                        context.t('cash_payment_title'),
                         style: textStyles.heading2.copyWith(fontSize: 24),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         _customerName != null
-                            ? 'For $_customerName'
-                            : 'Guest customer',
+                            ? context.tp('cash_payment_subtitle_customer', {
+                                'name': _customerName!,
+                              })
+                            : context.t('cash_payment_subtitle_guest'),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textMuted,
                         ),
@@ -190,7 +194,7 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
                   children: [
                     const SizedBox(height: 16),
                     Text(
-                      'Total due',
+                      context.t('cash_payment_total_due'),
                       style: textStyles.labelMedium.copyWith(
                         color: c.textMuted,
                         fontWeight: FontWeight.w500,
@@ -209,7 +213,7 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'Cash received',
+                        context.t('cash_payment_cash_received'),
                         style: textStyles.labelSmall.copyWith(
                           fontWeight: FontWeight.w600,
                           color: c.textPrimary,
@@ -223,7 +227,7 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
                         vertical: 16,
                       ),
                       decoration: BoxDecoration(
-                        color: c.surfaceTint, // 👈 theme-aware
+                        color: c.surfaceTint,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: c.primaryCoral, width: 1.5),
                       ),
@@ -255,7 +259,7 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         _buildQuickAmountPill(
-                          label: 'Exact',
+                          label: context.t('cash_payment_quick_exact'),
                           onTap: () => setState(
                             () => _inputAmount = _totalDue.toStringAsFixed(2),
                           ),
@@ -286,7 +290,7 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: changeBg, // 👈 theme-aware
+                        color: changeBg,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -297,23 +301,31 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
                             children: [
                               Text(
                                 isSufficient
-                                    ? 'Change to give'
-                                    : 'Insufficient cash',
+                                    ? context.t('cash_payment_change_title')
+                                    : context.t(
+                                        'cash_payment_insufficient_title',
+                                      ),
                                 style: textStyles.labelMedium.copyWith(
-                                  color: changeColor, // 👈
+                                  color: changeColor,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Text(
                                 _customerName != null && isSufficient
-                                    ? 'Hand the change to $_customerName before finishing.'
+                                    ? context.tp(
+                                        'cash_payment_hand_change_named',
+                                        {'name': _customerName!},
+                                      )
                                     : isSufficient
-                                    ? 'Hand the change to the customer before finishing.'
-                                    : 'Customer needs to pay more.',
+                                    ? context.t(
+                                        'cash_payment_hand_change_generic',
+                                      )
+                                    : context.t(
+                                        'cash_payment_insufficient_hint',
+                                      ),
                                 style: textStyles.bodySmall.copyWith(
                                   color: changeColor.withValues(alpha: 0.8),
-                                  // 👈
                                   fontSize: 10,
                                 ),
                               ),
@@ -324,7 +336,7 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
                             style: textStyles.heading2.copyWith(
                               color: isSufficient
                                   ? c.primaryCoral
-                                  : c.warningFg, // 👈
+                                  : c.warningFg,
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
                             ),
@@ -372,7 +384,9 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
                           Icon(Icons.check, size: 20, color: c.textLight),
                           const SizedBox(width: 8),
                           Text(
-                            'Complete sale · \$${_totalDue.toStringAsFixed(2)}',
+                            context.tp('cash_payment_complete_button', {
+                              'amount': _totalDue.toStringAsFixed(2),
+                            }),
                             style: textStyles.labelMedium.copyWith(
                               color: c.textLight,
                               fontSize: 16,
@@ -443,7 +457,7 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
                   child: Container(
                     height: 60,
                     decoration: BoxDecoration(
-                      color: c.surfaceLight, // 👈 theme-aware
+                      color: c.surfaceLight,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(

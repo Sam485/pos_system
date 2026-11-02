@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:pos_system/providers/setting_provider.dart';
 import 'package:pos_system/shared/helper/safe_pop.dart';
 import 'package:provider/provider.dart';
@@ -33,31 +34,32 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
   }
 
   Future<void> _saveSettings() async {
+    final c = context.colors;
     final settingsProvider = context.read<SettingsProvider>();
     final success = await settingsProvider.saveSettings();
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Settings saved successfully'),
-          backgroundColor: Color(0xFF137333),
+        SnackBar(
+          content: Text(context.t('taxes_save_success')),
+          backgroundColor: c.successFg,
         ),
       );
       context.safePop();
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(settingsProvider.error ?? 'Failed to save settings'),
-          backgroundColor: Colors.red,
+          content: Text(
+            settingsProvider.error ?? context.t('taxes_save_failed'),
+          ),
+          backgroundColor: c.dangerFg,
         ),
       );
     }
   }
 
-  // 👇 Edit tax rate dialog
+  // ── Edit tax rate dialog ──
   void _editTaxRate() {
-    final c = context.colors;
-    final textStyles = AppTextStylesX(context);
     final settingsProvider = context.read<SettingsProvider>();
     final currentRate = (settingsProvider.settings?.taxRate ?? 0.10) * 100;
     final controller = TextEditingController(
@@ -70,9 +72,9 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
         final dc = ctx.colors;
         final ds = AppTextStylesX(ctx);
         return AlertDialog(
-          backgroundColor: dc.cardBackground, // 👈 dark-friendly
+          backgroundColor: dc.cardBackground,
           title: Text(
-            'Sales tax rate',
+            ctx.t('taxes_edit_rate_title'),
             style: ds.heading2.copyWith(fontSize: 18),
           ),
           content: TextField(
@@ -83,7 +85,7 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
               suffixText: '%',
               suffixStyle: ds.bodyLarge,
               filled: true,
-              fillColor: dc.surfaceLight, // 👈 dark-friendly
+              fillColor: dc.surfaceLight,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -101,7 +103,10 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: Text('Cancel', style: TextStyle(color: dc.textSecondary)),
+              child: Text(
+                ctx.t('taxes_edit_rate_cancel'),
+                style: TextStyle(color: dc.textSecondary),
+              ),
             ),
             TextButton(
               onPressed: () {
@@ -110,7 +115,7 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
                 Navigator.pop(ctx);
               },
               child: Text(
-                'Save',
+                ctx.t('taxes_edit_rate_save'),
                 style: TextStyle(
                   color: dc.primaryCoral,
                   fontWeight: FontWeight.w600,
@@ -123,7 +128,7 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
     );
   }
 
-  // 👇 Create discount bottom sheet
+  // ── Create discount bottom sheet ──
   void _createDiscount() {
     final nameController = TextEditingController();
     final valueController = TextEditingController();
@@ -132,7 +137,7 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: context.colors.cardBackground, // 👈 dark-friendly
+      backgroundColor: context.colors.cardBackground,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -151,14 +156,17 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Create a discount',
+                  ctx.t('taxes_create_sheet_title'),
                   style: st.heading2.copyWith(fontSize: 20),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: nameController,
                   style: st.bodyLarge,
-                  decoration: _sheetInputDecoration(sc, label: 'Name'),
+                  decoration: _sheetInputDecoration(
+                    sc,
+                    label: ctx.t('taxes_create_name_label'),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -168,7 +176,10 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
                         controller: valueController,
                         keyboardType: TextInputType.number,
                         style: st.bodyLarge,
-                        decoration: _sheetInputDecoration(sc, label: 'Value'),
+                        decoration: _sheetInputDecoration(
+                          sc,
+                          label: ctx.t('taxes_create_value_label'),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -209,8 +220,12 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
                     provider.createDiscount({
                       'name': nameController.text,
                       'description': type == 'percentage'
-                          ? '${valueController.text}% off · Whole order'
-                          : '\$${valueController.text} off',
+                          ? ctx.tp('taxes_create_description_percentage', {
+                              'value': valueController.text,
+                            })
+                          : ctx.tp('taxes_create_description_fixed', {
+                              'value': valueController.text,
+                            }),
                       'type': type,
                       'value': double.tryParse(valueController.text) ?? 0,
                     });
@@ -226,7 +241,7 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
                     elevation: 0,
                   ),
                   child: Text(
-                    'Create',
+                    ctx.t('taxes_create_action'),
                     style: st.labelMedium.copyWith(
                       color: sc.textLight,
                       fontWeight: FontWeight.w600,
@@ -242,7 +257,7 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
     );
   }
 
-  // 👇 Delete discount dialog
+  // ── Delete discount dialog ──
   void _deleteDiscount(String id, String name) {
     showDialog(
       context: context,
@@ -252,17 +267,20 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
         return AlertDialog(
           backgroundColor: dc.cardBackground,
           title: Text(
-            'Delete discount?',
+            ctx.t('taxes_delete_dialog_title'),
             style: ds.heading2.copyWith(fontSize: 18),
           ),
           content: Text(
-            'Are you sure you want to delete "$name"?',
+            ctx.tp('taxes_delete_dialog_body', {'name': name}),
             style: ds.bodyMedium,
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: Text('Cancel', style: TextStyle(color: dc.textSecondary)),
+              child: Text(
+                ctx.t('taxes_delete_dialog_cancel'),
+                style: TextStyle(color: dc.textSecondary),
+              ),
             ),
             TextButton(
               onPressed: () {
@@ -270,7 +288,7 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
                 Navigator.pop(ctx);
               },
               style: TextButton.styleFrom(foregroundColor: dc.dangerFg),
-              child: const Text('Delete'),
+              child: Text(ctx.t('taxes_delete_dialog_delete')),
             ),
           ],
         );
@@ -314,12 +332,14 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Taxes & discounts',
+                          context.t('taxes_title'),
                           style: textStyles.heading2.copyWith(fontSize: 24),
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'SoHo store',
+                          context.tp('taxes_subtitle', {
+                            'store': context.t('taxes_store_default'),
+                          }),
                           style: textStyles.bodySmall.copyWith(
                             color: c.textMuted,
                           ),
@@ -344,7 +364,7 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: c.surfaceTint, // 👈 theme-aware
+                          color: c.surfaceTint,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Column(
@@ -353,7 +373,7 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  'Sales tax',
+                                  context.t('taxes_sales_tax'),
                                   style: textStyles.labelMedium.copyWith(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 16,
@@ -386,7 +406,7 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
                             Align(
                               alignment: Alignment.centerLeft,
                               child: Text(
-                                'Added at checkout after order discounts.',
+                                context.t('taxes_sales_tax_hint'),
                                 style: textStyles.bodySmall.copyWith(
                                   color: c.textSecondary,
                                   fontSize: 13,
@@ -406,7 +426,7 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Apply sales tax',
+                                      context.t('taxes_apply_tax_title'),
                                       style: textStyles.labelMedium.copyWith(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 14,
@@ -414,7 +434,7 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      'All taxable products',
+                                      context.t('taxes_apply_tax_sub'),
                                       style: textStyles.bodySmall.copyWith(
                                         color: c.textMuted,
                                         fontSize: 12,
@@ -422,6 +442,7 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
                                     ),
                                   ],
                                 ),
+                                // ✅ FIXED: was activeThumbColor / etc.
                                 Switch(
                                   value:
                                       settingsProvider
@@ -431,10 +452,17 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
                                   onChanged: (val) {
                                     settingsProvider.toggleSalesTax(val);
                                   },
-                                  activeThumbColor: c.textLight,
-                                  activeTrackColor: c.primaryCoral,
-                                  inactiveThumbColor: c.textLight,
-                                  inactiveTrackColor: c.surfaceLight,
+                                  thumbColor: WidgetStateProperty.resolveWith(
+                                    (states) => c.textLight,
+                                  ),
+                                  trackColor: WidgetStateProperty.resolveWith((
+                                    states,
+                                  ) {
+                                    if (states.contains(WidgetState.selected)) {
+                                      return c.primaryCoral;
+                                    }
+                                    return c.surfaceLight;
+                                  }),
                                 ),
                               ],
                             ),
@@ -445,7 +473,9 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
 
                       // ── Active Discounts Section ──
                       Text(
-                        '${settingsProvider.discounts.length} ACTIVE DISCOUNTS',
+                        context.tp('taxes_active_discounts', {
+                          'count': '${settingsProvider.discounts.length}',
+                        }),
                         style: textStyles.labelSmall.copyWith(
                           color: c.textSecondary,
                           letterSpacing: 1.0,
@@ -479,7 +509,7 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Require approval above 20%',
+                                context.t('taxes_require_approval_title'),
                                 style: textStyles.labelMedium.copyWith(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 15,
@@ -487,7 +517,7 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Store manager approval for custom discounts',
+                                context.t('taxes_require_approval_sub'),
                                 style: textStyles.bodySmall.copyWith(
                                   color: c.textMuted,
                                   fontSize: 13,
@@ -495,6 +525,7 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
                               ),
                             ],
                           ),
+                          // ✅ FIXED: was missing thumbColor + wrong params
                           Switch(
                             value:
                                 settingsProvider.settings?.requireApproval ??
@@ -502,9 +533,17 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
                             onChanged: (val) {
                               settingsProvider.toggleApproval(val);
                             },
-                            activeTrackColor: c.primaryCoral,
-                            inactiveThumbColor: c.textLight,
-                            inactiveTrackColor: c.surfaceLight,
+                            thumbColor: WidgetStateProperty.resolveWith(
+                              (states) => c.textLight,
+                            ),
+                            trackColor: WidgetStateProperty.resolveWith((
+                              states,
+                            ) {
+                              if (states.contains(WidgetState.selected)) {
+                                return c.primaryCoral;
+                              }
+                              return c.surfaceLight;
+                            }),
                           ),
                         ],
                       ),
@@ -514,7 +553,7 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
                       TextButton(
                         onPressed: _createDiscount,
                         style: TextButton.styleFrom(
-                          backgroundColor: c.surfaceTint, // 👈 theme-aware
+                          backgroundColor: c.surfaceTint,
                           foregroundColor: c.primaryCoral,
                           minimumSize: const Size(double.infinity, 54),
                           shape: RoundedRectangleBorder(
@@ -527,7 +566,7 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
                             Icon(Icons.add, size: 20, color: c.primaryCoral),
                             const SizedBox(width: 8),
                             Text(
-                              'Create a discount',
+                              context.t('taxes_create_button'),
                               style: textStyles.labelMedium.copyWith(
                                 color: c.primaryCoral,
                                 fontSize: 16,
@@ -541,7 +580,7 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
 
                       // ── Footer Note ──
                       Text(
-                        'One order discount per sale. Changes only apply to new checkouts; past receipts stay unchanged.',
+                        context.t('taxes_footer_note'),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textMuted,
                           fontSize: 12,
@@ -586,7 +625,7 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
                             Icon(Icons.check, size: 20, color: c.textLight),
                             const SizedBox(width: 8),
                             Text(
-                              'Save settings',
+                              context.t('taxes_save_button'),
                               style: textStyles.labelMedium.copyWith(
                                 color: c.textLight,
                                 fontSize: 16,
@@ -623,7 +662,7 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: c.surfaceTint, // 👈 theme-aware
+                  color: c.surfaceTint,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, color: c.primaryCoral, size: 20),

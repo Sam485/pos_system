@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:provider/provider.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
 import 'package:pos_system/core/theme/app_text_style_x.dart';
@@ -67,14 +68,14 @@ class _OrderNoteScreenState extends State<OrderNoteScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Order note',
+                        context.t('order_note_title'),
                         style: textStyles.heading2.copyWith(fontSize: 24),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         customer != null
                             ? '${customer.firstName} ${customer.lastName}'
-                            : 'Guest customer',
+                            : context.t('order_note_customer_guest'),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textMuted,
                         ),
@@ -97,7 +98,7 @@ class _OrderNoteScreenState extends State<OrderNoteScreen> {
 
                     // Heading
                     Text(
-                      'The details that matter.',
+                      context.t('order_note_heading'),
                       style: textStyles.heading1.copyWith(
                         fontSize: 26,
                         letterSpacing: -0.5,
@@ -107,7 +108,7 @@ class _OrderNoteScreenState extends State<OrderNoteScreen> {
 
                     // Description
                     Text(
-                      'Leave a helpful note for the team. Keep payment and other sensitive information out of notes.',
+                      context.t('order_note_description'),
                       style: textStyles.bodyMedium.copyWith(
                         color: c.textSecondary,
                         height: 1.4,
@@ -117,7 +118,7 @@ class _OrderNoteScreenState extends State<OrderNoteScreen> {
 
                     // ── Note Input ──
                     Text(
-                      'Note',
+                      context.t('order_note_label'),
                       style: textStyles.labelSmall.copyWith(
                         fontWeight: FontWeight.w600,
                         color: c.textPrimary,
@@ -164,7 +165,7 @@ class _OrderNoteScreenState extends State<OrderNoteScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Include note on receipt',
+                              context.t('order_note_include_title'),
                               style: textStyles.labelMedium.copyWith(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 15,
@@ -173,8 +174,8 @@ class _OrderNoteScreenState extends State<OrderNoteScreen> {
                             const SizedBox(height: 4),
                             Text(
                               _includeOnReceipt
-                                  ? 'On · Customer will see this note'
-                                  : 'Off · Only visible to store staff',
+                                  ? context.t('order_note_include_on')
+                                  : context.t('order_note_include_off'),
                               style: textStyles.bodySmall.copyWith(
                                 color: c.textMuted,
                                 fontSize: 13,
@@ -182,6 +183,7 @@ class _OrderNoteScreenState extends State<OrderNoteScreen> {
                             ),
                           ],
                         ),
+                        // ✅ FIXED: was activeColor + invalid params
                         Switch(
                           value: _includeOnReceipt,
                           onChanged: (val) {
@@ -189,10 +191,15 @@ class _OrderNoteScreenState extends State<OrderNoteScreen> {
                               _includeOnReceipt = val;
                             });
                           },
-                          activeColor: c.textLight,
-                          activeTrackColor: c.primaryCoral,
-                          inactiveThumbColor: c.textLight,
-                          inactiveTrackColor: c.surfaceLight,
+                          thumbColor: WidgetStateProperty.resolveWith(
+                            (states) => c.textLight,
+                          ),
+                          trackColor: WidgetStateProperty.resolveWith((states) {
+                            if (states.contains(WidgetState.selected)) {
+                              return c.primaryCoral;
+                            }
+                            return c.surfaceLight;
+                          }),
                         ),
                       ],
                     ),
@@ -202,7 +209,8 @@ class _OrderNoteScreenState extends State<OrderNoteScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF4F8FF), // Light blue
+                        // ✅ FIXED: was Color(0xFFF4F8FF)
+                        color: c.surfaceTint,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Column(
@@ -211,13 +219,13 @@ class _OrderNoteScreenState extends State<OrderNoteScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Added by',
+                                context.t('order_note_added_by'),
                                 style: textStyles.bodySmall.copyWith(
                                   color: c.textSecondary,
                                 ),
                               ),
                               Text(
-                                'Alex Morgan',
+                                context.t('order_note_added_by_name'),
                                 style: textStyles.labelSmall.copyWith(
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -229,15 +237,19 @@ class _OrderNoteScreenState extends State<OrderNoteScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Visibility',
+                                context.t('order_note_visibility'),
                                 style: textStyles.bodySmall.copyWith(
                                   color: c.textSecondary,
                                 ),
                               ),
                               Text(
                                 _includeOnReceipt
-                                    ? 'Customer receipt'
-                                    : 'Internal only',
+                                    ? context.t(
+                                        'order_note_visibility_customer',
+                                      )
+                                    : context.t(
+                                        'order_note_visibility_internal',
+                                      ),
                                 style: textStyles.labelSmall.copyWith(
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -260,7 +272,6 @@ class _OrderNoteScreenState extends State<OrderNoteScreen> {
                 children: [
                   ElevatedButton(
                     onPressed: () {
-                      // 👇 Save the note to the CartProvider
                       cartProvider.setOrderNote(
                         note: _noteController.text,
                         includeOnReceipt: _includeOnReceipt,
@@ -282,7 +293,7 @@ class _OrderNoteScreenState extends State<OrderNoteScreen> {
                         Icon(Icons.check, size: 20, color: c.textLight),
                         const SizedBox(width: 8),
                         Text(
-                          'Save order note',
+                          context.t('order_note_save_button'),
                           style: textStyles.labelMedium.copyWith(
                             color: c.textLight,
                             fontSize: 16,
@@ -296,7 +307,8 @@ class _OrderNoteScreenState extends State<OrderNoteScreen> {
                   TextButton(
                     onPressed: () => context.pop(),
                     style: TextButton.styleFrom(
-                      backgroundColor: const Color(0xFFF4F8FF), // Light blue
+                      // ✅ FIXED: was Color(0xFFF4F8FF)
+                      backgroundColor: c.surfaceTint,
                       foregroundColor: c.primaryCoral,
                       minimumSize: const Size(double.infinity, 54),
                       shape: RoundedRectangleBorder(
@@ -304,7 +316,7 @@ class _OrderNoteScreenState extends State<OrderNoteScreen> {
                       ),
                     ),
                     child: Text(
-                      'Cancel changes',
+                      context.t('order_note_cancel_button'),
                       style: textStyles.labelMedium.copyWith(
                         color: c.primaryCoral,
                         fontSize: 16,

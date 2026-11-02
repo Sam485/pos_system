@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:provider/provider.dart';
 import 'package:pos_system/core/routes/route_names.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
@@ -39,7 +40,7 @@ class _CartScreenState extends State<CartScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: c.cardBackground, // 👈 theme-aware sheet bg
+      backgroundColor: c.cardBackground,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -69,7 +70,7 @@ class _CartScreenState extends State<CartScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Apply discount',
+                        context.t('cart_apply_discount_title'),
                         style: textStyles.heading2.copyWith(fontSize: 20),
                       ),
                       IconButton(
@@ -86,8 +87,8 @@ class _CartScreenState extends State<CartScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
                     children: [
                       _buildDiscountOption(
-                        title: 'No discount',
-                        subtitle: 'Remove any applied discount',
+                        title: context.t('cart_no_discount_title'),
+                        subtitle: context.t('cart_no_discount_subtitle'),
                         isSelected: !cartProvider.hasDiscount,
                         onTap: () {
                           cartProvider.removeDiscount();
@@ -156,7 +157,6 @@ class _CartScreenState extends State<CartScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          // 👈 theme-aware selected/unselected
           color: isSelected
               ? c.primaryCoral.withValues(alpha: 0.10)
               : c.surfaceLight,
@@ -243,12 +243,14 @@ class _CartScreenState extends State<CartScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Cart',
+                        context.t('cart_title'),
                         style: textStyles.heading2.copyWith(fontSize: 24),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '$totalItems items · New sale',
+                        context.tp('cart_subtitle_items', {
+                          'count': '$totalItems',
+                        }),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textMuted,
                         ),
@@ -292,7 +294,7 @@ class _CartScreenState extends State<CartScreen> {
                                   vertical: 16,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: c.surfaceTint, // 👈 theme-aware
+                                  color: c.surfaceTint,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Row(
@@ -303,7 +305,6 @@ class _CartScreenState extends State<CartScreen> {
                                         height: 40,
                                         alignment: Alignment.center,
                                         decoration: BoxDecoration(
-                                          // 👈 theme-aware avatar bg
                                           color: c.primaryCoral.withValues(
                                             alpha: 0.15,
                                           ),
@@ -313,7 +314,7 @@ class _CartScreenState extends State<CartScreen> {
                                           '${customer.firstName.isNotEmpty ? customer.firstName[0] : ''}${customer.lastName.isNotEmpty ? customer.lastName[0] : ''}'
                                               .toUpperCase(),
                                           style: textStyles.labelSmall.copyWith(
-                                            color: c.primaryCoral, // 👈
+                                            color: c.primaryCoral,
                                             fontWeight: FontWeight.w700,
                                             fontSize: 14,
                                           ),
@@ -334,7 +335,9 @@ class _CartScreenState extends State<CartScreen> {
                                           Text(
                                             customer != null
                                                 ? '${customer.firstName} ${customer.lastName}'
-                                                : 'Add a customer',
+                                                : context.t(
+                                                    'cart_add_customer',
+                                                  ),
                                             style: textStyles.labelMedium
                                                 .copyWith(
                                                   color: c.primaryCoral,
@@ -345,7 +348,9 @@ class _CartScreenState extends State<CartScreen> {
                                           Text(
                                             customer != null
                                                 ? customer.email
-                                                : 'Send receipts & make it personal',
+                                                : context.t(
+                                                    'cart_add_customer_sub',
+                                                  ),
                                             style: textStyles.bodySmall
                                                 .copyWith(
                                                   color: c.textSecondary,
@@ -402,7 +407,7 @@ class _CartScreenState extends State<CartScreen> {
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      'Order discount',
+                                      context.t('cart_order_discount'),
                                       style: textStyles.labelMedium.copyWith(
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -417,8 +422,8 @@ class _CartScreenState extends State<CartScreen> {
                                       ),
                                       child: Text(
                                         cartProvider.hasDiscount
-                                            ? 'Change'
-                                            : 'Apply',
+                                            ? context.t('cart_discount_change')
+                                            : context.t('cart_discount_apply'),
                                         style: textStyles.labelSmall.copyWith(
                                           color: c.primaryCoral,
                                           fontWeight: FontWeight.w600,
@@ -434,7 +439,7 @@ class _CartScreenState extends State<CartScreen> {
                                   child: Container(
                                     padding: const EdgeInsets.all(16),
                                     decoration: BoxDecoration(
-                                      color: c.surfaceLight, // 👈 theme-aware
+                                      color: c.surfaceLight,
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Row(
@@ -454,8 +459,12 @@ class _CartScreenState extends State<CartScreen> {
                                                 cartProvider.hasDiscount
                                                     ? cartProvider
                                                               .discountName ??
-                                                          'Discount'
-                                                    : 'No discount applied',
+                                                          context.t(
+                                                            'cart_discount_fallback',
+                                                          )
+                                                    : context.t(
+                                                        'cart_no_discount_applied',
+                                                      ),
                                                 style: textStyles.labelMedium
                                                     .copyWith(
                                                       fontWeight:
@@ -466,8 +475,33 @@ class _CartScreenState extends State<CartScreen> {
                                               const SizedBox(height: 2),
                                               Text(
                                                 cartProvider.hasDiscount
-                                                    ? '${cartProvider.isPercentageDiscount ? "${cartProvider.discountValue}% off" : "Fixed amount"} · -\$${cartProvider.discountAmount.toStringAsFixed(2)}'
-                                                    : 'Tap to select a discount',
+                                                    ? cartProvider
+                                                              .isPercentageDiscount
+                                                          ? context.tp(
+                                                              'cart_discount_subtitle_percentage',
+                                                              {
+                                                                'value':
+                                                                    '${cartProvider.discountValue}',
+                                                                'amount': cartProvider
+                                                                    .discountAmount
+                                                                    .toStringAsFixed(
+                                                                      2,
+                                                                    ),
+                                                              },
+                                                            )
+                                                          : context.tp(
+                                                              'cart_discount_subtitle_fixed',
+                                                              {
+                                                                'amount': cartProvider
+                                                                    .discountAmount
+                                                                    .toStringAsFixed(
+                                                                      2,
+                                                                    ),
+                                                              },
+                                                            )
+                                                    : context.t(
+                                                        'cart_tap_to_select_discount',
+                                                      ),
                                                 style: textStyles.bodySmall
                                                     .copyWith(
                                                       color: c.textMuted,
@@ -523,7 +557,7 @@ class _CartScreenState extends State<CartScreen> {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    'Add an order note',
+                                    context.t('cart_add_order_note'),
                                     style: textStyles.labelSmall.copyWith(
                                       color: c.primaryCoral,
                                       fontWeight: FontWeight.w600,
@@ -545,7 +579,9 @@ class _CartScreenState extends State<CartScreen> {
                             child: Column(
                               children: [
                                 _buildSummaryRow(
-                                  'Subtotal · $totalItems items',
+                                  context.tp('cart_subtotal_items', {
+                                    'count': '$totalItems',
+                                  }),
                                   '\$${subtotal.toStringAsFixed(2)}',
                                   c,
                                   textStyles,
@@ -553,16 +589,34 @@ class _CartScreenState extends State<CartScreen> {
                                 const SizedBox(height: 8),
                                 if (cartProvider.hasDiscount) ...[
                                   _buildSummaryRow(
-                                    '${cartProvider.discountName}${cartProvider.isPercentageDiscount ? ' · ${cartProvider.discountValue}%' : ''}',
+                                    cartProvider.isPercentageDiscount
+                                        ? context.tp(
+                                            'cart_discount_summary_percentage',
+                                            {
+                                              'name':
+                                                  cartProvider.discountName ??
+                                                  '',
+                                              'value':
+                                                  '${cartProvider.discountValue}',
+                                            },
+                                          )
+                                        : context.tp(
+                                            'cart_discount_summary_fixed',
+                                            {
+                                              'name':
+                                                  cartProvider.discountName ??
+                                                  '',
+                                            },
+                                          ),
                                     '-\$${cartProvider.discountAmount.toStringAsFixed(2)}',
                                     c,
                                     textStyles,
-                                    valueColor: c.successFg, // 👈 theme-aware
+                                    valueColor: c.successFg,
                                   ),
                                   const SizedBox(height: 8),
                                 ],
                                 _buildSummaryRow(
-                                  'Sales tax · 10%',
+                                  context.t('cart_sales_tax'),
                                   '\$${taxAmount.toStringAsFixed(2)}',
                                   c,
                                   textStyles,
@@ -578,7 +632,7 @@ class _CartScreenState extends State<CartScreen> {
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      'Total due',
+                                      context.t('cart_total_due'),
                                       style: textStyles.heading2.copyWith(
                                         fontSize: 18,
                                       ),
@@ -651,7 +705,7 @@ class _CartScreenState extends State<CartScreen> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'Continue to checkout',
+                              context.t('cart_continue_to_checkout'),
                               style: textStyles.labelMedium.copyWith(
                                 color: c.textLight,
                                 fontSize: 16,
@@ -678,12 +732,12 @@ class _CartScreenState extends State<CartScreen> {
           Icon(Icons.shopping_cart_outlined, size: 64, color: c.textMuted),
           const SizedBox(height: 16),
           Text(
-            'Your cart is empty',
+            context.t('cart_empty_title'),
             style: textStyles.heading2.copyWith(fontSize: 20),
           ),
           const SizedBox(height: 8),
           Text(
-            'Add products to start a new sale.',
+            context.t('cart_empty_hint'),
             style: textStyles.bodySmall.copyWith(color: c.textMuted),
           ),
           const SizedBox(height: 24),
@@ -697,7 +751,7 @@ class _CartScreenState extends State<CartScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text('Browse Products'),
+            child: Text(context.t('cart_browse_products')),
           ),
         ],
       ),
@@ -722,7 +776,7 @@ class _CartScreenState extends State<CartScreen> {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: c.surfaceLight, // 👈 theme-aware
+              color: c.surfaceLight,
               borderRadius: BorderRadius.circular(8),
             ),
             child: ClipRRect(
@@ -750,7 +804,9 @@ class _CartScreenState extends State<CartScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  item.variantName.isNotEmpty ? item.variantName : 'Standard',
+                  item.variantName.isNotEmpty
+                      ? item.variantName
+                      : context.t('cart_standard_variant'),
                   style: textStyles.bodySmall.copyWith(
                     color: c.textMuted,
                     fontSize: 13,
@@ -786,7 +842,7 @@ class _CartScreenState extends State<CartScreen> {
                           provider.removeItem(item.id);
                         }
                       },
-                      c: c, // 👈
+                      c: c,
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -805,7 +861,7 @@ class _CartScreenState extends State<CartScreen> {
                               item.id,
                               item.quantity + 1,
                             ),
-                      c: c, // 👈
+                      c: c,
                       color: isMaxStock ? c.textMuted : null,
                     ),
                   ],
@@ -815,9 +871,9 @@ class _CartScreenState extends State<CartScreen> {
                 Padding(
                   padding: const EdgeInsets.only(top: 4.0),
                   child: Text(
-                    'Max stock reached',
+                    context.t('cart_max_stock_reached'),
                     style: textStyles.labelSmall.copyWith(
-                      color: c.warningFg, // 👈 theme-aware
+                      color: c.warningFg,
                       fontSize: 10,
                     ),
                   ),
@@ -832,14 +888,13 @@ class _CartScreenState extends State<CartScreen> {
   Widget _buildQuantityButton({
     required IconData icon,
     required VoidCallback? onTap,
-    required AppThemeColors c, // 👈 added
+    required AppThemeColors c,
     Color? color,
   }) {
     return InkWell(
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.all(8.0),
-        // 👈 default now uses theme-aware text color instead of Colors.black
         child: Icon(icon, size: 16, color: color ?? c.textPrimary),
       ),
     );

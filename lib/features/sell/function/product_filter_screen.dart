@@ -2,9 +2,11 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:provider/provider.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
 import 'package:pos_system/core/theme/app_text_style_x.dart';
+import 'package:pos_system/providers/language_provider.dart';
 import 'package:pos_system/providers/product_provider.dart';
 
 class ProductFilterScreen extends StatefulWidget {
@@ -15,7 +17,7 @@ class ProductFilterScreen extends StatefulWidget {
 }
 
 class _ProductFilterScreenState extends State<ProductFilterScreen> {
-  // UI state
+  // ── UI state (kept as *keys* rather than localized labels) ──
   String _selectedCategory = 'All';
   String _selectedSize = 'M';
   String _selectedColor = 'Any color';
@@ -23,22 +25,28 @@ class _ProductFilterScreenState extends State<ProductFilterScreen> {
   double _minPrice = 0;
   double _maxPrice = 1000;
 
-  final List<String> _categories = [
+  // Stable keys – these map to translation keys via `_categoryKey`, etc.
+  static const List<String> _categories = [
     'All',
     'Tops',
     'Bottoms',
     'Knitwear',
     'Classics',
   ];
-  final List<String> _sizes = ['XS', 'S', 'M', 'L', 'XL'];
-  final List<String> _colors = ['Any color', 'White', 'Sky', 'Navy', 'Sand'];
+  static const List<String> _sizes = ['XS', 'S', 'M', 'L', 'XL'];
+  static const List<String> _colors = [
+    'Any color',
+    'White',
+    'Sky',
+    'Navy',
+    'Sand',
+  ];
 
   bool _isInitialized = false;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // 👇 Read the current filter state from the provider
     if (!_isInitialized) {
       final provider = context.read<ProductProvider>();
       setState(() {
@@ -53,7 +61,43 @@ class _ProductFilterScreenState extends State<ProductFilterScreen> {
     }
   }
 
-  // 👇 Count how many products match the CURRENT UI selection
+  // ── Translation key maps (stable value → i18n key) ──
+  String _categoryKey(String value) {
+    switch (value) {
+      case 'Tops':
+        return 'product_filter_cat_tops';
+      case 'Bottoms':
+        return 'product_filter_cat_bottoms';
+      case 'Knitwear':
+        return 'product_filter_cat_knitwear';
+      case 'Classics':
+        return 'product_filter_cat_classics';
+      case 'All':
+      default:
+        return 'product_filter_cat_all';
+    }
+  }
+
+  String _colorKey(String value) {
+    switch (value) {
+      case 'White':
+        return 'product_filter_color_white';
+      case 'Sky':
+        return 'product_filter_color_sky';
+      case 'Navy':
+        return 'product_filter_color_navy';
+      case 'Sand':
+        return 'product_filter_color_sand';
+      case 'Any color':
+      default:
+        return 'product_filter_color_any';
+    }
+  }
+
+  // Sizes are literal – no translation needed.
+  String _sizeLabel(String size) => size;
+
+  // ── Count matches against the *current* UI selection ──
   int _getMatchingCount(ProductProvider provider) {
     return provider.products.where((product) {
       if (_selectedCategory != 'All') {
@@ -70,7 +114,6 @@ class _ProductFilterScreenState extends State<ProductFilterScreen> {
     }).length;
   }
 
-  // 👇 Save filters to the provider and close the sheet
   void _applyFilters() {
     context.read<ProductProvider>().applyFilters(
       category: _selectedCategory,
@@ -83,8 +126,23 @@ class _ProductFilterScreenState extends State<ProductFilterScreen> {
     context.pop();
   }
 
+  void _clearAll() {
+    setState(() {
+      _selectedCategory = 'All';
+      _selectedSize = 'M';
+      _selectedColor = 'Any color';
+      _minPrice = 0;
+      _maxPrice = 1000;
+      _inStockOnly = false;
+    });
+    context.read<ProductProvider>().clearFilters();
+  }
+
   @override
   Widget build(BuildContext context) {
+    // 👇 Watch the language provider so this screen rebuilds on toggle.
+    context.watch<LanguageProvider>();
+
     final c = context.colors;
     final textStyles = AppTextStylesX(context);
     final provider = context.watch<ProductProvider>();
@@ -116,12 +174,12 @@ class _ProductFilterScreenState extends State<ProductFilterScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Product filters',
+                        context.t('product_filter_title'),
                         style: textStyles.heading2.copyWith(fontSize: 24),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Refine the catalog',
+                        context.t('product_filter_subtitle'),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textMuted,
                         ),
@@ -141,14 +199,19 @@ class _ProductFilterScreenState extends State<ProductFilterScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 8),
-                    _buildSectionTitle('Category', textStyles),
+
+                    // ── Category ──
+                    _buildSectionTitle(
+                      context.t('product_filter_category_title'),
+                      textStyles,
+                    ),
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: _categories.map((cat) {
                         return _buildChip(
-                          cat,
+                          context.t(_categoryKey(cat)),
                           cat == _selectedCategory,
                           () => setState(() => _selectedCategory = cat),
                           c,
@@ -158,14 +221,18 @@ class _ProductFilterScreenState extends State<ProductFilterScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    _buildSectionTitle('Size', textStyles),
+                    // ── Size ──
+                    _buildSectionTitle(
+                      context.t('product_filter_size_title'),
+                      textStyles,
+                    ),
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: _sizes.map((size) {
                         return _buildChip(
-                          size,
+                          _sizeLabel(size),
                           size == _selectedSize,
                           () => setState(() => _selectedSize = size),
                           c,
@@ -175,14 +242,18 @@ class _ProductFilterScreenState extends State<ProductFilterScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    _buildSectionTitle('Color', textStyles),
+                    // ── Color ──
+                    _buildSectionTitle(
+                      context.t('product_filter_color_title'),
+                      textStyles,
+                    ),
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: _colors.map((color) {
                         return _buildChip(
-                          color,
+                          context.t(_colorKey(color)),
                           color == _selectedColor,
                           () => setState(() => _selectedColor = color),
                           c,
@@ -192,13 +263,17 @@ class _ProductFilterScreenState extends State<ProductFilterScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    _buildSectionTitle('Price range', textStyles),
+                    // ── Price range ──
+                    _buildSectionTitle(
+                      context.t('product_filter_price_title'),
+                      textStyles,
+                    ),
                     const SizedBox(height: 12),
                     Row(
                       children: [
                         Expanded(
                           child: _buildPriceInput(
-                            label: 'Minimum',
+                            label: context.t('product_filter_price_min'),
                             initialValue: _minPrice,
                             onChanged: (val) => setState(() => _minPrice = val),
                             c: c,
@@ -208,7 +283,7 @@ class _ProductFilterScreenState extends State<ProductFilterScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: _buildPriceInput(
-                            label: 'Maximum',
+                            label: context.t('product_filter_price_max'),
                             initialValue: _maxPrice,
                             onChanged: (val) => setState(() => _maxPrice = val),
                             c: c,
@@ -219,28 +294,35 @@ class _ProductFilterScreenState extends State<ProductFilterScreen> {
                     ),
                     const SizedBox(height: 24),
 
+                    // ── In-stock toggle ──
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'In-stock products only',
-                              style: textStyles.labelMedium.copyWith(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 15,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                context.t('product_filter_instock_title'),
+                                style: textStyles.labelMedium.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Hide unavailable variants at SoHo',
-                              style: textStyles.bodySmall.copyWith(
-                                color: c.textMuted,
-                                fontSize: 13,
+                              const SizedBox(height: 4),
+                              Text(
+                                context.tp('product_filter_instock_sub', {
+                                  'store': context.t(
+                                    'product_filter_store_default',
+                                  ),
+                                }),
+                                style: textStyles.bodySmall.copyWith(
+                                  color: c.textMuted,
+                                  fontSize: 13,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                         Switch(
                           value: _inStockOnly,
@@ -256,7 +338,7 @@ class _ProductFilterScreenState extends State<ProductFilterScreen> {
                     const SizedBox(height: 24),
 
                     Text(
-                      'Filters apply to the current search. Prices are before tax.',
+                      context.t('product_filter_footer'),
                       style: textStyles.bodySmall.copyWith(
                         color: c.textMuted,
                         fontSize: 12,
@@ -286,7 +368,9 @@ class _ProductFilterScreenState extends State<ProductFilterScreen> {
                       elevation: 0,
                     ),
                     child: Text(
-                      'Show $matchingCount matching products',
+                      context.tp('product_filter_apply_button', {
+                        'count': '$matchingCount',
+                      }),
                       style: textStyles.labelMedium.copyWith(
                         color: c.textLight,
                         fontSize: 16,
@@ -296,17 +380,7 @@ class _ProductFilterScreenState extends State<ProductFilterScreen> {
                   ),
                   const SizedBox(height: 12),
                   TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _selectedCategory = 'All';
-                        _selectedSize = 'M';
-                        _selectedColor = 'Any color';
-                        _minPrice = 0;
-                        _maxPrice = 1000;
-                        _inStockOnly = false;
-                      });
-                      context.read<ProductProvider>().clearFilters();
-                    },
+                    onPressed: _clearAll,
                     style: TextButton.styleFrom(
                       backgroundColor: const Color(0xFFF4F8FF),
                       foregroundColor: c.primaryCoral,
@@ -316,7 +390,7 @@ class _ProductFilterScreenState extends State<ProductFilterScreen> {
                       ),
                     ),
                     child: Text(
-                      'Clear all filters',
+                      context.t('product_filter_clear_button'),
                       style: textStyles.labelMedium.copyWith(
                         color: c.primaryCoral,
                         fontSize: 16,
@@ -388,6 +462,7 @@ class _ProductFilterScreenState extends State<ProductFilterScreen> {
         ),
         const SizedBox(height: 8),
         TextFormField(
+          key: ValueKey('price_$label'), // rebuild when language changes
           initialValue: initialValue.toStringAsFixed(0),
           keyboardType: TextInputType.number,
           style: textStyles.bodyLarge,

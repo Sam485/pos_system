@@ -2,12 +2,14 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:pos_system/core/routes/route_names.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
 import 'package:pos_system/core/theme/app_text_style_x.dart';
 import 'package:pos_system/providers/inventory_provider.dart';
+import 'package:pos_system/providers/language_provider.dart';
 import 'package:pos_system/providers/product_provider.dart';
 import 'package:pos_system/data/models/product_model.dart';
 import 'package:pos_system/data/models/iventory_model.dart';
@@ -48,6 +50,9 @@ class _StockScreenState extends State<StockScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // 👇 Rebuild when language changes
+    context.watch<LanguageProvider>();
+
     final c = context.colors;
     final textStyles = AppTextStylesX(context);
 
@@ -143,12 +148,12 @@ class _StockScreenState extends State<StockScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Inventory',
+                        context.t('stock_title'),
                         style: textStyles.heading2.copyWith(fontSize: 24),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'SoHo store',
+                        context.t('stock_store_default'),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textMuted,
                         ),
@@ -172,10 +177,9 @@ class _StockScreenState extends State<StockScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: TextFormField(
                           controller: _searchController,
-                          style:
-                              textStyles.bodyMedium, // 👈 readable typed text
+                          style: textStyles.bodyMedium,
                           decoration: InputDecoration(
-                            hintText: 'Search product, SKU or barcode',
+                            hintText: context.t('stock_search_hint'),
                             hintStyle: textStyles.bodyMedium.copyWith(
                               color: c.textMuted,
                             ),
@@ -233,7 +237,7 @@ class _StockScreenState extends State<StockScreen> {
                             Expanded(
                               child: _buildSummaryCard(
                                 title: '$totalProducts',
-                                subtitle: 'Products',
+                                subtitle: context.t('stock_summary_products'),
                                 bgColor: c.surfaceTint,
                                 textColor: c.textPrimary,
                                 textStyles: textStyles,
@@ -243,7 +247,7 @@ class _StockScreenState extends State<StockScreen> {
                             Expanded(
                               child: _buildSummaryCard(
                                 title: '$totalUnits',
-                                subtitle: 'Units on hand',
+                                subtitle: context.t('stock_summary_units'),
                                 bgColor: c.surfaceTint,
                                 textColor: c.textPrimary,
                                 textStyles: textStyles,
@@ -253,7 +257,7 @@ class _StockScreenState extends State<StockScreen> {
                             Expanded(
                               child: _buildSummaryCard(
                                 title: '$lowStockCount',
-                                subtitle: 'Low stock',
+                                subtitle: context.t('stock_summary_low'),
                                 bgColor: c.warningBg,
                                 textColor: c.warningFg,
                                 textStyles: textStyles,
@@ -275,7 +279,7 @@ class _StockScreenState extends State<StockScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 20.0),
                           children: [
                             _buildFilterChip(
-                              'All stock',
+                              context.t('stock_filter_all'),
                               isActive: _selectedFilterIndex == 0,
                               onTap: () =>
                                   setState(() => _selectedFilterIndex = 0),
@@ -283,7 +287,9 @@ class _StockScreenState extends State<StockScreen> {
                               textStyles: textStyles,
                             ),
                             _buildFilterChip(
-                              'Low stock · $lowStockCount',
+                              context.tp('stock_filter_low', {
+                                'count': '$lowStockCount',
+                              }),
                               isActive: _selectedFilterIndex == 1,
                               onTap: () =>
                                   setState(() => _selectedFilterIndex = 1),
@@ -291,7 +297,9 @@ class _StockScreenState extends State<StockScreen> {
                               textStyles: textStyles,
                             ),
                             _buildFilterChip(
-                              'Out of stock · $outOfStockCount',
+                              context.tp('stock_filter_out', {
+                                'count': '$outOfStockCount',
+                              }),
                               isActive: _selectedFilterIndex == 2,
                               onTap: () =>
                                   setState(() => _selectedFilterIndex = 2),
@@ -311,12 +319,19 @@ class _StockScreenState extends State<StockScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              _searchQuery.isNotEmpty
-                                  ? '${filteredProducts.length} results for "$_searchQuery"'
-                                  : '${filteredProducts.length} products · Updated just now',
-                              style: textStyles.bodySmall.copyWith(
-                                color: c.textSecondary,
+                            Expanded(
+                              child: Text(
+                                _searchQuery.isNotEmpty
+                                    ? context.tp('stock_list_results_for', {
+                                        'count': '${filteredProducts.length}',
+                                        'query': _searchQuery,
+                                      })
+                                    : context.tp('stock_list_count', {
+                                        'count': '${filteredProducts.length}',
+                                      }),
+                                style: textStyles.bodySmall.copyWith(
+                                  color: c.textSecondary,
+                                ),
                               ),
                             ),
                           ],
@@ -361,8 +376,10 @@ class _StockScreenState extends State<StockScreen> {
                                 const SizedBox(height: 16),
                                 Text(
                                   _searchQuery.isNotEmpty
-                                      ? 'No products match "$_searchQuery"'
-                                      : 'No products match this filter.',
+                                      ? context.tp('stock_empty_search', {
+                                          'query': _searchQuery,
+                                        })
+                                      : context.t('stock_empty_filter'),
                                   textAlign: TextAlign.center,
                                   style: textStyles.bodyMedium.copyWith(
                                     color: c.textMuted,
@@ -469,20 +486,24 @@ class _StockScreenState extends State<StockScreen> {
       (sum, item) => sum + item.quantityAvailable,
     );
 
-    // 👇 Theme-aware stock colors
+    // Theme-aware stock colors
     Color stockColor;
     String stockLabel;
 
     if (totalStock == 0) {
       stockColor = c.dangerFg;
-      stockLabel = '0 available · Out of stock';
+      stockLabel = context.t('stock_status_out');
     } else if (totalStock <= 5) {
       stockColor = c.warningFg;
-      stockLabel = '$totalStock available · Reorder soon';
+      stockLabel = context.tp('stock_status_low', {'count': '$totalStock'});
     } else {
       stockColor = c.successFg;
-      stockLabel = '$totalStock available';
+      stockLabel = context.tp('stock_status_ok', {'count': '$totalStock'});
     }
+
+    final variantCount = stockItems.isNotEmpty
+        ? stockItems.length
+        : _getVariantCount(product.id, context);
 
     return InkWell(
       onTap: () {
@@ -508,7 +529,6 @@ class _StockScreenState extends State<StockScreen> {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                // 👇 theme-aware placeholder
                 color: c.surfaceLight,
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -540,7 +560,10 @@ class _StockScreenState extends State<StockScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${stockItems.isNotEmpty ? stockItems.length : _getVariantCount(product.id, context)} variants · From \$${product.basePrice.toStringAsFixed(2)}',
+                    context.tp('stock_item_variants_from', {
+                      'count': '$variantCount',
+                      'price': product.basePrice.toStringAsFixed(2),
+                    }),
                     style: textStyles.bodySmall.copyWith(
                       color: c.textMuted,
                       fontSize: 13,

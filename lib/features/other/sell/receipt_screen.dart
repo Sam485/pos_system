@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:provider/provider.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
 import 'package:pos_system/core/theme/app_text_style_x.dart';
@@ -40,7 +41,6 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
 
       if (_order != null) {
         WidgetsBinding.instance.addPostFrameCallback((_) async {
-          // 👇 FIX: Fetch products AND order items AND payment
           final orderProvider = context.read<OrderProvider>();
           final productProvider = context.read<ProductProvider>();
           final inventoryProvider = context.read<InventoryProvider>();
@@ -73,7 +73,7 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
     if (_order == null) {
       return Scaffold(
         backgroundColor: c.background,
-        body: const Center(child: Text('Order not found')),
+        body: Center(child: Text(context.t('receipt_not_found'))),
       );
     }
 
@@ -107,12 +107,14 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Receipt',
+                        context.t('receipt_title'),
                         style: textStyles.heading2.copyWith(fontSize: 24),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${order.orderNumber} · Alternative card checkout',
+                        context.tp('receipt_subtitle', {
+                          'orderNumber': order.orderNumber,
+                        }),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textMuted,
                         ),
@@ -137,7 +139,6 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        // ✅ FIXED: was 0xFFF8F9FA
                         color: c.surfaceLight,
                         borderRadius: BorderRadius.circular(24),
                       ),
@@ -154,14 +155,16 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'SoHo · 120 Spring St, New York',
+                            context.t('receipt_store_address'),
                             style: textStyles.bodySmall.copyWith(
                               color: c.textSecondary,
                               fontSize: 12,
                             ),
                           ),
                           Text(
-                            '$date · Register 01',
+                            context.tp('receipt_store_date_register', {
+                              'date': date,
+                            }),
                             style: textStyles.bodySmall.copyWith(
                               color: c.textSecondary,
                               fontSize: 12,
@@ -173,7 +176,12 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                           Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              'Receipt ${order.orderNumber} · ${_customer?.firstName ?? "Guest"} ${_customer?.lastName ?? ""}',
+                              context.tp('receipt_customer_line', {
+                                'orderNumber': order.orderNumber,
+                                'customer':
+                                    '${_customer?.firstName ?? context.t('receipt_guest')} ${_customer?.lastName ?? ""}'
+                                        .trim(),
+                              }),
                               style: textStyles.labelMedium.copyWith(
                                 fontWeight: FontWeight.w600,
                               ),
@@ -193,7 +201,6 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                                 item['variant_id'],
                               );
 
-                              // 👇 FIX: Safe product lookup
                               ProductModel? product;
                               if (variant != null &&
                                   productProvider.products.isNotEmpty) {
@@ -202,6 +209,11 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                                   orElse: () => productProvider.products.first,
                                 );
                               }
+
+                              final itemName =
+                                  product?.name ??
+                                  variant?.name ??
+                                  context.t('receipt_item_default_name');
 
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 12),
@@ -216,11 +228,20 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            '${item['quantity']} × ${product?.name ?? variant?.name ?? "Item"}',
+                                            context.tp('receipt_item_line', {
+                                              'quantity': '${item['quantity']}',
+                                              'name': itemName,
+                                            }),
                                             style: textStyles.bodyMedium,
                                           ),
                                           Text(
-                                            '${variant?.color ?? ""} / ${variant?.size ?? ""} · \$${(item['unit_price'] as num).toStringAsFixed(2)} each',
+                                            context.tp('receipt_item_variant', {
+                                              'color': variant?.color ?? '',
+                                              'size': variant?.size ?? '',
+                                              'price':
+                                                  (item['unit_price'] as num)
+                                                      .toStringAsFixed(2),
+                                            }),
                                             style: textStyles.bodySmall
                                                 .copyWith(color: c.textMuted),
                                           ),
@@ -245,19 +266,19 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
 
                           // Totals
                           _buildSummaryRow(
-                            'Subtotal',
+                            context.t('receipt_subtotal'),
                             '\$${order.subTotal.toStringAsFixed(2)}',
                             c,
                             textStyles,
                           ),
                           _buildSummaryRow(
-                            'Welcome discount · 10%',
+                            context.t('receipt_discount'),
                             '-\$${order.discountAmount.toStringAsFixed(2)}',
                             c,
                             textStyles,
                           ),
                           _buildSummaryRow(
-                            'Sales tax · 10%',
+                            context.t('receipt_sales_tax'),
                             '\$${order.taxAmount.toStringAsFixed(2)}',
                             c,
                             textStyles,
@@ -267,7 +288,7 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Total paid',
+                                context.t('receipt_total_paid'),
                                 style: textStyles.labelMedium.copyWith(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 16,
@@ -292,7 +313,10 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
 
                           // Payment Method
                           _buildSummaryRow(
-                            '${_payment?['card_brand'] ?? 'Visa'} **** ${_payment?['card_last_four'] ?? '4242'}',
+                            context.tp('receipt_card_line', {
+                              'brand': _payment?['card_brand'] ?? 'Visa',
+                              'last4': _payment?['card_last_four'] ?? '4242',
+                            }),
                             '\$${order.totalAmount.toStringAsFixed(2)}',
                             c,
                             textStyles,
@@ -300,14 +324,16 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
 
                           const SizedBox(height: 16),
                           Text(
-                            'Approved · Auth ${_payment?['auth_code'] ?? 'AUTH1048V'}',
+                            context.tp('receipt_approved_auth', {
+                              'auth': _payment?['auth_code'] ?? 'AUTH1048V',
+                            }),
                             style: textStyles.bodySmall.copyWith(
                               color: c.textMuted,
                               fontSize: 11,
                             ),
                           ),
                           Text(
-                            'Thank you for shopping with fold.',
+                            context.t('receipt_thank_you'),
                             style: textStyles.bodySmall.copyWith(
                               color: c.textMuted,
                               fontSize: 11,
@@ -318,7 +344,7 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // ✅ FIXED: Email Notification Banner — successBg / successFg
+                    // ── Email Notification Banner ──
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -336,7 +362,11 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'Receipt delivered to ${_customer?.email ?? "customer"}.',
+                              context.tp('receipt_delivered_banner', {
+                                'email':
+                                    _customer?.email ??
+                                    context.t('receipt_customer_fallback'),
+                              }),
                               style: textStyles.bodySmall.copyWith(
                                 color: c.successFg,
                                 height: 1.4,
@@ -355,11 +385,15 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                         TextButton(
                           onPressed: () {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Sending again...')),
+                              SnackBar(
+                                content: Text(
+                                  context.t('receipt_sending_again'),
+                                ),
+                              ),
                             );
                           },
                           child: Text(
-                            'Send again',
+                            context.t('receipt_send_again'),
                             style: textStyles.labelSmall.copyWith(
                               color: c.primaryCoral,
                               fontWeight: FontWeight.w600,
@@ -375,7 +409,7 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                         TextButton(
                           onPressed: () {},
                           child: Text(
-                            'Change email address',
+                            context.t('receipt_change_email'),
                             style: textStyles.labelSmall.copyWith(
                               color: c.primaryCoral,
                               fontWeight: FontWeight.w600,
@@ -399,8 +433,7 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: const Text('Printing receipt...'),
-                          // ✅ FIXED: was const Color(0xFF137333)
+                          content: Text(context.t('receipt_printing')),
                           backgroundColor: c.successFg,
                         ),
                       );
@@ -420,7 +453,7 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                         Icon(Icons.print, size: 20, color: c.textLight),
                         const SizedBox(width: 8),
                         Text(
-                          'Print receipt',
+                          context.t('receipt_print_button'),
                           style: textStyles.labelMedium.copyWith(
                             color: c.textLight,
                             fontSize: 16,
@@ -434,7 +467,6 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                   TextButton(
                     onPressed: () => context.pop(),
                     style: TextButton.styleFrom(
-                      // ✅ FIXED: was 0xFFF4F8FF
                       backgroundColor: c.surfaceTint,
                       foregroundColor: c.primaryCoral,
                       minimumSize: const Size(double.infinity, 54),
@@ -443,7 +475,7 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                       ),
                     ),
                     child: Text(
-                      'Done',
+                      context.t('receipt_done_button'),
                       style: textStyles.labelMedium.copyWith(
                         color: c.primaryCoral,
                         fontSize: 16,

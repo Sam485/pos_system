@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:pos_system/shared/helper/safe_pop.dart';
 import 'package:provider/provider.dart';
 import 'package:pos_system/core/routes/route_names.dart';
@@ -18,9 +19,7 @@ class _OpenRegisterScreenState extends State<OpenRegisterScreen> {
   final TextEditingController _amountController = TextEditingController(
     text: '250.00',
   );
-  final TextEditingController _noteController = TextEditingController(
-    text: 'Morning float counted and checked.',
-  );
+  final TextEditingController _noteController = TextEditingController();
 
   String? _registerId;
   bool _isInitialized = false;
@@ -33,6 +32,8 @@ class _OpenRegisterScreenState extends State<OpenRegisterScreen> {
       if (extra is String) {
         _registerId = extra;
       }
+      // Set localized note default once
+      _noteController.text = context.t('open_register_note_default');
       _isInitialized = true;
     }
   }
@@ -81,10 +82,16 @@ class _OpenRegisterScreenState extends State<OpenRegisterScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Open register', style: textStyles.heading2),
+                      Text(
+                        context.t('open_register_title'),
+                        style: textStyles.heading2,
+                      ),
                       const SizedBox(height: 2),
                       Text(
-                        'SoHo store · ${register.name}',
+                        context.tp('open_register_subtitle', {
+                          'store': context.t('register_store_default'),
+                          'register': register.name,
+                        }),
                         style: textStyles.bodySmall,
                       ),
                     ],
@@ -102,7 +109,7 @@ class _OpenRegisterScreenState extends State<OpenRegisterScreen> {
                   children: [
                     const SizedBox(height: 16),
                     Text(
-                      'Start on a good note.',
+                      context.t('open_register_heading'),
                       style: textStyles.heading1.copyWith(
                         fontSize: 28,
                         letterSpacing: -0.5,
@@ -110,7 +117,7 @@ class _OpenRegisterScreenState extends State<OpenRegisterScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Count the cash in your drawer and enter your opening float.',
+                      context.t('open_register_description'),
                       style: textStyles.bodyMedium.copyWith(
                         color: c.textSecondary,
                         height: 1.4,
@@ -120,7 +127,7 @@ class _OpenRegisterScreenState extends State<OpenRegisterScreen> {
 
                     // ── Opening Float Section ──
                     Text(
-                      'Opening float · USD',
+                      context.t('open_register_float_label'),
                       style: textStyles.labelMedium.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -163,7 +170,7 @@ class _OpenRegisterScreenState extends State<OpenRegisterScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Cash available for giving change. This is not a sale.',
+                      context.t('open_register_float_hint'),
                       style: textStyles.bodySmall.copyWith(
                         color: c.textMuted,
                         fontSize: 12,
@@ -173,7 +180,7 @@ class _OpenRegisterScreenState extends State<OpenRegisterScreen> {
 
                     // ── Note Section ──
                     Text(
-                      'Opening note (optional)',
+                      context.t('open_register_note_label'),
                       style: textStyles.labelMedium.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -217,20 +224,20 @@ class _OpenRegisterScreenState extends State<OpenRegisterScreen> {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: c.surfaceTint, // 👈 theme-aware
+                        color: c.surfaceTint,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Column(
                         children: [
                           _buildSummaryRow(
-                            'Store',
+                            context.t('open_register_summary_store'),
                             'fold / SoHo',
                             c,
                             textStyles,
                           ),
                           const SizedBox(height: 12),
                           _buildSummaryRow(
-                            'Opened by',
+                            context.t('open_register_summary_opened_by'),
                             'Alex Morgan',
                             c,
                             textStyles,
@@ -244,7 +251,10 @@ class _OpenRegisterScreenState extends State<OpenRegisterScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('Opening cash', style: textStyles.bodyLarge),
+                              Text(
+                                context.t('open_register_summary_opening_cash'),
+                                style: textStyles.bodyLarge,
+                              ),
                               Text(
                                 '\$${_amountController.text}',
                                 style: textStyles.heading2.copyWith(
@@ -262,7 +272,7 @@ class _OpenRegisterScreenState extends State<OpenRegisterScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: c.surfaceTint, // 👈 theme-aware
+                        color: c.surfaceTint,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -276,9 +286,9 @@ class _OpenRegisterScreenState extends State<OpenRegisterScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'Opening the register starts today\'s cash movement log.',
+                              context.t('open_register_info'),
                               style: textStyles.bodyMedium.copyWith(
-                                color: c.primaryCoral,
+                                color: c.textSecondary,
                                 height: 1.4,
                               ),
                             ),
@@ -341,7 +351,9 @@ class _OpenRegisterScreenState extends State<OpenRegisterScreen> {
                               Icon(Icons.check, size: 20, color: c.textLight),
                               const SizedBox(width: 8),
                               Text(
-                                'Open register · \$${_amountController.text}',
+                                context.tp('open_register_action', {
+                                  'amount': _amountController.text,
+                                }),
                                 style: textStyles.labelMedium.copyWith(
                                   color: c.textLight,
                                   fontSize: 16,
@@ -353,7 +365,9 @@ class _OpenRegisterScreenState extends State<OpenRegisterScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Opening snapshot · Oct 19, 2026, 9:00 AM',
+                    context.tp('open_register_snapshot', {
+                      'date': 'Oct 19, 2026, 9:00 AM',
+                    }),
                     style: textStyles.bodySmall.copyWith(
                       color: c.textMuted,
                       fontSize: 12,

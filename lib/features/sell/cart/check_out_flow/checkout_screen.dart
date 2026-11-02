@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:provider/provider.dart';
 import 'package:pos_system/core/routes/route_names.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
@@ -32,6 +33,20 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
   }
 
+  // Localized display name for the selected payment method
+  String _localizedPaymentMethod(String englishMethod) {
+    switch (englishMethod) {
+      case 'cash':
+        return context.t('checkout_pay_cash');
+      case 'card':
+        return context.t('checkout_pay_card');
+      case 'KHQR':
+        return context.t('checkout_pay_khqr');
+      default:
+        return englishMethod;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -57,12 +72,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'No open register',
+                    context.t('checkout_guard_title'),
                     style: textStyles.heading2.copyWith(fontSize: 22),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'You need to open a register before completing this sale.',
+                    context.t('checkout_guard_hint'),
                     textAlign: TextAlign.center,
                     style: textStyles.bodyMedium.copyWith(color: c.textMuted),
                   ),
@@ -79,7 +94,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       ),
                     ),
                     child: Text(
-                      'Open a Register',
+                      context.t('checkout_guard_button'),
                       style: textStyles.labelMedium.copyWith(
                         color: c.textLight,
                         fontSize: 16,
@@ -129,12 +144,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Checkout',
+                        context.t('checkout_title'),
                         style: textStyles.heading2.copyWith(fontSize: 24),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '$totalItems items · New sale',
+                        context.tp('checkout_subtitle', {
+                          'count': '$totalItems',
+                        }),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textMuted,
                         ),
@@ -160,11 +177,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: c.surfaceTint, // 👈 theme-aware
+                          color: c.surfaceTint,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: c.primaryCoral.withValues(alpha: 0.2),
-                            // 👈 replaces 0xFFE8F0FE border
                             width: 1,
                           ),
                         ),
@@ -175,7 +191,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               height: 40,
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
-                                // 👈 theme-aware avatar bg
                                 color: c.primaryCoral.withValues(alpha: 0.15),
                                 shape: BoxShape.circle,
                               ),
@@ -184,7 +199,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                       '${customer.firstName.isNotEmpty ? customer.firstName[0] : ''}${customer.lastName.isNotEmpty ? customer.lastName[0] : ''}'
                                           .toUpperCase(),
                                       style: textStyles.labelSmall.copyWith(
-                                        color: c.primaryCoral, // 👈
+                                        color: c.primaryCoral,
                                         fontWeight: FontWeight.w700,
                                         fontSize: 14,
                                       ),
@@ -203,7 +218,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   Text(
                                     customer != null
                                         ? '${customer.firstName} ${customer.lastName}'
-                                        : 'Guest Customer',
+                                        : context.t('checkout_guest_customer'),
                                     style: textStyles.labelMedium.copyWith(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 14,
@@ -213,7 +228,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   Text(
                                     customer != null
                                         ? customer.email
-                                        : 'No email attached',
+                                        : context.t('checkout_no_email'),
                                     style: textStyles.bodySmall.copyWith(
                                       color: c.textMuted,
                                       fontSize: 12,
@@ -245,7 +260,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Order summary',
+                                context.t('checkout_order_summary'),
                                 style: textStyles.heading2.copyWith(
                                   fontSize: 18,
                                 ),
@@ -259,7 +274,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                       MaterialTapTargetSize.shrinkWrap,
                                 ),
                                 child: Text(
-                                  'Edit cart',
+                                  context.t('checkout_edit_cart'),
                                   style: textStyles.labelSmall.copyWith(
                                     color: c.primaryCoral,
                                     fontWeight: FontWeight.w600,
@@ -274,7 +289,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 8.0),
                               child: _buildSummaryRow(
-                                '${item.quantity} × ${item.productName}',
+                                context.tp('checkout_item_line', {
+                                  'quantity': '${item.quantity}',
+                                  'name': item.productName,
+                                }),
                                 '\$${item.totalPrice.toStringAsFixed(2)}',
                                 c,
                                 textStyles,
@@ -290,7 +308,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           const SizedBox(height: 16),
 
                           _buildTotalRow(
-                            'Subtotal · $totalItems items',
+                            context.tp('checkout_subtotal', {
+                              'count': '$totalItems',
+                            }),
                             '\$${subtotal.toStringAsFixed(2)}',
                             c,
                             textStyles,
@@ -299,17 +319,28 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           if (cartProvider.hasDiscount) ...[
                             const SizedBox(height: 8),
                             _buildTotalRow(
-                              '${cartProvider.discountName}${cartProvider.isPercentageDiscount ? ' · ${cartProvider.discountValue}%' : ''}',
+                              cartProvider.isPercentageDiscount
+                                  ? context.tp('checkout_discount_percentage', {
+                                      'name':
+                                          cartProvider.discountName ??
+                                          'Discount',
+                                      'value': '${cartProvider.discountValue}',
+                                    })
+                                  : context.tp('checkout_discount_fixed', {
+                                      'name':
+                                          cartProvider.discountName ??
+                                          'Discount',
+                                    }),
                               '-\$${discountAmount.toStringAsFixed(2)}',
                               c,
                               textStyles,
-                              valueColor: c.successFg, // 👈 theme-aware
+                              valueColor: c.successFg,
                             ),
                           ],
 
                           const SizedBox(height: 8),
                           _buildTotalRow(
-                            'Sales tax · 10%',
+                            context.t('checkout_tax'),
                             '\$${taxAmount.toStringAsFixed(2)}',
                             c,
                             textStyles,
@@ -325,7 +356,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Total due',
+                                context.t('checkout_total_due'),
                                 style: textStyles.labelMedium.copyWith(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -354,7 +385,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'How would they like to pay?',
+                            context.t('checkout_payment_question'),
                             style: textStyles.labelMedium.copyWith(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -364,8 +395,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           _buildPaymentOption(
                             index: 0,
                             icon: Icons.payments_outlined,
-                            title: 'Cash',
-                            subtitle: 'Accept cash & calculate change',
+                            title: context.t('checkout_pay_cash'),
+                            subtitle: context.t('checkout_pay_cash_sub'),
                             c: c,
                             textStyles: textStyles,
                           ),
@@ -373,8 +404,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           _buildPaymentOption(
                             index: 1,
                             icon: Icons.credit_card_outlined,
-                            title: 'Card',
-                            subtitle: 'Tap, insert or swipe',
+                            title: context.t('checkout_pay_card'),
+                            subtitle: context.t('checkout_pay_card_sub'),
                             c: c,
                             textStyles: textStyles,
                           ),
@@ -382,8 +413,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           _buildPaymentOption(
                             index: 2,
                             icon: Icons.qr_code_2_rounded,
-                            title: 'KHQR',
-                            subtitle: 'Scan QR code via banking app',
+                            title: context.t('checkout_pay_khqr'),
+                            subtitle: context.t('checkout_pay_khqr_sub'),
                             c: c,
                             textStyles: textStyles,
                           ),
@@ -407,6 +438,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       final paymentExtra = {
                         'amount': totalDue,
                         'customerId': customer?.id,
+                        // Keep 'Guest' hardcoded for data consistency —
+                        // the order record should store language-neutral
+                        // identifiers.
                         'customerName': customer != null
                             ? '${customer.firstName} ${customer.lastName}'
                             : 'Guest',
@@ -450,7 +484,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       elevation: 0,
                     ),
                     child: Text(
-                      'Continue with $_paymentMethodString · \$${totalDue.toStringAsFixed(2)}',
+                      context.tp('checkout_continue_button', {
+                        'method': _localizedPaymentMethod(_paymentMethodString),
+                        'amount': totalDue.toStringAsFixed(2),
+                      }),
                       style: textStyles.labelMedium.copyWith(
                         color: c.textLight,
                         fontSize: 16,
@@ -460,7 +497,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Stock updates automatically after payment.',
+                    context.t('checkout_footer'),
                     style: textStyles.bodySmall.copyWith(
                       color: c.textMuted,
                       fontSize: 12,
@@ -539,7 +576,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          // 👈 theme-aware selected bg
           color: isSelected
               ? c.primaryCoral.withValues(alpha: 0.10)
               : Colors.transparent,
@@ -554,7 +590,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                // 👈 theme-aware icon chip
                 color: isSelected
                     ? c.primaryCoral.withValues(alpha: 0.15)
                     : c.surfaceLight,

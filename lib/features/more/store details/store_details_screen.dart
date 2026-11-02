@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:provider/provider.dart';
 import 'package:pos_system/providers/store_provider.dart';
 import 'package:pos_system/shared/helper/safe_pop.dart';
@@ -28,7 +29,6 @@ class _StoreDetailsScreenState extends State<StoreDetailsScreen> {
   @override
   void initState() {
     super.initState();
-    // 👇 TRIGGER THE FETCH when the screen opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<StoreProvider>().fetchStore();
     });
@@ -46,7 +46,7 @@ class _StoreDetailsScreenState extends State<StoreDetailsScreen> {
     super.dispose();
   }
 
-  // 👇 Populate fields from the provider once data is available
+  // Populate fields from the provider once data is available
   void _populateFieldsFromProvider(StoreProvider provider) {
     final store = provider.store;
     if (store != null && !_isFieldsPopulated) {
@@ -62,6 +62,7 @@ class _StoreDetailsScreenState extends State<StoreDetailsScreen> {
   }
 
   Future<void> _saveStoreDetails() async {
+    final c = context.colors;
     final storeProvider = context.read<StoreProvider>();
 
     final success = await storeProvider.updateStore({
@@ -76,9 +77,9 @@ class _StoreDetailsScreenState extends State<StoreDetailsScreen> {
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Store details updated successfully'),
-          backgroundColor: Color(0xFF137333),
+        SnackBar(
+          content: Text(context.t('store_details_save_success')),
+          backgroundColor: c.successFg,
         ),
       );
       context.safePop();
@@ -86,9 +87,9 @@ class _StoreDetailsScreenState extends State<StoreDetailsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            storeProvider.error ?? 'Failed to update store details',
+            storeProvider.error ?? context.t('store_details_save_failed'),
           ),
-          backgroundColor: Colors.red,
+          backgroundColor: c.dangerFg,
         ),
       );
     }
@@ -100,7 +101,6 @@ class _StoreDetailsScreenState extends State<StoreDetailsScreen> {
     final textStyles = AppTextStylesX(context);
     final storeProvider = context.watch<StoreProvider>();
 
-    // 👇 Populate fields immediately when the data arrives (via notifyListeners)
     _populateFieldsFromProvider(storeProvider);
 
     // Show loading only when the store isn't loaded yet
@@ -136,13 +136,13 @@ class _StoreDetailsScreenState extends State<StoreDetailsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Store details',
+                        context.t('store_details_title'),
                         style: textStyles.heading2.copyWith(fontSize: 24),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         _storeNameController.text.isEmpty
-                            ? 'Loading...'
+                            ? context.t('store_details_loading')
                             : _storeNameController.text,
                         style: textStyles.bodySmall.copyWith(
                           color: c.textMuted,
@@ -164,7 +164,7 @@ class _StoreDetailsScreenState extends State<StoreDetailsScreen> {
                   children: [
                     const SizedBox(height: 12),
                     _buildInputGroup(
-                      label: 'Store name',
+                      label: context.t('store_details_name_label'),
                       controller: _storeNameController,
                       icon: Icons.store_outlined,
                       c: c,
@@ -172,7 +172,7 @@ class _StoreDetailsScreenState extends State<StoreDetailsScreen> {
                     ),
                     const SizedBox(height: 20),
                     _buildInputGroup(
-                      label: 'Street address',
+                      label: context.t('store_details_street_label'),
                       controller: _streetAddressController,
                       icon: Icons.location_on_outlined,
                       c: c,
@@ -183,7 +183,7 @@ class _StoreDetailsScreenState extends State<StoreDetailsScreen> {
                       children: [
                         Expanded(
                           child: _buildInputGroup(
-                            label: 'City',
+                            label: context.t('store_details_city_label'),
                             controller: _cityController,
                             c: c,
                             textStyles: textStyles,
@@ -192,7 +192,7 @@ class _StoreDetailsScreenState extends State<StoreDetailsScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: _buildInputGroup(
-                            label: 'ZIP code',
+                            label: context.t('store_details_zip_label'),
                             controller: _zipCodeController,
                             c: c,
                             textStyles: textStyles,
@@ -202,7 +202,7 @@ class _StoreDetailsScreenState extends State<StoreDetailsScreen> {
                     ),
                     const SizedBox(height: 20),
                     _buildInputGroup(
-                      label: 'Store phone',
+                      label: context.t('store_details_phone_label'),
                       controller: _phoneController,
                       icon: Icons.phone_outlined,
                       c: c,
@@ -213,7 +213,7 @@ class _StoreDetailsScreenState extends State<StoreDetailsScreen> {
                       children: [
                         Expanded(
                           child: _buildInputGroup(
-                            label: 'Currency',
+                            label: context.t('store_details_currency_label'),
                             controller: _currencyController,
                             c: c,
                             textStyles: textStyles,
@@ -222,7 +222,7 @@ class _StoreDetailsScreenState extends State<StoreDetailsScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: _buildInputGroup(
-                            label: 'Time zone',
+                            label: context.t('store_details_timezone_label'),
                             controller: _timeZoneController,
                             c: c,
                             textStyles: textStyles,
@@ -234,7 +234,8 @@ class _StoreDetailsScreenState extends State<StoreDetailsScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF4F8FF),
+                        // ✅ FIXED: was Color(0xFFF4F8FF)
+                        color: c.surfaceTint,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -248,9 +249,10 @@ class _StoreDetailsScreenState extends State<StoreDetailsScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'America/New_York · EST / EDT adjusts automatically. Address and phone appear on receipts.',
+                              context.t('store_details_info'),
                               style: textStyles.bodySmall.copyWith(
-                                color: c.primaryCoral,
+                                // ✅ FIXED: was c.primaryCoral
+                                color: c.textSecondary,
                                 height: 1.4,
                                 fontSize: 13,
                               ),
@@ -261,7 +263,7 @@ class _StoreDetailsScreenState extends State<StoreDetailsScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Only store managers can update store details.',
+                      context.t('store_details_manager_note'),
                       style: textStyles.bodySmall.copyWith(
                         color: c.textMuted,
                         fontSize: 12,
@@ -309,7 +311,7 @@ class _StoreDetailsScreenState extends State<StoreDetailsScreen> {
                               Icon(Icons.check, size: 20, color: c.textLight),
                               const SizedBox(width: 8),
                               Text(
-                                'Save store details',
+                                context.t('store_details_save_button'),
                                 style: textStyles.labelMedium.copyWith(
                                   color: c.textLight,
                                   fontSize: 16,
@@ -323,7 +325,8 @@ class _StoreDetailsScreenState extends State<StoreDetailsScreen> {
                   TextButton(
                     onPressed: () => context.safePop(),
                     style: TextButton.styleFrom(
-                      backgroundColor: const Color(0xFFF4F8FF),
+                      // ✅ FIXED: was Color(0xFFF4F8FF)
+                      backgroundColor: c.surfaceTint,
                       foregroundColor: c.primaryCoral,
                       minimumSize: const Size(double.infinity, 54),
                       shape: RoundedRectangleBorder(
@@ -331,7 +334,7 @@ class _StoreDetailsScreenState extends State<StoreDetailsScreen> {
                       ),
                     ),
                     child: Text(
-                      'Cancel changes',
+                      context.t('store_details_cancel_button'),
                       style: textStyles.labelMedium.copyWith(
                         color: c.primaryCoral,
                         fontSize: 16,

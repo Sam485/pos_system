@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:pos_system/shared/helper/safe_pop.dart';
 import 'package:provider/provider.dart';
 import 'package:pos_system/core/routes/route_names.dart';
@@ -50,7 +51,8 @@ class _CloseRegisterScreenState extends State<CloseRegisterScreen> {
         _openingFloat = session.openingFloat;
         // In a real app, you would calculate expected cash from
         // opening float + cash sales - refunds + cash in - cash out.
-        // For now, we default it to the opening float since we don't have movement tracking.
+        // For now, we default it to the opening float since we don't
+        // have movement tracking.
         _expectedCash = _openingFloat;
         _countedCashController.text = _expectedCash.toStringAsFixed(2);
       }
@@ -79,8 +81,7 @@ class _CloseRegisterScreenState extends State<CloseRegisterScreen> {
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Register closed successfully'),
-          // ✅ FIXED: was const Color(0xFF137333)
+          content: Text(context.t('close_register_success')),
           backgroundColor: c.successFg,
         ),
       );
@@ -89,8 +90,9 @@ class _CloseRegisterScreenState extends State<CloseRegisterScreen> {
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(registerProvider.error ?? 'Failed to close register'),
-          // ✅ FIXED: was Colors.red
+          content: Text(
+            registerProvider.error ?? context.t('close_register_failed'),
+          ),
           backgroundColor: c.dangerFg,
         ),
       );
@@ -113,10 +115,13 @@ class _CloseRegisterScreenState extends State<CloseRegisterScreen> {
             children: [
               Icon(Icons.lock_outline, size: 64, color: c.textMuted),
               const SizedBox(height: 16),
-              Text('No open register', style: textStyles.heading2),
+              Text(
+                context.t('close_register_no_open'),
+                style: textStyles.heading2,
+              ),
               const SizedBox(height: 8),
               Text(
-                'There is no active register session to close.',
+                context.t('close_register_no_open_hint'),
                 style: textStyles.bodySmall.copyWith(color: c.textMuted),
               ),
               const SizedBox(height: 24),
@@ -133,7 +138,7 @@ class _CloseRegisterScreenState extends State<CloseRegisterScreen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('Go Back'),
+                child: Text(context.t('close_register_go_back')),
               ),
             ],
           ),
@@ -166,12 +171,14 @@ class _CloseRegisterScreenState extends State<CloseRegisterScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Close register',
+                        context.t('close_register_title'),
                         style: textStyles.heading2.copyWith(fontSize: 24),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Register 01 · Today',
+                        context.tp('close_register_subtitle', {
+                          'register': 'Register 01',
+                        }),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textMuted,
                         ),
@@ -196,14 +203,13 @@ class _CloseRegisterScreenState extends State<CloseRegisterScreen> {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        // ✅ FIXED: was 0xFFF4F8FF
                         color: c.surfaceTint,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Column(
                         children: [
                           _buildSummaryRow(
-                            'Opening float',
+                            context.t('close_register_opening_float'),
                             '\$${_openingFloat.toStringAsFixed(2)}',
                             c,
                             textStyles,
@@ -212,28 +218,28 @@ class _CloseRegisterScreenState extends State<CloseRegisterScreen> {
 
                           // Placeholder rows for future cash movement tracking
                           _buildSummaryRow(
-                            'Cash sales · After change',
+                            context.t('close_register_cash_sales'),
                             '+\$0.00',
                             c,
                             textStyles,
                           ),
                           const SizedBox(height: 12),
                           _buildSummaryRow(
-                            'Cash refunds',
+                            context.t('close_register_cash_refunds'),
                             '-\$0.00',
                             c,
                             textStyles,
                           ),
                           const SizedBox(height: 12),
                           _buildSummaryRow(
-                            'Cash in · Replenishment',
+                            context.t('close_register_cash_in'),
                             '+\$0.00',
                             c,
                             textStyles,
                           ),
                           const SizedBox(height: 12),
                           _buildSummaryRow(
-                            'Cash out · Expenses',
+                            context.t('close_register_cash_out'),
                             '-\$0.00',
                             c,
                             textStyles,
@@ -250,7 +256,7 @@ class _CloseRegisterScreenState extends State<CloseRegisterScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Expected cash',
+                                context.t('close_register_expected_cash'),
                                 style: textStyles.labelMedium.copyWith(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 16,
@@ -272,7 +278,7 @@ class _CloseRegisterScreenState extends State<CloseRegisterScreen> {
 
                     // ── Counted Cash Input ──
                     Text(
-                      'Counted cash · USD',
+                      context.t('close_register_counted_cash'),
                       style: textStyles.labelSmall.copyWith(
                         fontWeight: FontWeight.w600,
                         color: c.textPrimary,
@@ -316,7 +322,7 @@ class _CloseRegisterScreenState extends State<CloseRegisterScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Count all notes and coins in the drawer.',
+                      context.t('close_register_counted_hint'),
                       style: textStyles.bodySmall.copyWith(
                         color: c.textMuted,
                         fontSize: 12,
@@ -331,7 +337,6 @@ class _CloseRegisterScreenState extends State<CloseRegisterScreen> {
                         vertical: 12,
                       ),
                       decoration: BoxDecoration(
-                        // ✅ FIXED: successBg / warningBg
                         color: _isBalanced ? c.successBg : c.warningBg,
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -341,17 +346,23 @@ class _CloseRegisterScreenState extends State<CloseRegisterScreen> {
                             _isBalanced
                                 ? Icons.check_circle_outline_rounded
                                 : Icons.warning_amber_rounded,
-                            // ✅ FIXED: successFg / warningFg
                             color: _isBalanced ? c.successFg : c.warningFg,
                             size: 20,
                           ),
                           const SizedBox(width: 8),
                           Text(
                             _isBalanced
-                                ? 'Balanced · Difference \$0.00'
-                                : 'Difference: \$${_difference.abs().toStringAsFixed(2)} ${_difference > 0 ? 'over' : 'short'}',
+                                ? context.t('close_register_balanced')
+                                : context.tp(
+                                    _difference > 0
+                                        ? 'close_register_difference_over'
+                                        : 'close_register_difference_short',
+                                    {
+                                      'amount':
+                                          '\$${_difference.abs().toStringAsFixed(2)}',
+                                    },
+                                  ),
                             style: textStyles.bodySmall.copyWith(
-                              // ✅ FIXED: successFg / warningFg
                               color: _isBalanced ? c.successFg : c.warningFg,
                               fontWeight: FontWeight.w600,
                               fontSize: 13,
@@ -364,7 +375,7 @@ class _CloseRegisterScreenState extends State<CloseRegisterScreen> {
 
                     // ── Closing Note ──
                     Text(
-                      'Closing note',
+                      context.t('close_register_note_label'),
                       style: textStyles.labelSmall.copyWith(
                         fontWeight: FontWeight.w600,
                         color: c.textPrimary,
@@ -449,7 +460,7 @@ class _CloseRegisterScreenState extends State<CloseRegisterScreen> {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'Confirm & close register',
+                                context.t('close_register_action'),
                                 style: textStyles.labelMedium.copyWith(
                                   color: c.textLight,
                                   fontSize: 16,
@@ -461,7 +472,7 @@ class _CloseRegisterScreenState extends State<CloseRegisterScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'This ends the current register session.',
+                    context.t('close_register_footer'),
                     style: textStyles.bodySmall.copyWith(
                       color: c.textMuted,
                       fontSize: 12,

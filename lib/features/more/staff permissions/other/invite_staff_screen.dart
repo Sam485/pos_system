@@ -1,6 +1,7 @@
 // features/more/staff permissions/invite_staff_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:pos_system/shared/helper/safe_pop.dart';
 import 'package:provider/provider.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
@@ -31,8 +32,7 @@ class _InviteStaffScreenState extends State<InviteStaffScreen> {
     if (_emailController.text.isEmpty || !_emailController.text.contains('@')) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Please enter a valid email address'),
-          // ✅ FIXED: was Colors.red
+          content: Text(context.t('invite_error_email')),
           backgroundColor: c.dangerFg,
         ),
       );
@@ -48,8 +48,7 @@ class _InviteStaffScreenState extends State<InviteStaffScreen> {
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Invitation sent successfully'),
-          // ✅ FIXED: was const Color(0xFF137333)
+          content: Text(context.t('invite_success')),
           backgroundColor: c.successFg,
         ),
       );
@@ -57,8 +56,7 @@ class _InviteStaffScreenState extends State<InviteStaffScreen> {
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(staffProvider.error ?? 'Failed to send invite'),
-          // ✅ FIXED: was Colors.red
+          content: Text(staffProvider.error ?? context.t('invite_failed')),
           backgroundColor: c.dangerFg,
         ),
       );
@@ -93,7 +91,7 @@ class _InviteStaffScreenState extends State<InviteStaffScreen> {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    'Invite staff',
+                    context.t('invite_title'),
                     style: textStyles.heading2.copyWith(fontSize: 24),
                   ),
                 ],
@@ -112,7 +110,7 @@ class _InviteStaffScreenState extends State<InviteStaffScreen> {
 
                     // Headings
                     Text(
-                      'Grow your team.',
+                      context.t('invite_heading'),
                       style: textStyles.heading1.copyWith(
                         fontSize: 26,
                         letterSpacing: -0.5,
@@ -120,7 +118,7 @@ class _InviteStaffScreenState extends State<InviteStaffScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Invite a new staff member to join your store. They will receive an email to set up their account.',
+                      context.t('invite_description'),
                       style: textStyles.bodyMedium.copyWith(
                         color: c.textSecondary,
                         height: 1.4,
@@ -130,7 +128,7 @@ class _InviteStaffScreenState extends State<InviteStaffScreen> {
 
                     // ── Email Input ──
                     Text(
-                      'Email address',
+                      context.t('invite_email_label'),
                       style: textStyles.labelSmall.copyWith(
                         fontWeight: FontWeight.w600,
                         color: c.textPrimary,
@@ -147,7 +145,7 @@ class _InviteStaffScreenState extends State<InviteStaffScreen> {
                           color: c.textMuted,
                           size: 20,
                         ),
-                        hintText: 'name@example.com',
+                        hintText: context.t('invite_email_hint'),
                         hintStyle: textStyles.bodyMedium.copyWith(
                           color: c.textMuted,
                         ),
@@ -177,7 +175,7 @@ class _InviteStaffScreenState extends State<InviteStaffScreen> {
 
                     // ── Role Selection ──
                     Text(
-                      'Role',
+                      context.t('invite_role_label'),
                       style: textStyles.labelSmall.copyWith(
                         fontWeight: FontWeight.w600,
                         color: c.textPrimary,
@@ -187,16 +185,16 @@ class _InviteStaffScreenState extends State<InviteStaffScreen> {
 
                     _buildRoleOption(
                       role: RoleEnum.associate,
-                      title: 'Sales associate',
-                      description: 'Can sell and manage customers',
+                      title: context.t('invite_role_associate'),
+                      description: context.t('invite_role_associate_sub'),
                       c: c,
                       textStyles: textStyles,
                     ),
                     const SizedBox(height: 12),
                     _buildRoleOption(
                       role: RoleEnum.manager,
-                      title: 'Store manager',
-                      description: 'Full access to all features',
+                      title: context.t('invite_role_manager'),
+                      description: context.t('invite_role_manager_sub'),
                       c: c,
                       textStyles: textStyles,
                     ),
@@ -205,7 +203,7 @@ class _InviteStaffScreenState extends State<InviteStaffScreen> {
 
                     // ── Footer Note ──
                     Text(
-                      'The new staff member will need to verify their email and create a password before accessing the store.',
+                      context.t('invite_footer_note'),
                       style: textStyles.bodySmall.copyWith(
                         color: c.textMuted,
                         fontSize: 12,
@@ -254,7 +252,7 @@ class _InviteStaffScreenState extends State<InviteStaffScreen> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Send invitation',
+                            context.t('invite_send_button'),
                             style: textStyles.labelMedium.copyWith(
                               color: c.textLight,
                               fontSize: 16,
@@ -285,7 +283,6 @@ class _InviteStaffScreenState extends State<InviteStaffScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          // ✅ FIXED: was 0xFFF4F8FF
           color: isSelected ? c.surfaceTint : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(

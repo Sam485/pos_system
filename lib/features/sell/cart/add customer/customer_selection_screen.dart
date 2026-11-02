@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:pos_system/core/routes/route_names.dart';
@@ -79,7 +80,7 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    'Add a customer',
+                    context.t('customer_select_title'),
                     style: textStyles.heading2.copyWith(fontSize: 24),
                   ),
                 ],
@@ -104,7 +105,7 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
                           controller: _searchController,
                           style: textStyles.bodyLarge,
                           decoration: InputDecoration(
-                            hintText: 'Search by name, email or phone',
+                            hintText: context.t('customer_search_hint'),
                             hintStyle: textStyles.bodyMedium.copyWith(
                               color: c.textMuted,
                             ),
@@ -150,7 +151,9 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              '${filteredCustomers.length} matching customers',
+                              context.tp('customer_matching_count', {
+                                'count': '${filteredCustomers.length}',
+                              }),
                               style: textStyles.bodySmall.copyWith(
                                 color: c.textMuted,
                               ),
@@ -165,7 +168,7 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
                               child: Text(
-                                '+ New customer',
+                                context.t('customer_new_button'),
                                 style: textStyles.labelSmall.copyWith(
                                   color: c.primaryCoral,
                                   fontWeight: FontWeight.w600,
@@ -186,7 +189,7 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
                           padding: const EdgeInsets.all(40.0),
                           child: Center(
                             child: Text(
-                              'No customers found.',
+                              context.t('customer_no_results'),
                               style: textStyles.bodyMedium.copyWith(
                                 color: c.textMuted,
                               ),
@@ -221,7 +224,6 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              // ✅ FIXED: was 0xFFF8F9FA
                               color: c.surfaceLight,
                               borderRadius: BorderRadius.circular(16),
                             ),
@@ -229,7 +231,7 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Customer Insight',
+                                  context.t('customer_insight_title'),
                                   style: textStyles.labelSmall.copyWith(
                                     color: c.primaryCoral,
                                     fontWeight: FontWeight.w700,
@@ -238,8 +240,8 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
                                 const SizedBox(height: 8),
                                 Text(
                                   _selectedCustomer!.totalVisit > 1
-                                      ? 'A familiar face. A better experience.'
-                                      : 'Welcome back.',
+                                      ? context.t('customer_insight_familiar')
+                                      : context.t('customer_insight_welcome'),
                                   style: textStyles.heading2.copyWith(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
@@ -247,7 +249,11 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  '${_selectedCustomer!.firstName} has spent \$${_selectedCustomer!.lifeTimeSpend.toStringAsFixed(2)} with your store.',
+                                  context.tp('customer_insight_spent', {
+                                    'name': _selectedCustomer!.firstName,
+                                    'amount': _selectedCustomer!.lifeTimeSpend
+                                        .toStringAsFixed(2),
+                                  }),
                                   style: textStyles.bodySmall.copyWith(
                                     color: c.textSecondary,
                                     height: 1.4,
@@ -273,8 +279,6 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
                     onPressed: _selectedCustomer == null
                         ? null
                         : () {
-                            // Store the selected customer in the cart provider
-                            // Note: You'll need a method like this in CartProvider
                             cartProvider.selectCustomer(_selectedCustomer);
                             context.pop();
                           },
@@ -292,8 +296,11 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
                     ),
                     child: Text(
                       _selectedCustomer != null
-                          ? 'Use ${_selectedCustomer!.firstName} ${_selectedCustomer!.lastName}'
-                          : 'Select a customer',
+                          ? context.tp('customer_use_button', {
+                              'name':
+                                  '${_selectedCustomer!.firstName} ${_selectedCustomer!.lastName}',
+                            })
+                          : context.t('customer_select_prompt'),
                       style: textStyles.labelMedium.copyWith(
                         color: c.textLight,
                         fontSize: 16,
@@ -304,11 +311,10 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
                   const SizedBox(height: 12),
                   TextButton(
                     onPressed: () {
-                      cartProvider.selectCustomer(null); // Clear selection
+                      cartProvider.selectCustomer(null);
                       context.pop();
                     },
                     style: TextButton.styleFrom(
-                      // ✅ FIXED: was 0xFFF4F8FF
                       backgroundColor: c.surfaceTint,
                       foregroundColor: c.primaryCoral,
                       minimumSize: const Size(double.infinity, 54),
@@ -317,7 +323,7 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
                       ),
                     ),
                     child: Text(
-                      'Continue as guest',
+                      context.t('customer_continue_guest'),
                       style: textStyles.labelMedium.copyWith(
                         color: c.primaryCoral,
                         fontSize: 16,
@@ -352,11 +358,9 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          // ✅ FIXED: selected row bg — surfaceTint instead of 0xFFF4F8FF
           color: isSelected ? c.surfaceTint : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            // ✅ FIXED: selected border adapts to theme
             color: isSelected
                 ? (c.isDark
                       ? Colors.white.withValues(alpha: 0.10)
@@ -372,7 +376,6 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
               height: 40,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                // ✅ FIXED: avatar bg
                 color: c.isDark
                     ? Colors.white.withValues(alpha: 0.10)
                     : const Color(0xFFE8F0FE),
@@ -381,7 +384,6 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
               child: Text(
                 initials,
                 style: textStyles.labelSmall.copyWith(
-                  // ✅ FIXED: avatar text — was 0xFF1967D2
                   color: c.primaryCoral,
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
@@ -412,7 +414,10 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${customer.totalVisit} visits · Lifetime \$${customer.lifeTimeSpend.toStringAsFixed(2)}',
+                    context.tp('customer_visits_lifetime', {
+                      'visits': '${customer.totalVisit}',
+                      'amount': customer.lifeTimeSpend.toStringAsFixed(2),
+                    }),
                     style: textStyles.bodySmall.copyWith(
                       color: c.textMuted,
                       fontSize: 11,

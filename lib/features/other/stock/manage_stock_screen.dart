@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:provider/provider.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
 import 'package:pos_system/core/theme/app_text_style_x.dart';
@@ -23,12 +24,8 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
   final TextEditingController _quantityController = TextEditingController(
     text: '8',
   );
-  final TextEditingController _reasonController = TextEditingController(
-    text: 'Stock received',
-  );
-  final TextEditingController _noteController = TextEditingController(
-    text: 'Delivery PO-0246',
-  );
+  final TextEditingController _reasonController = TextEditingController();
+  final TextEditingController _noteController = TextEditingController();
 
   ProductModel? _product;
   bool _isInitialized = false;
@@ -40,6 +37,9 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
   void initState() {
     super.initState();
     _quantityController.addListener(_updateCalculation);
+    // Localized defaults
+    _reasonController.text = context.t('manage_stock_reason_default');
+    _noteController.text = context.t('manage_stock_note_default');
   }
 
   @override
@@ -199,10 +199,14 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
       return (order[a] ?? 99).compareTo(order[b] ?? 99);
     });
 
-    final selectedSize = _selectedVariant?.size ?? 'M';
-    final selectedColor = _selectedVariant?.color ?? 'White';
-    final variantSku = _selectedVariant?.sku ?? 'CT-WHT-M';
-    final productName = _product?.name ?? 'Essential cotton tee';
+    final selectedSize =
+        _selectedVariant?.size ?? context.t('manage_stock_size_default');
+    final selectedColor =
+        _selectedVariant?.color ?? context.t('manage_stock_color_default');
+    final variantSku =
+        _selectedVariant?.sku ?? context.t('manage_stock_sku_default');
+    final productName =
+        _product?.name ?? context.t('manage_stock_product_default');
 
     return Scaffold(
       backgroundColor: c.background,
@@ -229,12 +233,12 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Manage stock',
+                        context.t('manage_stock_title'),
                         style: textStyles.heading2.copyWith(fontSize: 22),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'SoHo store',
+                        context.t('manage_stock_store_default'),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textMuted,
                         ),
@@ -269,7 +273,7 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
                             width: 72,
                             height: 72,
                             decoration: BoxDecoration(
-                              color: c.surfaceLight, // 👈 theme-aware
+                              color: c.surfaceLight,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: ClipRRect(
@@ -298,7 +302,10 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  '$totalProductUnits units · ${productVariants.length} variants',
+                                  context.tp('manage_stock_product_units', {
+                                    'units': '$totalProductUnits',
+                                    'variants': '${productVariants.length}',
+                                  }),
                                   style: textStyles.bodySmall.copyWith(
                                     color: c.textSecondary,
                                   ),
@@ -307,7 +314,7 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
                                 Row(
                                   children: [
                                     Text(
-                                      'View product details',
+                                      context.t('manage_stock_view_details'),
                                       style: textStyles.labelSmall.copyWith(
                                         color: c.primaryCoral,
                                         fontWeight: FontWeight.w600,
@@ -338,7 +345,7 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Stock by variant',
+                            context.t('manage_stock_stock_by_variant'),
                             style: textStyles.labelMedium.copyWith(
                               fontWeight: FontWeight.w600,
                             ),
@@ -366,7 +373,7 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
                                       ),
                                       const SizedBox(width: 4),
                                       Text(
-                                        'Add',
+                                        context.t('manage_stock_add_button'),
                                         style: textStyles.labelSmall.copyWith(
                                           color: c.textLight,
                                           fontWeight: FontWeight.w600,
@@ -438,7 +445,6 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
                             child: Container(
                               width: 60,
                               decoration: BoxDecoration(
-                                // 👇 theme-aware selection tint
                                 color: isSelected
                                     ? c.primaryCoral.withValues(alpha: 0.12)
                                     : c.surfaceLight,
@@ -500,12 +506,18 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Update $selectedSize · $selectedColor / $selectedSize',
+                            context.tp('manage_stock_update_title', {
+                              'size': selectedSize,
+                              'color': selectedColor,
+                            }),
                             style: textStyles.heading2.copyWith(fontSize: 20),
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'SKU $variantSku · $_currentStock units currently available',
+                            context.tp('manage_stock_update_sku', {
+                              'sku': variantSku,
+                              'count': '$_currentStock',
+                            }),
                             style: textStyles.bodySmall.copyWith(
                               color: c.textMuted,
                             ),
@@ -516,7 +528,7 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
                           Row(
                             children: [
                               _buildActionToggle(
-                                label: 'Add stock',
+                                label: context.t('manage_stock_action_add'),
                                 isActive: _isAddAction,
                                 onTap: () =>
                                     setState(() => _isAddAction = true),
@@ -525,7 +537,7 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
                               ),
                               const SizedBox(width: 8),
                               _buildActionToggle(
-                                label: 'Remove',
+                                label: context.t('manage_stock_action_remove'),
                                 isActive: !_isAddAction,
                                 onTap: () =>
                                     setState(() => _isAddAction = false),
@@ -534,7 +546,7 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
                               ),
                               const SizedBox(width: 8),
                               _buildActionToggle(
-                                label: 'Set quantity',
+                                label: context.t('manage_stock_action_set'),
                                 isActive: false,
                                 onTap: () {},
                                 c: c,
@@ -546,7 +558,7 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
 
                           // Inputs
                           Text(
-                            'Quantity',
+                            context.t('manage_stock_quantity_label'),
                             style: textStyles.labelSmall.copyWith(
                               fontWeight: FontWeight.w600,
                             ),
@@ -560,7 +572,7 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'Reason',
+                            context.t('manage_stock_reason_label'),
                             style: textStyles.labelSmall.copyWith(
                               fontWeight: FontWeight.w600,
                             ),
@@ -578,7 +590,7 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'Reference note',
+                            context.t('manage_stock_note_label'),
                             style: textStyles.labelSmall.copyWith(
                               fontWeight: FontWeight.w600,
                             ),
@@ -598,7 +610,7 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: c.surfaceTint, // 👈 theme-aware
+                              color: c.surfaceTint,
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Column(
@@ -608,11 +620,15 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      'Current available',
+                                      context.t(
+                                        'manage_stock_current_available',
+                                      ),
                                       style: textStyles.bodySmall,
                                     ),
                                     Text(
-                                      '$_currentStock units',
+                                      context.tp('manage_stock_current_units', {
+                                        'count': '$_currentStock',
+                                      }),
                                       style: textStyles.labelSmall.copyWith(
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -625,13 +641,15 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      'After update',
+                                      context.t('manage_stock_after_update'),
                                       style: textStyles.labelMedium.copyWith(
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
                                     Text(
-                                      '$_newStock units',
+                                      context.tp('manage_stock_after_units', {
+                                        'count': '$_newStock',
+                                      }),
                                       style: textStyles.heading2.copyWith(
                                         color: c.primaryCoral,
                                         fontSize: 22,
@@ -644,7 +662,18 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
                           ),
                           const SizedBox(height: 16),
                           Text(
-                            'Last movement: +1 return · #1048 · Today, 10:08 AM',
+                            context.tp('manage_stock_last_movement', {
+                              'change': context.tp(
+                                'manage_stock_last_movement_change',
+                                {'count': '1'},
+                              ),
+                              'orderNumber': context.t(
+                                'manage_stock_last_movement_order',
+                              ),
+                              'time': context.t(
+                                'manage_stock_last_movement_time',
+                              ),
+                            }),
                             style: textStyles.bodySmall.copyWith(
                               color: c.textMuted,
                               fontSize: 11,
@@ -680,11 +709,11 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
                             _newStock,
                           );
                           ScaffoldMessenger.of(context).showSnackBar(
-                            // SnackBar on its own colored surface — white
-                            // text stays readable in both modes
-                            const SnackBar(
-                              content: Text('Stock updated successfully'),
-                              backgroundColor: Color(0xFF137333),
+                            SnackBar(
+                              content: Text(
+                                context.t('manage_stock_update_success'),
+                              ),
+                              backgroundColor: context.colors.successFg,
                             ),
                           );
                           context.pop();
@@ -717,7 +746,14 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
                           Icon(Icons.check, size: 20, color: c.textLight),
                           const SizedBox(width: 8),
                           Text(
-                            'Save stock update · ${_difference > 0 ? '+' : ''}$_difference units',
+                            context.tp('manage_stock_save_button', {
+                              'change': _difference > 0
+                                  ? context.tp(
+                                      'manage_stock_save_change_positive',
+                                      {'count': '$_difference'},
+                                    )
+                                  : '$_difference',
+                            }),
                             style: textStyles.labelMedium.copyWith(
                               color: c.textLight,
                               fontSize: 16,
@@ -797,9 +833,7 @@ class _AddVariantSheet extends StatefulWidget {
 }
 
 class _AddVariantSheetState extends State<_AddVariantSheet> {
-  final TextEditingController _colorController = TextEditingController(
-    text: 'White',
-  );
+  final TextEditingController _colorController = TextEditingController();
   final TextEditingController _skuController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _stockController = TextEditingController(
@@ -824,6 +858,7 @@ class _AddVariantSheetState extends State<_AddVariantSheet> {
   void initState() {
     super.initState();
     _priceController.text = widget.product.basePrice.toStringAsFixed(2);
+    _colorController.text = context.t('manage_stock_color_default_input');
   }
 
   @override
@@ -838,9 +873,9 @@ class _AddVariantSheetState extends State<_AddVariantSheet> {
   Future<void> _saveVariant() async {
     if (_colorController.text.isEmpty || _skuController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill in color and SKU'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: Text(context.t('manage_stock_add_variant_error')),
+          backgroundColor: context.colors.dangerFg,
         ),
       );
       return;
@@ -863,8 +898,11 @@ class _AddVariantSheetState extends State<_AddVariantSheet> {
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(inventoryProvider.error ?? 'Failed to create variant'),
-          backgroundColor: Colors.red,
+          content: Text(
+            inventoryProvider.error ??
+                context.t('manage_stock_add_variant_failed'),
+          ),
+          backgroundColor: context.colors.dangerFg,
         ),
       );
     }
@@ -905,7 +943,7 @@ class _AddVariantSheetState extends State<_AddVariantSheet> {
               const SizedBox(height: 20),
 
               Text(
-                'Add new variant',
+                context.t('manage_stock_add_variant_title'),
                 style: textStyles.heading2.copyWith(fontSize: 22),
               ),
               const SizedBox(height: 4),
@@ -916,7 +954,7 @@ class _AddVariantSheetState extends State<_AddVariantSheet> {
               const SizedBox(height: 24),
 
               Text(
-                'Color',
+                context.t('manage_stock_color_label'),
                 style: textStyles.labelSmall.copyWith(
                   fontWeight: FontWeight.w600,
                   color: c.textPrimary,
@@ -931,7 +969,7 @@ class _AddVariantSheetState extends State<_AddVariantSheet> {
               const SizedBox(height: 16),
 
               Text(
-                'Size',
+                context.t('manage_stock_size_label'),
                 style: textStyles.labelSmall.copyWith(
                   fontWeight: FontWeight.w600,
                   color: c.textPrimary,
@@ -948,7 +986,7 @@ class _AddVariantSheetState extends State<_AddVariantSheet> {
                   child: DropdownButton<String>(
                     value: _selectedSize,
                     isExpanded: true,
-                    dropdownColor: c.cardBackground, // 👈 dark-friendly menu
+                    dropdownColor: c.cardBackground,
                     icon: Icon(
                       Icons.keyboard_arrow_down_rounded,
                       color: c.textMuted,
@@ -966,7 +1004,7 @@ class _AddVariantSheetState extends State<_AddVariantSheet> {
               const SizedBox(height: 16),
 
               Text(
-                'SKU',
+                context.t('manage_stock_sku_label'),
                 style: textStyles.labelSmall.copyWith(
                   fontWeight: FontWeight.w600,
                   color: c.textPrimary,
@@ -987,7 +1025,7 @@ class _AddVariantSheetState extends State<_AddVariantSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Price',
+                          context.t('manage_stock_price_label'),
                           style: textStyles.labelSmall.copyWith(
                             fontWeight: FontWeight.w600,
                             color: c.textPrimary,
@@ -1014,7 +1052,7 @@ class _AddVariantSheetState extends State<_AddVariantSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Initial stock',
+                          context.t('manage_stock_initial_stock_label'),
                           style: textStyles.labelSmall.copyWith(
                             fontWeight: FontWeight.w600,
                             color: c.textPrimary,
@@ -1066,7 +1104,7 @@ class _AddVariantSheetState extends State<_AddVariantSheet> {
                           Icon(Icons.check, size: 20, color: c.textLight),
                           const SizedBox(width: 8),
                           Text(
-                            'Save variant',
+                            context.t('manage_stock_save_variant_button'),
                             style: textStyles.labelMedium.copyWith(
                               color: c.textLight,
                               fontSize: 16,

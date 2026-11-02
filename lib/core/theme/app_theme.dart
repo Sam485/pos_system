@@ -1,18 +1,23 @@
+// core/theme/app_theme.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
+import 'app_text_styles.dart';
 
 abstract class AppTheme {
   // ══════════════════════════════════════════════════════════════
-  // LIGHT
+  // LIGHT — takes the active language so it can pick the right font
   // ══════════════════════════════════════════════════════════════
-  static ThemeData get light {
+  static ThemeData lightFor(String languageCode) {
+    final family = AppTextStyles.familyFor(languageCode);
+
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
       scaffoldBackgroundColor: AppColors.background,
+      fontFamily: family, // 👈 default family for unstyled Text
       colorScheme: const ColorScheme.light(
         surface: AppColors.background,
         primary: AppColors.primaryCoral,
@@ -24,13 +29,12 @@ abstract class AppTheme {
       ),
 
       // ── Text ──────────────────────────────────────────────────
-      textTheme:
-          GoogleFonts.plusJakartaSansTextTheme(
-            ThemeData.light().textTheme,
-          ).apply(
-            bodyColor: AppColors.textPrimary,
-            displayColor: AppColors.textPrimary,
-          ),
+      // No more GoogleFonts: font family comes from `family`.
+      textTheme: ThemeData.light().textTheme.apply(
+        fontFamily: family,
+        bodyColor: AppColors.textPrimary,
+        displayColor: AppColors.textPrimary,
+      ),
 
       // ── AppBar ────────────────────────────────────────────────
       appBarTheme: AppBarTheme(
@@ -40,7 +44,8 @@ abstract class AppTheme {
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.dark,
         ),
-        titleTextStyle: GoogleFonts.plusJakartaSans(
+        titleTextStyle: TextStyle(
+          fontFamily: family, // 👈
           fontSize: 18,
           fontWeight: FontWeight.w700,
           color: AppColors.textPrimary,
@@ -67,7 +72,8 @@ abstract class AppTheme {
           horizontal: 20,
           vertical: 14,
         ),
-        hintStyle: GoogleFonts.plusJakartaSans(
+        hintStyle: TextStyle(
+          fontFamily: family, // 👈
           color: AppColors.textMuted,
           fontSize: 14,
         ),
@@ -107,9 +113,11 @@ abstract class AppTheme {
   }
 
   // ══════════════════════════════════════════════════════════════
-  // DARK
+  // DARK — same idea; also registers the palette extension
   // ══════════════════════════════════════════════════════════════
-  static ThemeData get dark {
+  static ThemeData darkFor(String languageCode) {
+    final family = AppTextStyles.familyFor(languageCode);
+
     // Base is Material's dark scheme, then we override with our tokens.
     final base = ThemeData.dark(useMaterial3: true);
     return base.copyWith(
@@ -126,7 +134,8 @@ abstract class AppTheme {
       ),
 
       // ── Text ──────────────────────────────────────────────────
-      textTheme: GoogleFonts.plusJakartaSansTextTheme(base.textTheme).apply(
+      textTheme: base.textTheme.apply(
+        fontFamily: family, // 👈
         bodyColor: AppThemeColors.dark.textPrimary,
         displayColor: AppThemeColors.dark.textPrimary,
       ),
@@ -137,10 +146,10 @@ abstract class AppTheme {
         elevation: 0,
         systemOverlayStyle: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
-          // Light status bar icons for dark background
           statusBarIconBrightness: Brightness.light,
         ),
-        titleTextStyle: GoogleFonts.plusJakartaSans(
+        titleTextStyle: TextStyle(
+          fontFamily: family, // 👈
           fontSize: 18,
           fontWeight: FontWeight.w700,
           color: AppThemeColors.dark.textPrimary,
@@ -167,7 +176,8 @@ abstract class AppTheme {
           horizontal: 20,
           vertical: 14,
         ),
-        hintStyle: GoogleFonts.plusJakartaSans(
+        hintStyle: TextStyle(
+          fontFamily: family, // 👈
           color: AppThemeColors.dark.textMuted,
           fontSize: 14,
         ),
@@ -211,4 +221,13 @@ abstract class AppTheme {
       extensions: const [AppThemeColors.dark],
     );
   }
+
+  // ══════════════════════════════════════════════════════════════
+  // Backwards-compatible getters — for any code that still calls
+  // AppTheme.light / AppTheme.dark without a language. They default
+  // to English (PlusJakartaSans). New code should call lightFor(...)
+  // / darkFor(...) with the active language.
+  // ══════════════════════════════════════════════════════════════
+  static ThemeData get light => lightFor('en');
+  static ThemeData get dark => darkFor('en');
 }

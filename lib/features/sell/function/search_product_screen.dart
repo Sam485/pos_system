@@ -2,12 +2,14 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:pos_system/core/routes/route_names.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
 import 'package:pos_system/core/theme/app_text_style_x.dart';
 import 'package:pos_system/providers/inventory_provider.dart';
+import 'package:pos_system/providers/language_provider.dart';
 import 'package:pos_system/providers/product_provider.dart';
 import 'package:pos_system/data/models/product_model.dart';
 import 'package:pos_system/data/models/variant_model.dart';
@@ -46,6 +48,9 @@ class _SearchProductsScreenState extends State<SearchProductsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // 👇 Rebuild when the language changes
+    context.watch<LanguageProvider>();
+
     final c = context.colors;
     final textStyles = AppTextStylesX(context);
     final productProvider = context.watch<ProductProvider>();
@@ -57,14 +62,12 @@ class _SearchProductsScreenState extends State<SearchProductsScreen> {
     final searchResults = productProvider.products.where((product) {
       if (_searchQuery.isEmpty) return true;
 
-      // Check product name
       if (product.name.toLowerCase().contains(_searchQuery)) return true;
 
-      // Check collection name
-      if (product.collectionName.toLowerCase().contains(_searchQuery))
+      if (product.collectionName.toLowerCase().contains(_searchQuery)) {
         return true;
+      }
 
-      // Check variant SKUs
       final variants = inventoryProvider.variants.where(
         (v) => v.productId == product.id,
       );
@@ -100,12 +103,17 @@ class _SearchProductsScreenState extends State<SearchProductsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Search products',
+                        context.t('search_products_title'),
                         style: textStyles.heading2.copyWith(fontSize: 24),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'SoHo store · Before order #1048',
+                        context.tp('search_products_subtitle', {
+                          'store': context.t('search_products_store_default'),
+                          'orderNumber': context.t(
+                            'search_products_order_default',
+                          ),
+                        }),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textMuted,
                         ),
@@ -123,7 +131,7 @@ class _SearchProductsScreenState extends State<SearchProductsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Search products or SKU',
+                    context.t('search_products_label'),
                     style: textStyles.labelMedium.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -133,7 +141,7 @@ class _SearchProductsScreenState extends State<SearchProductsScreen> {
                     controller: _searchController,
                     autofocus: true,
                     decoration: InputDecoration(
-                      hintText: 'Search products or scan a barcode',
+                      hintText: context.t('search_products_hint'),
                       hintStyle: textStyles.bodyMedium.copyWith(
                         color: c.textMuted,
                       ),
@@ -193,10 +201,20 @@ class _SearchProductsScreenState extends State<SearchProductsScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              '${searchResults.length} results${_searchQuery.isNotEmpty ? ' for "$_searchQuery"' : ''}',
-                              style: textStyles.bodySmall.copyWith(
-                                color: c.textSecondary,
+                            Expanded(
+                              child: Text(
+                                _searchQuery.isNotEmpty
+                                    ? context
+                                          .tp('search_products_results_for', {
+                                            'count': '${searchResults.length}',
+                                            'query': _searchQuery,
+                                          })
+                                    : context.tp('search_products_results', {
+                                        'count': '${searchResults.length}',
+                                      }),
+                                style: textStyles.bodySmall.copyWith(
+                                  color: c.textSecondary,
+                                ),
                               ),
                             ),
                             TextButton.icon(
@@ -209,7 +227,7 @@ class _SearchProductsScreenState extends State<SearchProductsScreen> {
                                 size: 18,
                               ),
                               label: Text(
-                                'Filters',
+                                context.t('search_products_filters'),
                                 style: textStyles.labelMedium.copyWith(
                                   color: c.primaryCoral,
                                   fontWeight: FontWeight.w600,
@@ -234,7 +252,9 @@ class _SearchProductsScreenState extends State<SearchProductsScreen> {
                           padding: const EdgeInsets.all(40.0),
                           child: Center(
                             child: Text(
-                              'No products found for "$_searchQuery".',
+                              context.tp('search_products_empty', {
+                                'query': _searchQuery,
+                              }),
                               style: textStyles.bodyMedium.copyWith(
                                 color: c.textMuted,
                               ),
@@ -270,7 +290,7 @@ class _SearchProductsScreenState extends State<SearchProductsScreen> {
                           vertical: 16.0,
                         ),
                         child: Text(
-                          'Matching product names, materials and SKUs.',
+                          context.t('search_products_match_note'),
                           style: textStyles.bodySmall.copyWith(
                             color: c.textMuted,
                             fontSize: 12,
@@ -297,7 +317,6 @@ class _SearchProductsScreenState extends State<SearchProductsScreen> {
     AppThemeColors c,
     AppTextStylesX textStyles,
   ) {
-    // Find the first matching variant (or just the first variant if no query)
     final variants = inventoryProvider.variants
         .where((v) => v.productId == product.id)
         .toList();
@@ -312,7 +331,6 @@ class _SearchProductsScreenState extends State<SearchProductsScreen> {
       }
     }
 
-    // Get stock for the variant
     int stock = 0;
     if (displayVariant != null) {
       final inv = inventoryProvider.lowStockAlerts.firstWhere(
@@ -381,8 +399,12 @@ class _SearchProductsScreenState extends State<SearchProductsScreen> {
                   const SizedBox(height: 4),
                   Text(
                     displayVariant != null
-                        ? '${displayVariant.color} / ${displayVariant.size} · ${displayVariant.sku}'
-                        : 'No variants',
+                        ? context.tp('search_products_variant_line', {
+                            'color': displayVariant.color,
+                            'size': displayVariant.size,
+                            'sku': displayVariant.sku,
+                          })
+                        : context.t('search_products_no_variants'),
                     style: textStyles.bodySmall.copyWith(
                       color: c.textMuted,
                       fontSize: 13,
@@ -400,7 +422,9 @@ class _SearchProductsScreenState extends State<SearchProductsScreen> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '· $stock available',
+                        context.tp('search_products_stock_available', {
+                          'count': '$stock',
+                        }),
                         style: textStyles.labelMedium.copyWith(
                           color: c.textMuted,
                           fontSize: 14,

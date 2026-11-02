@@ -114,7 +114,6 @@ class _KhqrPaymentScreenState extends State<KhqrPaymentScreen> {
         _pollTimer?.cancel();
         _expiryTimer?.cancel();
         setState(() => _status = 'paid');
-        // 👇 Automatically place the order when payment is confirmed
         _placeOrder();
       } else if (body['responseCode'] != 0 && body['responseCode'] != 1) {
         setState(() {
@@ -178,12 +177,10 @@ class _KhqrPaymentScreenState extends State<KhqrPaymentScreen> {
         );
       }
     } else if (mounted) {
-      // If placing order fails, still show the payment as successful
-      // but display an error
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(orderProvider.error ?? 'Failed to create order'),
-          backgroundColor: Colors.red,
+          content: Text(orderProvider.error ?? context.t('khqr_failed_order')),
+          backgroundColor: context.colors.dangerFg,
         ),
       );
     }
@@ -212,7 +209,7 @@ class _KhqrPaymentScreenState extends State<KhqrPaymentScreen> {
           icon: Icon(Icons.close_rounded, color: c.textPrimary),
         ),
         title: Text(
-          'Scan to pay',
+          context.t('khqr_title'),
           style: textStyles.heading2.copyWith(fontSize: 20),
         ),
         centerTitle: true,
@@ -245,13 +242,13 @@ class _KhqrPaymentScreenState extends State<KhqrPaymentScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Bakong · KHQR',
+                          context.t('khqr_bakong_label'),
                           style: textStyles.labelMedium.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         Text(
-                          'Scan with any banking app',
+                          context.t('khqr_bakong_sub'),
                           style: textStyles.bodySmall.copyWith(
                             color: c.textSecondary,
                           ),
@@ -269,7 +266,9 @@ class _KhqrPaymentScreenState extends State<KhqrPaymentScreen> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      '\$ ${widget.amount.toStringAsFixed(2)}',
+                      context.tp('khqr_amount_display', {
+                        'amount': widget.amount.toStringAsFixed(2),
+                      }),
                       style: textStyles.labelMedium.copyWith(
                         color: c.primaryCoral,
                         fontWeight: FontWeight.w700,
@@ -298,7 +297,7 @@ class _KhqrPaymentScreenState extends State<KhqrPaymentScreen> {
 
     return Column(
       children: [
-        // QR Container
+        // QR Container — stays hardcoded white for scan reliability
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -350,7 +349,7 @@ class _KhqrPaymentScreenState extends State<KhqrPaymentScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Please do not close this screen',
+          context.t('khqr_waiting_hint'),
           style: textStyles.bodySmall.copyWith(color: c.textMuted),
         ),
       ],
@@ -381,7 +380,9 @@ class _KhqrPaymentScreenState extends State<KhqrPaymentScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Payment of \$${widget.amount.toStringAsFixed(2)} received.',
+          context.tp('khqr_payment_received', {
+            'amount': widget.amount.toStringAsFixed(2),
+          }),
           style: textStyles.bodyMedium.copyWith(color: c.textSecondary),
           textAlign: TextAlign.center,
         ),
@@ -400,7 +401,7 @@ class _KhqrPaymentScreenState extends State<KhqrPaymentScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                'Creating order...',
+                context.t('khqr_creating_order'),
                 style: textStyles.labelSmall.copyWith(color: c.textMuted),
               ),
             ],

@@ -1,18 +1,69 @@
+// core/theme/app_text_styles.dart
+
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
 abstract class AppTextStyles {
   // ══════════════════════════════════════════════════════════════
-  // Static getters — LIGHT THEME fallbacks.
-  //
-  // These keep working exactly like before so you can migrate screens
-  // gradually. On a dark-mode screen they'll render with light colors
-  // until you switch to `context.text.<style>`.
+  // Font families — both declared in pubspec.yaml.
+  // ══════════════════════════════════════════════════════════════
+  static const String _latinFamily = 'PlusJakartaSans';
+  static const String _khmerFamily = 'NotoSerifKhmer';
+
+  /// Picks the right family for the active language.
+  static String familyFor(String languageCode) =>
+      languageCode == 'km' ? _khmerFamily : _latinFamily;
+
+  /// Central TextStyle factory.
+  /// [languageCode] determines the font family.
+  static TextStyle _s(
+    String languageCode, {
+    required double fontSize,
+    required FontWeight fontWeight,
+    required Color color,
+    double? height,
+    double? letterSpacing,
+    TextDecoration? decoration,
+  }) {
+    return TextStyle(
+      fontFamily: familyFor(languageCode),
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      color: color,
+      height: height,
+      letterSpacing: letterSpacing,
+      decoration: decoration,
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════
+  // Static getters — ENGLISH fallbacks (kept for gradual migration
+  // and for code that doesn't have a BuildContext, e.g. tests).
+  // ══════════════════════════════════════════════════════════════
+
+  static TextStyle get displayLarge => displayLargeFor('en');
+  static TextStyle get displayMedium => displayMediumFor('en');
+  static TextStyle get heading1 => heading1For('en');
+  static TextStyle get heading2 => heading2For('en');
+  static TextStyle get bodyLarge => bodyLargeFor('en');
+  static TextStyle get bodyMedium => bodyMediumFor('en');
+  static TextStyle get bodySmall => bodySmallFor('en');
+  static TextStyle get labelMedium => labelMediumFor('en');
+  static TextStyle get labelSmall => labelSmallFor('en');
+  static TextStyle get price => priceFor('en');
+  static TextStyle get priceLarge => priceLargeFor('en');
+  static TextStyle get priceOld => priceOldFor('en');
+  static TextStyle get bannerTitle => bannerTitleFor('en');
+  static TextStyle get bannerSubtitle => bannerSubtitleFor('en');
+
+  // ══════════════════════════════════════════════════════════════
+  // Language-aware getters — these are the ones to use going
+  // forward (via AppTextStylesX which supplies the language code).
   // ══════════════════════════════════════════════════════════════
 
   // ── Display ──────────────────────────────────────────────────
-  static TextStyle get displayLarge => GoogleFonts.plusJakartaSans(
+  static TextStyle displayLargeFor(String lang) => _s(
+    lang,
     fontSize: 28,
     fontWeight: FontWeight.w800,
     color: AppColors.textPrimary,
@@ -20,7 +71,8 @@ abstract class AppTextStyles {
     letterSpacing: -0.4,
   );
 
-  static TextStyle get displayMedium => GoogleFonts.plusJakartaSans(
+  static TextStyle displayMediumFor(String lang) => _s(
+    lang,
     fontSize: 22,
     fontWeight: FontWeight.w700,
     color: AppColors.textPrimary,
@@ -28,34 +80,39 @@ abstract class AppTextStyles {
   );
 
   // ── Headings ─────────────────────────────────────────────────
-  static TextStyle get heading1 => GoogleFonts.plusJakartaSans(
+  static TextStyle heading1For(String lang) => _s(
+    lang,
     fontSize: 18,
     fontWeight: FontWeight.w700,
     color: AppColors.textPrimary,
   );
 
-  static TextStyle get heading2 => GoogleFonts.plusJakartaSans(
+  static TextStyle heading2For(String lang) => _s(
+    lang,
     fontSize: 16,
     fontWeight: FontWeight.w700,
     color: AppColors.textPrimary,
   );
 
   // ── Body ─────────────────────────────────────────────────────
-  static TextStyle get bodyLarge => GoogleFonts.plusJakartaSans(
+  static TextStyle bodyLargeFor(String lang) => _s(
+    lang,
     fontSize: 15,
     fontWeight: FontWeight.w400,
     color: AppColors.textPrimary,
     height: 1.5,
   );
 
-  static TextStyle get bodyMedium => GoogleFonts.plusJakartaSans(
+  static TextStyle bodyMediumFor(String lang) => _s(
+    lang,
     fontSize: 14,
     fontWeight: FontWeight.w400,
     color: AppColors.textPrimary,
     height: 1.5,
   );
 
-  static TextStyle get bodySmall => GoogleFonts.plusJakartaSans(
+  static TextStyle bodySmallFor(String lang) => _s(
+    lang,
     fontSize: 12,
     fontWeight: FontWeight.w400,
     color: AppColors.textSecondary,
@@ -63,32 +120,37 @@ abstract class AppTextStyles {
   );
 
   // ── Label ────────────────────────────────────────────────────
-  static TextStyle get labelMedium => GoogleFonts.plusJakartaSans(
+  static TextStyle labelMediumFor(String lang) => _s(
+    lang,
     fontSize: 13,
     fontWeight: FontWeight.w500,
     color: AppColors.textPrimary,
   );
 
-  static TextStyle get labelSmall => GoogleFonts.plusJakartaSans(
+  static TextStyle labelSmallFor(String lang) => _s(
+    lang,
     fontSize: 11,
     fontWeight: FontWeight.w400,
     color: AppColors.textSecondary,
   );
 
   // ── Price ────────────────────────────────────────────────────
-  static TextStyle get price => GoogleFonts.plusJakartaSans(
+  static TextStyle priceFor(String lang) => _s(
+    lang,
     fontSize: 16,
     fontWeight: FontWeight.w700,
     color: AppColors.textPrimary,
   );
 
-  static TextStyle get priceLarge => GoogleFonts.plusJakartaSans(
+  static TextStyle priceLargeFor(String lang) => _s(
+    lang,
     fontSize: 18,
     fontWeight: FontWeight.w800,
     color: AppColors.primaryCoral,
   );
 
-  static TextStyle get priceOld => GoogleFonts.plusJakartaSans(
+  static TextStyle priceOldFor(String lang) => _s(
+    lang,
     fontSize: 12,
     fontWeight: FontWeight.w400,
     color: AppColors.textMuted,
@@ -96,14 +158,16 @@ abstract class AppTextStyles {
   );
 
   // ── Banner (text on dark gradients) ──────────────────────────
-  static TextStyle get bannerTitle => GoogleFonts.plusJakartaSans(
+  static TextStyle bannerTitleFor(String lang) => _s(
+    lang,
     fontSize: 24,
     fontWeight: FontWeight.w800,
     color: AppColors.textLight,
     height: 1.2,
   );
 
-  static TextStyle get bannerSubtitle => GoogleFonts.plusJakartaSans(
+  static TextStyle bannerSubtitleFor(String lang) => _s(
+    lang,
     fontSize: 13,
     fontWeight: FontWeight.w400,
     color: AppColors.textLight.withValues(alpha: 0.8),
@@ -111,49 +175,48 @@ abstract class AppTextStyles {
   );
 
   // ══════════════════════════════════════════════════════════════
-  // THEME-AWARE variants — pass in the desired color.
-  //
-  // Use these when you want text that responds to the current theme:
-  //
-  //   final colors = context.colors;
-  //   Text('Hi', style: AppTextStyles.heading1On(colors.textPrimary))
-  //
-  // Or, more conveniently, use the `context.text` extension below.
+  // THEME-AWARE variants — pass in the color (used by AppTextStylesX).
   // ══════════════════════════════════════════════════════════════
 
-  static TextStyle displayLargeOn(Color color) =>
-      displayLarge.copyWith(color: color);
+  static TextStyle displayLargeOn(String lang, Color color) =>
+      displayLargeFor(lang).copyWith(color: color);
 
-  static TextStyle displayMediumOn(Color color) =>
-      displayMedium.copyWith(color: color);
+  static TextStyle displayMediumOn(String lang, Color color) =>
+      displayMediumFor(lang).copyWith(color: color);
 
-  static TextStyle heading1On(Color color) => heading1.copyWith(color: color);
+  static TextStyle heading1On(String lang, Color color) =>
+      heading1For(lang).copyWith(color: color);
 
-  static TextStyle heading2On(Color color) => heading2.copyWith(color: color);
+  static TextStyle heading2On(String lang, Color color) =>
+      heading2For(lang).copyWith(color: color);
 
-  static TextStyle bodyLargeOn(Color color) => bodyLarge.copyWith(color: color);
+  static TextStyle bodyLargeOn(String lang, Color color) =>
+      bodyLargeFor(lang).copyWith(color: color);
 
-  static TextStyle bodyMediumOn(Color color) =>
-      bodyMedium.copyWith(color: color);
+  static TextStyle bodyMediumOn(String lang, Color color) =>
+      bodyMediumFor(lang).copyWith(color: color);
 
-  static TextStyle bodySmallOn(Color color) => bodySmall.copyWith(color: color);
+  static TextStyle bodySmallOn(String lang, Color color) =>
+      bodySmallFor(lang).copyWith(color: color);
 
-  static TextStyle labelMediumOn(Color color) =>
-      labelMedium.copyWith(color: color);
+  static TextStyle labelMediumOn(String lang, Color color) =>
+      labelMediumFor(lang).copyWith(color: color);
 
-  static TextStyle labelSmallOn(Color color) =>
-      labelSmall.copyWith(color: color);
+  static TextStyle labelSmallOn(String lang, Color color) =>
+      labelSmallFor(lang).copyWith(color: color);
 
-  static TextStyle priceOn(Color color) => price.copyWith(color: color);
+  static TextStyle priceOn(String lang, Color color) =>
+      priceFor(lang).copyWith(color: color);
 
-  static TextStyle priceLargeOn(Color color) =>
-      priceLarge.copyWith(color: color);
+  static TextStyle priceLargeOn(String lang, Color color) =>
+      priceLargeFor(lang).copyWith(color: color);
 
-  static TextStyle priceOldOn(Color color) => priceOld.copyWith(color: color);
+  static TextStyle priceOldOn(String lang, Color color) =>
+      priceOldFor(lang).copyWith(color: color);
 
-  static TextStyle bannerTitleOn(Color color) =>
-      bannerTitle.copyWith(color: color);
+  static TextStyle bannerTitleOn(String lang, Color color) =>
+      bannerTitleFor(lang).copyWith(color: color);
 
-  static TextStyle bannerSubtitleOn(Color color) =>
-      bannerSubtitle.copyWith(color: color);
+  static TextStyle bannerSubtitleOn(String lang, Color color) =>
+      bannerSubtitleFor(lang).copyWith(color: color);
 }

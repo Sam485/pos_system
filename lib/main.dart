@@ -24,12 +24,10 @@ import 'package:provider/provider.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   ServiceLocator.setup();
-  // Lock to portrait (both up + down)
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  // runApp(DevicePreview(builder: (context) => const MyApp()));
   runApp(const MyApp());
 }
 
@@ -40,6 +38,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final api = ServiceLocator.apiClient;
     final apiService = ApiService(api);
+
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
@@ -56,34 +55,36 @@ class MyApp extends StatelessWidget {
           create: (context) => CartProvider(
             apiService,
             context.read<InventoryProvider>(),
-            context.read<RegisterProvider>(), // New dependency
+            context.read<RegisterProvider>(),
           ),
         ),
         ChangeNotifierProvider(create: (_) => StoreProvider(apiService)),
         ChangeNotifierProvider(create: (_) => SettingsProvider(apiService)),
         ChangeNotifierProvider(create: (_) => NotificationProvider(apiService)),
       ],
-      child: Consumer<ThemeProvider>(
-        builder: (context, themeProvider, _) {
+      // 👇 Watch BOTH providers — theme AND language
+      child: Consumer2<ThemeProvider, LanguageProvider>(
+        builder: (context, themeProvider, languageProvider, _) {
+          final languageCode = languageProvider.currentLanguage;
+
           return MaterialApp.router(
             title: 'Miko Delivery',
             debugShowCheckedModeBanner: false,
             routerConfig: appRouter,
 
-            // ── Light theme ──────────────────────────────────
-            theme: AppTheme.light.copyWith(
+            // ── Light theme — font family follows the active language ──
+            theme: AppTheme.lightFor(languageCode).copyWith(
               scaffoldBackgroundColor: AppColors.background,
               extensions: const [AppThemeColors.light],
             ),
 
-            // ── Dark theme ───────────────────────────────────
-            darkTheme: AppTheme.dark.copyWith(
-              // ✅ fixed
+            // ── Dark theme — same, for dark mode ────────────────
+            darkTheme: AppTheme.darkFor(languageCode).copyWith(
               scaffoldBackgroundColor: AppThemeColors.dark.background,
               extensions: const [AppThemeColors.dark],
             ),
 
-            // ── Which one to use — driven by the provider ────
+            // ── Theme mode from provider ────────────────────────
             themeMode: themeProvider.themeMode,
           );
         },

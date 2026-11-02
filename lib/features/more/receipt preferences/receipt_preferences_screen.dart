@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:pos_system/providers/setting_provider.dart';
 import 'package:pos_system/shared/helper/safe_pop.dart';
 import 'package:provider/provider.dart';
@@ -41,6 +42,7 @@ class _ReceiptPreferencesScreenState extends State<ReceiptPreferencesScreen> {
   }
 
   Future<void> _savePreferences() async {
+    final c = context.colors;
     final settingsProvider = context.read<SettingsProvider>();
     settingsProvider.updateReceiptFooter(_footerController.text.trim());
 
@@ -48,17 +50,19 @@ class _ReceiptPreferencesScreenState extends State<ReceiptPreferencesScreen> {
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Preferences saved successfully'),
-          backgroundColor: Color(0xFF137333),
+        SnackBar(
+          content: Text(context.t('receipt_pref_save_success')),
+          backgroundColor: c.successFg,
         ),
       );
       context.safePop();
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(settingsProvider.error ?? 'Failed to save preferences'),
-          backgroundColor: Colors.red,
+          content: Text(
+            settingsProvider.error ?? context.t('receipt_pref_save_failed'),
+          ),
+          backgroundColor: c.dangerFg,
         ),
       );
     }
@@ -102,12 +106,14 @@ class _ReceiptPreferencesScreenState extends State<ReceiptPreferencesScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Receipt preferences',
+                          context.t('receipt_pref_title'),
                           style: textStyles.heading2.copyWith(fontSize: 24),
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'SoHo store · Print & digital',
+                          context.tp('receipt_pref_subtitle', {
+                            'store': 'SoHo store',
+                          }),
                           style: textStyles.bodySmall.copyWith(
                             color: c.textMuted,
                           ),
@@ -130,7 +136,7 @@ class _ReceiptPreferencesScreenState extends State<ReceiptPreferencesScreen> {
 
                       // ── Receipt Header Preview ──
                       Text(
-                        'RECEIPT HEADER',
+                        context.t('receipt_pref_header_label'),
                         style: textStyles.labelSmall.copyWith(
                           color: c.textSecondary,
                           letterSpacing: 1.0,
@@ -145,7 +151,7 @@ class _ReceiptPreferencesScreenState extends State<ReceiptPreferencesScreen> {
                           horizontal: 16,
                         ),
                         decoration: BoxDecoration(
-                          color: c.surfaceTint, // 👈 theme-aware
+                          color: c.surfaceTint,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Column(
@@ -160,7 +166,7 @@ class _ReceiptPreferencesScreenState extends State<ReceiptPreferencesScreen> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'SoHo · 120 Spring St, New York',
+                              context.t('receipt_pref_store_address'),
                               style: textStyles.bodySmall.copyWith(
                                 color: c.textSecondary,
                                 fontSize: 13,
@@ -173,7 +179,7 @@ class _ReceiptPreferencesScreenState extends State<ReceiptPreferencesScreen> {
 
                       // ── Receipt Footer Input ──
                       Text(
-                        'Receipt footer',
+                        context.t('receipt_pref_footer_label'),
                         style: textStyles.labelSmall.copyWith(
                           fontWeight: FontWeight.w600,
                           color: c.textPrimary,
@@ -216,8 +222,8 @@ class _ReceiptPreferencesScreenState extends State<ReceiptPreferencesScreen> {
 
                       // ── Toggles ──
                       _buildToggleRow(
-                        title: 'Show store logo',
-                        subtitle: 'Use the fold wordmark',
+                        title: context.t('receipt_pref_toggle_logo_title'),
+                        subtitle: context.t('receipt_pref_toggle_logo_sub'),
                         value: settings?.showLogo ?? true,
                         onChanged: (val) => settingsProvider
                             .toggleReceiptSetting('show_logo', val),
@@ -225,8 +231,8 @@ class _ReceiptPreferencesScreenState extends State<ReceiptPreferencesScreen> {
                         textStyles: textStyles,
                       ),
                       _buildToggleRow(
-                        title: 'Show tax breakdown',
-                        subtitle: 'Display sales tax separately',
+                        title: context.t('receipt_pref_toggle_tax_title'),
+                        subtitle: context.t('receipt_pref_toggle_tax_sub'),
                         value: settings?.showTaxBreakdown ?? true,
                         onChanged: (val) => settingsProvider
                             .toggleReceiptSetting('show_tax', val),
@@ -234,8 +240,8 @@ class _ReceiptPreferencesScreenState extends State<ReceiptPreferencesScreen> {
                         textStyles: textStyles,
                       ),
                       _buildToggleRow(
-                        title: 'Offer email receipts',
-                        subtitle: 'Ask the customer after payment',
+                        title: context.t('receipt_pref_toggle_email_title'),
+                        subtitle: context.t('receipt_pref_toggle_email_sub'),
                         value: settings?.offerEmailReceipts ?? true,
                         onChanged: (val) => settingsProvider
                             .toggleReceiptSetting('offer_email', val),
@@ -243,10 +249,10 @@ class _ReceiptPreferencesScreenState extends State<ReceiptPreferencesScreen> {
                         textStyles: textStyles,
                       ),
                       _buildToggleRow(
-                        title: 'Automatically print receipts',
+                        title: context.t('receipt_pref_toggle_auto_title'),
                         subtitle: (settings?.autoPrintReceipts ?? false)
-                            ? 'On'
-                            : 'Off · Print when requested',
+                            ? context.t('receipt_pref_toggle_auto_on')
+                            : context.t('receipt_pref_toggle_auto_off'),
                         value: settings?.autoPrintReceipts ?? false,
                         onChanged: (val) => settingsProvider
                             .toggleReceiptSetting('auto_print', val),
@@ -258,7 +264,7 @@ class _ReceiptPreferencesScreenState extends State<ReceiptPreferencesScreen> {
 
                       // ── Footer Note ──
                       Text(
-                        'Receipt emails are transactional and don\'t subscribe customers to marketing.',
+                        context.t('receipt_pref_note'),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textMuted,
                           fontSize: 12,
@@ -307,7 +313,7 @@ class _ReceiptPreferencesScreenState extends State<ReceiptPreferencesScreen> {
                                 Icon(Icons.check, size: 20, color: c.textLight),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'Save preferences',
+                                  context.t('receipt_pref_save_button'),
                                   style: textStyles.labelMedium.copyWith(
                                     color: c.textLight,
                                     fontSize: 16,
@@ -320,15 +326,18 @@ class _ReceiptPreferencesScreenState extends State<ReceiptPreferencesScreen> {
                     const SizedBox(height: 12),
                     TextButton(
                       onPressed: () {
+                        final c = context.colors;
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Test receipt sent to printer'),
-                            backgroundColor: Color(0xFF137333),
+                          SnackBar(
+                            content: Text(
+                              context.t('receipt_pref_print_success'),
+                            ),
+                            backgroundColor: c.successFg,
                           ),
                         );
                       },
                       style: TextButton.styleFrom(
-                        backgroundColor: c.surfaceTint, // 👈 theme-aware
+                        backgroundColor: c.surfaceTint,
                         foregroundColor: c.primaryCoral,
                         minimumSize: const Size(double.infinity, 54),
                         shape: RoundedRectangleBorder(
@@ -345,7 +354,7 @@ class _ReceiptPreferencesScreenState extends State<ReceiptPreferencesScreen> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Print test receipt',
+                            context.t('receipt_pref_print_button'),
                             style: textStyles.labelMedium.copyWith(
                               color: c.primaryCoral,
                               fontSize: 16,
@@ -402,13 +411,19 @@ class _ReceiptPreferencesScreenState extends State<ReceiptPreferencesScreen> {
                 ],
               ),
             ),
+            // ✅ FIXED: was `activeThumbColor` + invalid params
             Switch(
               value: value,
               onChanged: onChanged,
-              activeThumbColor: c.textLight,
-              activeTrackColor: c.primaryCoral,
-              inactiveThumbColor: c.textLight,
-              inactiveTrackColor: c.surfaceLight,
+              thumbColor: WidgetStateProperty.resolveWith(
+                (states) => c.textLight,
+              ),
+              trackColor: WidgetStateProperty.resolveWith((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return c.primaryCoral;
+                }
+                return c.surfaceLight;
+              }),
             ),
           ],
         ),

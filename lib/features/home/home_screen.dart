@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:pos_system/core/routes/route_names.dart';
@@ -90,9 +91,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final int lowStockCount = inventoryProvider.lowStockAlerts.length;
     final int customerCount = customerProvider.customers.length;
 
-    final storeName = storeProvider.store?.name ?? 'Loading...';
+    final storeName = storeProvider.store?.name ?? context.t('home_loading');
 
-    // 👇 Theme-aware colors, resolve once per build
+    // Theme-aware colors, resolve once per build
     final surfaceTint = c.surfaceTint;
     final successBg = c.successBg;
     final warningBg = c.warningBg;
@@ -132,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'MONDAY, OCTOBER 19',
+                            context.t('home_date_placeholder'),
                             style: textStyles.labelSmall.copyWith(
                               color: c.textMuted,
                               letterSpacing: 0.5,
@@ -158,7 +159,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   // Greeting
                   Text(
-                    'Good morning, Alex.',
+                    context.t('home_greeting'),
                     style: textStyles.heading1.copyWith(
                       fontSize: 28,
                       letterSpacing: -0.5,
@@ -179,7 +180,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          isRegisterOpen ? 'Register open' : 'Register closed',
+                          isRegisterOpen
+                              ? context.t('home_register_open')
+                              : context.t('home_register_closed'),
                           style: textStyles.labelSmall.copyWith(
                             color: isRegisterOpen ? successFg : warningFg,
                             fontWeight: FontWeight.w600,
@@ -189,8 +192,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(width: 8),
                       Text(
                         session != null
-                            ? 'Register 01 · Since 9:00 AM'
-                            : 'No active session',
+                            ? context.t('home_register_since')
+                            : context.t('home_no_active_session'),
                         style: textStyles.bodySmall,
                       ),
                     ],
@@ -211,7 +214,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              "Today's net sales",
+                              context.t('home_todays_net_sales'),
                               style: textStyles.bodyMedium.copyWith(
                                 color: c.textSecondary,
                               ),
@@ -253,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   const SizedBox(width: 2),
                                   Text(
-                                    '12.8%',
+                                    context.t('home_trend_up'),
                                     style: textStyles.labelSmall.copyWith(
                                       color: successFg,
                                       fontWeight: FontWeight.w600,
@@ -264,7 +267,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'vs. last Monday',
+                              context.t('home_vs_last_monday'),
                               style: textStyles.bodySmall.copyWith(
                                 color: c.textMuted,
                               ),
@@ -282,19 +285,19 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             _buildStatItem(
                               '$totalTransactions',
-                              'Transactions',
+                              context.t('home_stat_transactions'),
                               textStyles,
                               c,
                             ),
                             _buildStatItem(
                               '\$${avgSale.toStringAsFixed(2)}',
-                              'Average sale',
+                              context.t('home_stat_avg_sale'),
                               textStyles,
                               c,
                             ),
                             _buildStatItem(
                               '$itemsSold',
-                              'Items sold',
+                              context.t('home_stat_items_sold'),
                               textStyles,
                               c,
                             ),
@@ -329,7 +332,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Icon(Icons.add, size: 20, color: c.textLight),
                         const SizedBox(width: 8),
                         Text(
-                          'Start a new sale',
+                          context.t('home_start_new_sale'),
                           style: textStyles.labelMedium.copyWith(
                             color: c.textLight,
                             fontSize: 16,
@@ -343,23 +346,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   // Glance Section
                   Text(
-                    'Your store at a glance',
+                    context.t('home_glance_title'),
                     style: textStyles.heading2.copyWith(fontSize: 20),
                   ),
                   const SizedBox(height: 16),
 
                   _buildGlanceItem(
                     icon: Icons.inventory_2_outlined,
-                    title: '$lowStockCount variants running low',
-                    subtitle: 'Replenish your bestsellers',
+                    title: context.tp('home_glance_low_stock', {
+                      'count': '$lowStockCount',
+                    }),
+                    subtitle: context.t('home_glance_low_stock_sub'),
                     c: c,
                     textStyles: textStyles,
                     onTap: () => context.pushNamed(RouteNames.lowStockName),
                   ),
                   _buildGlanceItem(
                     icon: Icons.people_outline_rounded,
-                    title: 'Customers',
-                    subtitle: '$customerCount people in your community',
+                    title: context.t('home_glance_customers'),
+                    subtitle: context.tp('home_glance_customers_sub', {
+                      'count': '$customerCount',
+                    }),
                     c: c,
                     textStyles: textStyles,
                     onTap: () =>
@@ -367,10 +374,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   _buildGlanceItem(
                     icon: Icons.account_balance_wallet_outlined,
-                    title: 'Cash drawer',
+                    title: context.t('home_glance_cash_drawer'),
                     subtitle: session != null
-                        ? '\$${session.openingFloat.toStringAsFixed(2)} opening float · Balanced'
-                        : 'No active drawer',
+                        ? context.tp('home_glance_cash_drawer_open', {
+                            'amount':
+                                '\$${session.openingFloat.toStringAsFixed(2)}',
+                          })
+                        : context.t('home_glance_cash_drawer_closed'),
                     c: c,
                     textStyles: textStyles,
                     showDivider: false,
@@ -438,7 +448,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    // 👇 theme-aware
                     color: c.surfaceTint,
                     borderRadius: BorderRadius.circular(10),
                   ),

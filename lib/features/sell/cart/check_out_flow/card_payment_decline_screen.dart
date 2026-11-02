@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:pos_system/core/routes/route_names.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
 import 'package:pos_system/core/theme/app_text_style_x.dart';
@@ -63,12 +64,14 @@ class _CardPaymentDeclineScreenState extends State<CardPaymentDeclineScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Card payment',
+                        context.t('card_decline_title'),
                         style: textStyles.heading2.copyWith(fontSize: 24),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '$_orderId · Alternative checkout state',
+                        context.tp('card_decline_subtitle', {
+                          'orderId': _orderId,
+                        }),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textMuted,
                         ),
@@ -94,12 +97,12 @@ class _CardPaymentDeclineScreenState extends State<CardPaymentDeclineScreen> {
                       width: 80,
                       height: 80,
                       decoration: BoxDecoration(
-                        color: c.dangerBg, // 👈 theme-aware
+                        color: c.dangerBg,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         Icons.credit_card_outlined,
-                        color: c.dangerFg, // 👈 theme-aware
+                        color: c.dangerFg,
                         size: 40,
                       ),
                     ),
@@ -107,7 +110,7 @@ class _CardPaymentDeclineScreenState extends State<CardPaymentDeclineScreen> {
 
                     // Headings
                     Text(
-                      'Card declined.',
+                      context.t('card_decline_heading'),
                       style: textStyles.heading1.copyWith(
                         fontSize: 28,
                         fontWeight: FontWeight.w500,
@@ -115,7 +118,9 @@ class _CardPaymentDeclineScreenState extends State<CardPaymentDeclineScreen> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'The bank didn\'t approve this payment. Ask $_customerName to try again or use a different card.',
+                      context.tp('card_decline_description', {
+                        'customerName': _customerName,
+                      }),
                       textAlign: TextAlign.center,
                       style: textStyles.bodyMedium.copyWith(
                         color: c.textSecondary,
@@ -129,7 +134,7 @@ class _CardPaymentDeclineScreenState extends State<CardPaymentDeclineScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: c.surfaceLight, // 👈 theme-aware
+                        color: c.surfaceLight,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Column(
@@ -138,7 +143,7 @@ class _CardPaymentDeclineScreenState extends State<CardPaymentDeclineScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Still to pay',
+                                context.t('card_decline_still_to_pay'),
                                 style: textStyles.labelMedium.copyWith(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -162,29 +167,29 @@ class _CardPaymentDeclineScreenState extends State<CardPaymentDeclineScreen> {
                           const SizedBox(height: 16),
 
                           _buildSummaryRow(
-                            'Card attempted',
+                            context.t('card_decline_card_attempted'),
                             _cardInfo,
                             c,
                             textStyles,
                           ),
                           const SizedBox(height: 12),
                           _buildSummaryRow(
-                            'Customer',
+                            context.t('card_decline_customer'),
                             _customerName,
                             c,
                             textStyles,
                           ),
                           const SizedBox(height: 12),
                           _buildSummaryRow(
-                            'Payment status',
-                            'Unpaid',
+                            context.t('card_decline_status'),
+                            context.t('card_decline_status_unpaid'),
                             c,
                             textStyles,
                           ),
                           const SizedBox(height: 12),
                           _buildSummaryRow(
-                            'Reader',
-                            'Reader 01',
+                            context.t('card_decline_reader'),
+                            context.t('card_decline_reader_default'),
                             c,
                             textStyles,
                           ),
@@ -197,7 +202,7 @@ class _CardPaymentDeclineScreenState extends State<CardPaymentDeclineScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: c.warningBg, // 👈 theme-aware
+                        color: c.warningBg,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -205,15 +210,15 @@ class _CardPaymentDeclineScreenState extends State<CardPaymentDeclineScreen> {
                         children: [
                           Icon(
                             Icons.warning_amber_rounded,
-                            color: c.warningFg, // 👈 theme-aware
+                            color: c.warningFg,
                             size: 20,
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'No payment taken. This sale is not complete and stock has not changed.',
+                              context.t('card_decline_warning'),
                               style: textStyles.bodySmall.copyWith(
-                                color: c.warningFg, // 👈 theme-aware
+                                color: c.warningFg,
                                 height: 1.4,
                                 fontSize: 13,
                               ),
@@ -226,7 +231,7 @@ class _CardPaymentDeclineScreenState extends State<CardPaymentDeclineScreen> {
 
                     // ── Footer Note ──
                     Text(
-                      'Alternative to the cash checkout for $_orderId, not a second charge.',
+                      context.tp('card_decline_footer', {'orderId': _orderId}),
                       style: textStyles.bodySmall.copyWith(
                         color: c.textMuted,
                         fontSize: 12,
@@ -259,14 +264,14 @@ class _CardPaymentDeclineScreenState extends State<CardPaymentDeclineScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.refresh_rounded,
                           size: 20,
-                          color: Colors.white,
+                          color: c.textLight,
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Retry card payment',
+                          context.t('card_decline_retry_button'),
                           style: textStyles.labelMedium.copyWith(
                             color: c.textLight,
                             fontSize: 16,
@@ -282,7 +287,7 @@ class _CardPaymentDeclineScreenState extends State<CardPaymentDeclineScreen> {
                       context.goNamed(RouteNames.checkoutName);
                     },
                     style: TextButton.styleFrom(
-                      backgroundColor: c.surfaceTint, // 👈 theme-aware
+                      backgroundColor: c.surfaceTint,
                       foregroundColor: c.primaryCoral,
                       minimumSize: const Size(double.infinity, 54),
                       shape: RoundedRectangleBorder(
@@ -290,7 +295,7 @@ class _CardPaymentDeclineScreenState extends State<CardPaymentDeclineScreen> {
                       ),
                     ),
                     child: Text(
-                      'Choose another method',
+                      context.t('card_decline_choose_other_button'),
                       style: textStyles.labelMedium.copyWith(
                         color: c.primaryCoral,
                         fontSize: 16,

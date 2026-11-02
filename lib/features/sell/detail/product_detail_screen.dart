@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:provider/provider.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
 import 'package:pos_system/core/theme/app_text_style_x.dart';
@@ -80,7 +81,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     if (_product == null) {
       return Scaffold(
         backgroundColor: c.background,
-        body: const Center(child: Text('Product not found.')),
+        body: Center(child: Text(context.t('product_detail_not_found'))),
       );
     }
 
@@ -105,7 +106,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    'Product details',
+                    context.t('product_detail_title'),
                     style: textStyles.heading2.copyWith(fontSize: 24),
                   ),
                   const Spacer(),
@@ -130,7 +131,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       width: double.infinity,
                       height: 300,
                       decoration: BoxDecoration(
-                        color: c.surfaceLight, // 👈 theme-aware
+                        color: c.surfaceLight,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: ClipRRect(
@@ -166,12 +167,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            // 👇 theme-aware status badge
                             color: currentStock > 0 ? c.successBg : c.warningBg,
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
-                            currentStock > 0 ? 'In stock' : 'Out of stock',
+                            currentStock > 0
+                                ? context.t('product_detail_in_stock')
+                                : context.t('product_detail_out_of_stock'),
                             style: textStyles.labelSmall.copyWith(
                               color: currentStock > 0
                                   ? c.successFg
@@ -200,7 +202,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'SKU ${_selectedVariant?.sku ?? 'N/A'}',
+                                context.tp('product_detail_sku', {
+                                  'sku':
+                                      _selectedVariant?.sku ??
+                                      context.t('product_detail_sku_na'),
+                                }),
                                 style: textStyles.bodySmall.copyWith(
                                   color: c.textMuted,
                                   fontSize: 13,
@@ -228,7 +234,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      'Color · ${_selectedVariant?.color ?? "N/A"}',
+                      context.tp('product_detail_color', {
+                        'color':
+                            _selectedVariant?.color ??
+                            context.t('product_detail_sku_na'),
+                      }),
                       style: textStyles.labelMedium.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
@@ -266,15 +276,21 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Size · ${_selectedVariant?.size ?? "N/A"}',
+                          context.tp('product_detail_size', {
+                            'size':
+                                _selectedVariant?.size ??
+                                context.t('product_detail_sku_na'),
+                          }),
                           style: textStyles.labelMedium.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                         Text(
-                          '$currentStock available at SoHo',
+                          context.tp('product_detail_stock_available', {
+                            'count': '$currentStock',
+                            'store': context.t('product_detail_store_default'),
+                          }),
                           style: textStyles.bodySmall.copyWith(
-                            // 👈 theme-aware stock count color
                             color: currentStock > 0 ? c.successFg : c.warningFg,
                             fontWeight: FontWeight.w500,
                             fontSize: 12,
@@ -310,7 +326,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 decoration: BoxDecoration(
                                   color: isSelected
                                       ? c.primaryCoral
-                                      : c.surfaceLight, // 👈 theme-aware
+                                      : c.surfaceLight,
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
@@ -333,7 +349,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Quantity',
+                          context.t('product_detail_quantity'),
                           style: textStyles.labelMedium.copyWith(
                             fontWeight: FontWeight.w600,
                           ),
@@ -393,8 +409,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     : () async {
                         if (_selectedVariant == null) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Please select a variant'),
+                            SnackBar(
+                              content: Text(
+                                context.t(
+                                  'product_detail_error_select_variant',
+                                ),
+                              ),
                               backgroundColor: Colors.red,
                             ),
                           );
@@ -403,8 +423,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
                         if (currentStock == 0) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Out of stock'),
+                            SnackBar(
+                              content: Text(
+                                context.t('product_detail_error_out_of_stock'),
+                              ),
                               backgroundColor: Colors.red,
                             ),
                           );
@@ -415,7 +437,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                'Only $currentStock units available',
+                                context.tp('product_detail_error_not_enough', {
+                                  'count': '$currentStock',
+                                }),
                               ),
                               backgroundColor: Colors.red,
                             ),
@@ -436,9 +460,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
                         if (success && context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Added to cart'),
-                              backgroundColor: Color(0xFF137333),
+                            SnackBar(
+                              content: Text(
+                                context.t('product_detail_added_toast'),
+                              ),
+                              backgroundColor: const Color(0xFF137333),
                             ),
                           );
                           context.pop();
@@ -446,7 +472,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                cartProvider.error ?? 'Failed to add to cart',
+                                cartProvider.error ??
+                                    context.t('product_detail_failed_add'),
                               ),
                               backgroundColor: Colors.red,
                             ),
@@ -480,7 +507,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           Icon(Icons.add, size: 20, color: c.textLight),
                           const SizedBox(width: 8),
                           Text(
-                            'Add $_quantity to cart · \$${totalPrice.toStringAsFixed(2)}',
+                            context.tp('product_detail_add_button', {
+                              'count': '$_quantity',
+                              'amount': totalPrice.toStringAsFixed(2),
+                            }),
                             style: textStyles.labelMedium.copyWith(
                               color: c.textLight,
                               fontSize: 16,
@@ -522,13 +552,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget _buildQuantityButton({
     required IconData icon,
     required VoidCallback onTap,
-    required AppThemeColors c, // 👈 added
+    required AppThemeColors c,
   }) {
     return InkWell(
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.all(12.0),
-        // 👈 explicit color so the +/− icons are visible on dark
         child: Icon(icon, size: 16, color: c.textPrimary),
       ),
     );

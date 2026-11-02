@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:pos_system/shared/helper/safe_pop.dart';
@@ -63,7 +64,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     if (_order == null) {
       return Scaffold(
         backgroundColor: c.background,
-        body: const Center(child: Text('Order not found.')),
+        body: Center(child: Text(context.t('txn_detail_not_found'))),
       );
     }
 
@@ -71,12 +72,10 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     final orderItems = orderProvider.orderItems;
     final orderItemRefunds = orderProvider.orderItemRefunds;
 
-    // 👇 Check for all refund states
     final isFullyRefunded = order.status == OrderStatusEnum.fullyrefunded;
     final isPartiallyRefunded =
         order.status == OrderStatusEnum.partitallyrefunded;
 
-    // ✅ FIXED: Use theme-aware badge colors from AppThemeColors
     Color statusColor;
     Color textColor;
     String statusLabel;
@@ -84,21 +83,22 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     if (isFullyRefunded) {
       statusColor = c.dangerBg;
       textColor = c.dangerFg;
-      statusLabel = 'Fully refunded';
+      statusLabel = context.t('txn_detail_status_fully_refunded');
     } else if (isPartiallyRefunded) {
       statusColor = c.warningBg;
       textColor = c.warningFg;
-      statusLabel = 'Partially refunded';
+      statusLabel = context.t('txn_detail_status_partially_refunded');
     } else {
       statusColor = c.successBg;
       textColor = c.successFg;
-      statusLabel = 'Completed';
+      statusLabel = context.t('txn_detail_status_completed');
     }
 
     final customerName = _customer != null
         ? '${_customer!.firstName} ${_customer!.lastName}'
-        : 'Guest customer';
-    final customerEmail = _customer?.email ?? 'No email';
+        : context.t('txn_detail_customer_guest');
+    final customerEmail =
+        _customer?.email ?? context.t('txn_detail_customer_no_email');
     final initials = _customer != null
         ? '${_customer!.firstName.isNotEmpty ? _customer!.firstName[0] : ''}${_customer!.lastName.isNotEmpty ? _customer!.lastName[0] : ''}'
               .toUpperCase()
@@ -139,12 +139,17 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Order ${order.orderNumber}',
+                        context.tp('txn_detail_title', {
+                          'orderNumber': order.orderNumber,
+                        }),
                         style: textStyles.heading2.copyWith(fontSize: 22),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '$date · $time',
+                        context.tp('txn_detail_subtitle', {
+                          'date': date,
+                          'time': time,
+                        }),
                         style: textStyles.bodySmall.copyWith(
                           color: c.textMuted,
                         ),
@@ -194,7 +199,12 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Sold by Alex · Register 01',
+                            context.tp('txn_detail_sold_by', {
+                              'name': context.t('txn_detail_cashier_default'),
+                              'register': context.t(
+                                'txn_detail_register_default',
+                              ),
+                            }),
                             style: textStyles.bodySmall.copyWith(
                               color: c.textSecondary,
                             ),
@@ -203,7 +213,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                       ),
                       const SizedBox(height: 20),
 
-                      // ✅ FIXED: Customer Card — surfaceTint + subtle border
+                      // Customer Card
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -222,7 +232,6 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                               height: 40,
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
-                                // ✅ FIXED: avatar bg
                                 color: c.isDark
                                     ? Colors.white.withValues(alpha: 0.10)
                                     : const Color(0xFFE8F0FE),
@@ -231,7 +240,6 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                               child: Text(
                                 initials,
                                 style: textStyles.labelSmall.copyWith(
-                                  // ✅ FIXED: avatar text
                                   color: c.primaryCoral,
                                   fontWeight: FontWeight.w700,
                                   fontSize: 14,
@@ -271,13 +279,13 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                       ),
                       const SizedBox(height: 24),
 
-                      // 👇 Items List with Refund Tracking
+                      // Items List with Refund Tracking
                       if (orderItems.isEmpty && !orderProvider.isLoading)
                         Center(
                           child: Padding(
                             padding: const EdgeInsets.all(20.0),
                             child: Text(
-                              'No items in this order',
+                              context.t('txn_detail_no_items'),
                               style: textStyles.bodySmall.copyWith(
                                 color: c.textMuted,
                               ),
@@ -290,7 +298,6 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                             item['variant_id'],
                           );
 
-                          // Find the product to get the image URL
                           final product = variant != null
                               ? productProvider.products.firstWhere(
                                   (p) => p.id == variant.productId,
@@ -309,7 +316,6 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                                 )
                               : null;
 
-                          // 👇 Calculate returned quantities
                           final refundsForItem = orderItemRefunds.where(
                             (r) => r['order_item_id'] == item['id'],
                           );
@@ -323,10 +329,20 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                           return Column(
                             children: [
                               _buildItemRow(
-                                title: variant?.name ?? 'Unknown Variant',
+                                title:
+                                    variant?.name ??
+                                    context.t(
+                                      'txn_detail_item_unknown_variant',
+                                    ),
                                 variant: variant != null
-                                    ? '${variant.color} / ${variant.size} · Qty $originalQty'
-                                    : 'Qty $originalQty',
+                                    ? context.tp('txn_detail_item_variant', {
+                                        'color': variant.color,
+                                        'size': variant.size,
+                                        'qty': '$originalQty',
+                                      })
+                                    : context.tp('txn_detail_item_qty', {
+                                        'qty': '$originalQty',
+                                      }),
                                 price:
                                     '\$${(item['total_price'] as num).toStringAsFixed(2)}',
                                 imageUrl: product?.imageUrl,
@@ -348,35 +364,36 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
 
                       // Order Summary
                       _buildSummaryRow(
-                        'Subtotal · $totalItems items',
+                        context.tp('txn_detail_subtotal', {
+                          'count': '$totalItems',
+                        }),
                         '\$${order.subTotal.toStringAsFixed(2)}',
                         c,
                         textStyles,
                       ),
                       const SizedBox(height: 8),
                       _buildSummaryRow(
-                        'Welcome discount · 10%',
+                        context.t('txn_detail_discount'),
                         '-\$${order.discountAmount.toStringAsFixed(2)}',
                         c,
                         textStyles,
                       ),
                       const SizedBox(height: 8),
                       _buildSummaryRow(
-                        'Sales tax · 10%',
+                        context.t('txn_detail_tax'),
                         '\$${order.taxAmount.toStringAsFixed(2)}',
                         c,
                         textStyles,
                       ),
 
-                      // 👇 Refunded Amount Row
+                      // Refunded Amount Row
                       if (order.refundedAmount > 0) ...[
                         const SizedBox(height: 8),
                         _buildSummaryRow(
-                          'Refunded amount',
+                          context.t('txn_detail_refunded_amount'),
                           '-\$${order.refundedAmount.toStringAsFixed(2)}',
                           c,
                           textStyles,
-                          // ✅ FIXED: warningFg adapts to theme
                           valueColor: c.warningFg,
                         ),
                       ],
@@ -388,19 +405,18 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Total Due
+                      // Net Total
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Net total',
+                            context.t('txn_detail_net_total'),
                             style: textStyles.labelMedium.copyWith(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           Text(
-                            // 👇 Show Net Total (Total - Refunded)
                             '\$${(order.totalAmount - order.refundedAmount).toStringAsFixed(2)}',
                             style: textStyles.heading1.copyWith(
                               color: c.primaryCoral,
@@ -411,7 +427,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                       ),
                       const SizedBox(height: 24),
 
-                      // ✅ FIXED: Payment Details Card — surfaceLight
+                      // Payment Details Card
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
@@ -429,7 +445,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  'Payment details',
+                                  context.t('txn_detail_payment_details'),
                                   style: textStyles.labelMedium.copyWith(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 15,
@@ -439,7 +455,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                             ),
                             const SizedBox(height: 16),
                             _buildSummaryRow(
-                              'Total paid',
+                              context.t('txn_detail_total_paid'),
                               '\$${order.totalAmount.toStringAsFixed(2)}',
                               c,
                               textStyles,
@@ -447,11 +463,10 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                             if (order.refundedAmount > 0) ...[
                               const SizedBox(height: 8),
                               _buildSummaryRow(
-                                'Refunded to customer',
+                                context.t('txn_detail_refunded_to_customer'),
                                 '-\$${order.refundedAmount.toStringAsFixed(2)}',
                                 c,
                                 textStyles,
-                                // ✅ FIXED
                                 valueColor: c.warningFg,
                               ),
                             ],
@@ -462,7 +477,9 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              'Receipt sent to $customerEmail',
+                              context.tp('txn_detail_receipt_sent', {
+                                'email': customerEmail,
+                              }),
                               style: textStyles.bodySmall.copyWith(
                                 color: c.textMuted,
                                 fontSize: 12,
@@ -505,7 +522,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                         Icon(Icons.undo_rounded, size: 20, color: c.textLight),
                         const SizedBox(width: 8),
                         Text(
-                          'Return items',
+                          context.t('txn_detail_return_button'),
                           style: textStyles.labelMedium.copyWith(
                             color: c.textLight,
                             fontSize: 16,
@@ -518,14 +535,12 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                   const SizedBox(height: 12),
                   TextButton(
                     onPressed: () {
-                      // 👇 FIX: Pass the full customer model to the receipt
                       context.pushNamed(
                         RouteNames.receiptName,
                         extra: {'order': order, 'customer': _customer},
                       );
                     },
                     style: TextButton.styleFrom(
-                      // ✅ FIXED: was 0xFFF4F8FF
                       backgroundColor: c.surfaceTint,
                       foregroundColor: c.primaryCoral,
                       minimumSize: const Size(double.infinity, 54),
@@ -543,7 +558,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'View receipt', // Changed from 'Resend receipt' since it navigates
+                          context.t('txn_detail_view_receipt_button'),
                           style: textStyles.labelMedium.copyWith(
                             color: c.primaryCoral,
                             fontSize: 16,
@@ -583,7 +598,6 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            // ✅ FIXED: image placeholder bg
             color: c.isDark
                 ? Colors.white.withValues(alpha: 0.08)
                 : const Color(0xFFE8EBEE),
@@ -626,7 +640,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                 ),
               ),
 
-              // 👇 Refund Badges
+              // Refund Badges
               if (refundedQty > 0) ...[
                 const SizedBox(height: 8),
                 Row(
@@ -637,14 +651,16 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        // ✅ FIXED: refund badge bg
                         color: isFullyRefunded ? c.dangerBg : c.warningBg,
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        isFullyRefunded ? 'Refunded' : 'Returned: $refundedQty',
+                        isFullyRefunded
+                            ? context.t('txn_detail_item_refunded')
+                            : context.tp('txn_detail_item_returned_qty', {
+                                'qty': '$refundedQty',
+                              }),
                         style: textStyles.labelSmall.copyWith(
-                          // ✅ FIXED: refund badge fg
                           color: isFullyRefunded ? c.dangerFg : c.warningFg,
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
