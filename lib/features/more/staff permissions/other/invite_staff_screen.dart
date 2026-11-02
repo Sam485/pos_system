@@ -26,11 +26,14 @@ class _InviteStaffScreenState extends State<InviteStaffScreen> {
   }
 
   Future<void> _sendInvite() async {
+    final c = context.colors;
+
     if (_emailController.text.isEmpty || !_emailController.text.contains('@')) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid email address'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text('Please enter a valid email address'),
+          // ✅ FIXED: was Colors.red
+          backgroundColor: c.dangerFg,
         ),
       );
       return;
@@ -44,9 +47,10 @@ class _InviteStaffScreenState extends State<InviteStaffScreen> {
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Invitation sent successfully'),
-          backgroundColor: Color(0xFF137333),
+        SnackBar(
+          content: const Text('Invitation sent successfully'),
+          // ✅ FIXED: was const Color(0xFF137333)
+          backgroundColor: c.successFg,
         ),
       );
       context.safePop();
@@ -54,7 +58,8 @@ class _InviteStaffScreenState extends State<InviteStaffScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(staffProvider.error ?? 'Failed to send invite'),
-          backgroundColor: Colors.red,
+          // ✅ FIXED: was Colors.red
+          backgroundColor: c.dangerFg,
         ),
       );
     }
@@ -280,7 +285,8 @@ class _InviteStaffScreenState extends State<InviteStaffScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFF4F8FF) : Colors.transparent,
+          // ✅ FIXED: was 0xFFF4F8FF
+          color: isSelected ? c.surfaceTint : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? c.primaryCoral : c.border,

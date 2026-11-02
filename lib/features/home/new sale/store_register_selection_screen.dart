@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pos_system/shared/helper/safe_pop.dart';
 import 'package:provider/provider.dart';
-import 'package:skeletonizer/skeletonizer.dart'; // 👈 Import Skeletonizer
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:pos_system/core/routes/route_names.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
 import 'package:pos_system/core/theme/app_text_style_x.dart';
@@ -20,13 +20,11 @@ class StoreRegisterSelectionScreen extends StatefulWidget {
 
 class _StoreRegisterSelectionScreenState
     extends State<StoreRegisterSelectionScreen> {
-  // Track the selected register ID
   String? _selectedRegisterId;
 
   @override
   void initState() {
     super.initState();
-    // Fetch registers on load
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<RegisterProvider>().fetchRegisters();
     });
@@ -38,7 +36,6 @@ class _StoreRegisterSelectionScreenState
     final textStyles = AppTextStylesX(context);
     final registerProvider = context.watch<RegisterProvider>();
 
-    // Auto-select the first available register when data loads
     if (_selectedRegisterId == null && registerProvider.registers.isNotEmpty) {
       final available = registerProvider.registers
           .where((r) => r.status == RegisterStatusEnum.ready)
@@ -74,7 +71,7 @@ class _StoreRegisterSelectionScreenState
                       Text('Choose your workspace', style: textStyles.heading2),
                       const SizedBox(height: 2),
                       Text(
-                        'Signed in as Alex Morgan', // Could pull from AuthProvider
+                        'Signed in as Alex Morgan',
                         style: textStyles.bodySmall,
                       ),
                     ],
@@ -91,7 +88,6 @@ class _StoreRegisterSelectionScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 16),
-                    // Page Title
                     Text(
                       "Let's get your store ready.",
                       style: textStyles.heading1.copyWith(
@@ -125,7 +121,6 @@ class _StoreRegisterSelectionScreenState
                     ),
                     const SizedBox(height: 8),
 
-                    // Skeletonizer wraps the dynamic register list
                     Skeletonizer(
                       enabled:
                           registerProvider.isLoading &&
@@ -162,7 +157,7 @@ class _StoreRegisterSelectionScreenState
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF5F8FF), // Light blue background
+                        color: c.surfaceTint, // 👈 theme-aware
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -170,7 +165,7 @@ class _StoreRegisterSelectionScreenState
                         children: [
                           Icon(
                             Icons.info_outline_rounded,
-                            color: c.primaryCoral, // Using blue from theme
+                            color: c.primaryCoral,
                             size: 20,
                           ),
                           const SizedBox(width: 12),
@@ -248,7 +243,6 @@ class _StoreRegisterSelectionScreenState
     );
   }
 
-  // ── Helper to get selected register name for button label ──
   String _getRegisterName(List<RegisterModel> registers) {
     if (_selectedRegisterId == null) return 'Register';
     final reg = registers.firstWhere(
@@ -263,7 +257,7 @@ class _StoreRegisterSelectionScreenState
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFF2F7FF), // Very light blue/grey
+        color: c.surfaceTint, // 👈 theme-aware
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.transparent),
       ),
@@ -272,7 +266,7 @@ class _StoreRegisterSelectionScreenState
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: c.surfaceLight, // 👈 theme-aware (was Colors.white)
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -313,7 +307,6 @@ class _StoreRegisterSelectionScreenState
     final bool isInUse = register.status == RegisterStatusEnum.inUse;
     final bool isSelected = _selectedRegisterId == register.id;
 
-    // Determine subtitle based on status
     String subtitle;
     if (isInUse) {
       subtitle = 'In use by another staff member';
@@ -339,9 +332,8 @@ class _StoreRegisterSelectionScreenState
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: isInUse
-                    ? const Color(0xFFF5F5F5)
-                    : const Color(0xFFF2F7FF),
+                // 👇 theme-aware — same tile in both modes now
+                color: c.surfaceTint,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
@@ -375,7 +367,7 @@ class _StoreRegisterSelectionScreenState
               ),
             ),
 
-            // Right side status (Radio or "In use" text)
+            // Right side status
             if (isInUse)
               Text(
                 'In use',

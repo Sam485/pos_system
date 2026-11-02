@@ -89,6 +89,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                     TextFormField(
                       readOnly: true,
                       onTap: () {},
+                      style: textStyles.bodyMedium,
                       decoration: InputDecoration(
                         hintText: 'What can we help you with?',
                         hintStyle: textStyles.bodyMedium.copyWith(
@@ -162,7 +163,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF4F8FF), // Light blue
+                        color: c.surfaceTint, // 👈 theme-aware
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Column(
@@ -288,7 +289,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF4F8FF), // Light blue
+                    color: c.surfaceTint, // 👈 theme-aware
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(icon, color: c.primaryCoral, size: 22),

@@ -46,8 +46,6 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
   }
 
   void _onKeyTap(String value) {
-    // If the user starts typing, clear the pre-filled amount first
-    // so they can type freely
     String current = _inputAmount;
     if (current == _totalDue.toStringAsFixed(2)) {
       current = '';
@@ -137,6 +135,11 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
     final c = context.colors;
     final textStyles = AppTextStylesX(context);
 
+    // 👇 compute once so we can reference in both the panel and pill
+    final isSufficient = _changeToGive >= 0;
+    final changeColor = isSufficient ? c.successFg : c.warningFg;
+    final changeBg = isSufficient ? c.successBg : c.warningBg;
+
     return Scaffold(
       backgroundColor: c.background,
       body: SafeArea(
@@ -220,7 +223,7 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
                         vertical: 16,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF4F8FF),
+                        color: c.surfaceTint, // 👈 theme-aware
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: c.primaryCoral, width: 1.5),
                       ),
@@ -283,9 +286,7 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: _changeToGive >= 0
-                            ? const Color(0xFFE6F4EA)
-                            : const Color(0xFFFFF4E5),
+                        color: changeBg, // 👈 theme-aware
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -295,40 +296,35 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                _changeToGive >= 0
+                                isSufficient
                                     ? 'Change to give'
                                     : 'Insufficient cash',
                                 style: textStyles.labelMedium.copyWith(
-                                  color: _changeToGive >= 0
-                                      ? const Color(0xFF137333)
-                                      : const Color(0xFFD97706),
+                                  color: changeColor, // 👈
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                _customerName != null && _changeToGive >= 0
+                                _customerName != null && isSufficient
                                     ? 'Hand the change to $_customerName before finishing.'
-                                    : _changeToGive >= 0
+                                    : isSufficient
                                     ? 'Hand the change to the customer before finishing.'
                                     : 'Customer needs to pay more.',
                                 style: textStyles.bodySmall.copyWith(
-                                  color:
-                                      (_changeToGive >= 0
-                                              ? const Color(0xFF137333)
-                                              : const Color(0xFFD97706))
-                                          .withValues(alpha: 0.8),
+                                  color: changeColor.withValues(alpha: 0.8),
+                                  // 👈
                                   fontSize: 10,
                                 ),
                               ),
                             ],
                           ),
                           Text(
-                            '\$${_changeToGive >= 0 ? _changeToGive.toStringAsFixed(2) : '0.00'}',
+                            '\$${isSufficient ? _changeToGive.toStringAsFixed(2) : '0.00'}',
                             style: textStyles.heading2.copyWith(
-                              color: _changeToGive >= 0
+                              color: isSufficient
                                   ? c.primaryCoral
-                                  : const Color(0xFFD97706),
+                                  : c.warningFg, // 👈
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
                             ),
@@ -346,7 +342,7 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
               child: ElevatedButton(
-                onPressed: _isProcessing || _changeToGive < 0
+                onPressed: _isProcessing || !isSufficient
                     ? null
                     : _completePayment,
                 style: ElevatedButton.styleFrom(
@@ -447,7 +443,7 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
                   child: Container(
                     height: 60,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8F9FA),
+                      color: c.surfaceLight, // 👈 theme-aware
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(

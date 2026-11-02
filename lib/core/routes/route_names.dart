@@ -42,7 +42,6 @@ abstract class RouteNames {
   static const String transactionDetail = '/transaction-detail';
   static const String returnRefund = '/return-refund';
   static const String refundComplete = '/refund-complete';
-  static const String applyDiscount = '/apply-discount';
   static const String orderNote = '/order-note';
   static const String productFilter = '/product-filter';
   static const String searchProduct = '/search-product';
@@ -87,7 +86,6 @@ abstract class RouteNames {
   static const String transactionDetailName = 'transaction-detail';
   static const String returnRefundName = 'return-refund';
   static const String refundCompleteName = 'refund-complete';
-  static const String applyDiscountName = 'apply-discount';
   static const String orderNoteName = 'order-note';
   static const String productFilterName = 'product-filter';
   static const String searchProductName = 'search-product';

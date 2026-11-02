@@ -76,22 +76,22 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
     final isPartiallyRefunded =
         order.status == OrderStatusEnum.partitallyrefunded;
 
-    // 👇 Set colors and labels based on status
+    // ✅ FIXED: Use theme-aware badge colors from AppThemeColors
     Color statusColor;
     Color textColor;
     String statusLabel;
 
     if (isFullyRefunded) {
-      statusColor = const Color(0xFFFEE2E2); // Light red
-      textColor = const Color(0xFFDC2626); // Dark red
+      statusColor = c.dangerBg;
+      textColor = c.dangerFg;
       statusLabel = 'Fully refunded';
     } else if (isPartiallyRefunded) {
-      statusColor = const Color(0xFFFFF4E5); // Light orange
-      textColor = const Color(0xFFD97706); // Dark orange
+      statusColor = c.warningBg;
+      textColor = c.warningFg;
       statusLabel = 'Partially refunded';
     } else {
-      statusColor = const Color(0xFFE6F4EA); // Light green
-      textColor = const Color(0xFF137333); // Dark green
+      statusColor = c.successBg;
+      textColor = c.successFg;
       statusLabel = 'Completed';
     }
 
@@ -203,13 +203,17 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                       ),
                       const SizedBox(height: 20),
 
-                      // Customer Card
+                      // ✅ FIXED: Customer Card — surfaceTint + subtle border
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF4F8FF),
+                          color: c.surfaceTint,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: const Color(0xFFE8F0FE)),
+                          border: Border.all(
+                            color: c.isDark
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : const Color(0xFFE8F0FE),
+                          ),
                         ),
                         child: Row(
                           children: [
@@ -217,14 +221,18 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                               width: 40,
                               height: 40,
                               alignment: Alignment.center,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFE8F0FE),
+                              decoration: BoxDecoration(
+                                // ✅ FIXED: avatar bg
+                                color: c.isDark
+                                    ? Colors.white.withValues(alpha: 0.10)
+                                    : const Color(0xFFE8F0FE),
                                 shape: BoxShape.circle,
                               ),
                               child: Text(
                                 initials,
                                 style: textStyles.labelSmall.copyWith(
-                                  color: const Color(0xFF1967D2),
+                                  // ✅ FIXED: avatar text
+                                  color: c.primaryCoral,
                                   fontWeight: FontWeight.w700,
                                   fontSize: 14,
                                 ),
@@ -368,7 +376,8 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                           '-\$${order.refundedAmount.toStringAsFixed(2)}',
                           c,
                           textStyles,
-                          valueColor: const Color(0xFFD97706),
+                          // ✅ FIXED: warningFg adapts to theme
+                          valueColor: c.warningFg,
                         ),
                       ],
 
@@ -402,11 +411,11 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Payment Details Card
+                      // ✅ FIXED: Payment Details Card — surfaceLight
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF8F9FA),
+                          color: c.surfaceLight,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Column(
@@ -442,7 +451,8 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                                 '-\$${order.refundedAmount.toStringAsFixed(2)}',
                                 c,
                                 textStyles,
-                                valueColor: const Color(0xFFD97706),
+                                // ✅ FIXED
+                                valueColor: c.warningFg,
                               ),
                             ],
                             const SizedBox(height: 16),
@@ -515,7 +525,8 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                       );
                     },
                     style: TextButton.styleFrom(
-                      backgroundColor: const Color(0xFFF4F8FF),
+                      // ✅ FIXED: was 0xFFF4F8FF
+                      backgroundColor: c.surfaceTint,
                       foregroundColor: c.primaryCoral,
                       minimumSize: const Size(double.infinity, 54),
                       shape: RoundedRectangleBorder(
@@ -572,7 +583,10 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: const Color(0xFFE8EBEE),
+            // ✅ FIXED: image placeholder bg
+            color: c.isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : const Color(0xFFE8EBEE),
             borderRadius: BorderRadius.circular(8),
           ),
           child: ClipRRect(
@@ -623,17 +637,15 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: isFullyRefunded
-                            ? const Color(0xFFFEE2E2)
-                            : const Color(0xFFFFF4E5),
+                        // ✅ FIXED: refund badge bg
+                        color: isFullyRefunded ? c.dangerBg : c.warningBg,
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         isFullyRefunded ? 'Refunded' : 'Returned: $refundedQty',
                         style: textStyles.labelSmall.copyWith(
-                          color: isFullyRefunded
-                              ? const Color(0xFFDC2626)
-                              : const Color(0xFFD97706),
+                          // ✅ FIXED: refund badge fg
+                          color: isFullyRefunded ? c.dangerFg : c.warningFg,
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                         ),

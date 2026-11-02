@@ -48,11 +48,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             errorBuilder: (context, error, stackTrace) =>
                                 Container(
                                   height: 200,
-                                  color: c.surfaceLight,
+                                  // ✅ FIXED: was c.surfaceLight
+                                  color: c.surfaceTint,
                                   child: Icon(
                                     Icons.store,
                                     size: 50,
-                                    color: c.textMuted,
+                                    // ✅ FIXED: was c.textMuted
+                                    color: c.primaryCoral,
                                   ),
                                 ),
                           ),

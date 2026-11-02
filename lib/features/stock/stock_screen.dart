@@ -91,11 +91,9 @@ class _StockScreenState extends State<StockScreen> {
 
     // ── Filter products (search + chip filter) ──
     final filteredProducts = productProvider.products.where((product) {
-      // 👇 1. Apply search filter
       if (_searchQuery.isNotEmpty) {
         final nameMatches = product.name.toLowerCase().contains(_searchQuery);
 
-        // Check if any variant matches SKU, color, or size
         final variants = inventoryProvider.variants
             .where((v) => v.productId == product.id)
             .toList();
@@ -111,8 +109,7 @@ class _StockScreenState extends State<StockScreen> {
         if (!nameMatches && !variantMatches) return false;
       }
 
-      // 👇 2. Apply chip filter
-      if (_selectedFilterIndex == 0) return true; // All
+      if (_selectedFilterIndex == 0) return true;
 
       final stockItems = inventoryByProduct[product.id] ?? [];
       final totalStock = stockItems.fold(
@@ -121,9 +118,9 @@ class _StockScreenState extends State<StockScreen> {
       );
 
       if (_selectedFilterIndex == 1) {
-        return totalStock > 0 && totalStock <= 5; // Low stock
+        return totalStock > 0 && totalStock <= 5;
       } else {
-        return totalStock == 0; // Out of stock
+        return totalStock == 0;
       }
     }).toList();
 
@@ -169,12 +166,14 @@ class _StockScreenState extends State<StockScreen> {
                 child: CustomScrollView(
                   physics: const ClampingScrollPhysics(),
                   slivers: [
-                    // 👇 Search Bar
+                    // Search Bar
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         child: TextFormField(
                           controller: _searchController,
+                          style:
+                              textStyles.bodyMedium, // 👈 readable typed text
                           decoration: InputDecoration(
                             hintText: 'Search product, SKU or barcode',
                             hintStyle: textStyles.bodyMedium.copyWith(
@@ -235,9 +234,8 @@ class _StockScreenState extends State<StockScreen> {
                               child: _buildSummaryCard(
                                 title: '$totalProducts',
                                 subtitle: 'Products',
-                                bgColor: const Color(0xFFF4F8FF),
+                                bgColor: c.surfaceTint,
                                 textColor: c.textPrimary,
-                                c: c,
                                 textStyles: textStyles,
                               ),
                             ),
@@ -246,9 +244,8 @@ class _StockScreenState extends State<StockScreen> {
                               child: _buildSummaryCard(
                                 title: '$totalUnits',
                                 subtitle: 'Units on hand',
-                                bgColor: const Color(0xFFF4F8FF),
+                                bgColor: c.surfaceTint,
                                 textColor: c.textPrimary,
-                                c: c,
                                 textStyles: textStyles,
                               ),
                             ),
@@ -257,9 +254,8 @@ class _StockScreenState extends State<StockScreen> {
                               child: _buildSummaryCard(
                                 title: '$lowStockCount',
                                 subtitle: 'Low stock',
-                                bgColor: const Color(0xFFFFF4E5),
-                                textColor: const Color(0xFFD97706),
-                                c: c,
+                                bgColor: c.warningBg,
+                                textColor: c.warningFg,
                                 textStyles: textStyles,
                               ),
                             ),
@@ -396,7 +392,6 @@ class _StockScreenState extends State<StockScreen> {
     required String subtitle,
     required Color bgColor,
     required Color textColor,
-    required AppThemeColors c,
     required AppTextStylesX textStyles,
   }) {
     return Container(
@@ -474,17 +469,18 @@ class _StockScreenState extends State<StockScreen> {
       (sum, item) => sum + item.quantityAvailable,
     );
 
+    // 👇 Theme-aware stock colors
     Color stockColor;
     String stockLabel;
 
     if (totalStock == 0) {
-      stockColor = const Color(0xFFDC2626);
+      stockColor = c.dangerFg;
       stockLabel = '0 available · Out of stock';
     } else if (totalStock <= 5) {
-      stockColor = const Color(0xFFD97706);
+      stockColor = c.warningFg;
       stockLabel = '$totalStock available · Reorder soon';
     } else {
-      stockColor = const Color(0xFF137333);
+      stockColor = c.successFg;
       stockLabel = '$totalStock available';
     }
 
@@ -512,7 +508,8 @@ class _StockScreenState extends State<StockScreen> {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: const Color(0xFFE8EBEE),
+                // 👇 theme-aware placeholder
+                color: c.surfaceLight,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: ClipRRect(

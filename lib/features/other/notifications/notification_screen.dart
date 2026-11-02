@@ -86,10 +86,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                         ),
                       )
                     : ListView.separated(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
                         itemCount: provider.notifications.length,
-                        separatorBuilder: (_, __) =>
-                            Divider(color: c.border.withValues(alpha: 0.5)),
+                        // 👇 Cards have their own spacing — no dividers needed
+                        separatorBuilder: (_, __) => const SizedBox(height: 10),
                         itemBuilder: (context, index) {
                           final notif = provider.notifications[index];
                           return _buildNotificationItem(
@@ -114,7 +114,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     AppTextStylesX textStyles,
     NotificationProvider provider,
   ) {
-    // Pick icon based on type
+    // Pick icon based on type — theme-aware colors
     IconData icon;
     Color iconColor;
     switch (notif.type) {
@@ -124,11 +124,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
         break;
       case 'delivery':
         icon = Icons.local_shipping_outlined;
-        iconColor = const Color(0xFF137333);
+        iconColor = c.successFg;
         break;
       case 'promo':
         icon = Icons.local_offer_outlined;
-        iconColor = const Color(0xFFD97706);
+        iconColor = c.warningFg;
         break;
       default:
         icon = Icons.info_outline_rounded;
@@ -141,9 +141,21 @@ class _NotificationScreenState extends State<NotificationScreen> {
           provider.markAsRead(notif.id);
         }
       },
+      borderRadius: BorderRadius.circular(14), // 👈 match card radius
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        color: notif.isRead ? Colors.transparent : const Color(0xFFF4F8FF),
+        // 👈 margin creates the gap between cards
+        margin: EdgeInsets.zero,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: BoxDecoration(
+          // 👈 unread: tinted surface; read: transparent but still rounded
+          color: notif.isRead ? Colors.transparent : c.surfaceTint,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            // subtle outline so read cards don't disappear on the bg
+            color: c.border.withValues(alpha: 0.6),
+            width: 1,
+          ),
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

@@ -74,7 +74,7 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
 
     final success = await orderProvider.placeOrder(orderData);
 
-if (success && mounted) {
+    if (success && mounted) {
       final customer = cartProvider.selectedCustomer;
       final itemsSold = cartProvider.itemCount;
 
@@ -96,7 +96,7 @@ if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(orderProvider.error ?? 'Payment failed'),
-          backgroundColor: Colors.red,
+          backgroundColor: context.colors.dangerFg,
         ),
       );
       setState(() => _isProcessing = false);
@@ -107,6 +107,10 @@ if (success && mounted) {
   Widget build(BuildContext context) {
     final c = context.colors;
     final textStyles = AppTextStylesX(context);
+
+    final terminalShadow = c.isDark
+        ? Colors.black.withValues(alpha: 0.35)
+        : Colors.black.withValues(alpha: 0.02);
 
     return Scaffold(
       backgroundColor: c.background,
@@ -167,7 +171,7 @@ if (success && mounted) {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE6F4EA), // Light green
+                        color: c.successBg,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -176,8 +180,8 @@ if (success && mounted) {
                           Container(
                             width: 6,
                             height: 6,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF137333),
+                            decoration: BoxDecoration(
+                              color: c.successFg,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -185,7 +189,7 @@ if (success && mounted) {
                           Text(
                             'Reader connected',
                             style: textStyles.labelSmall.copyWith(
-                              color: const Color(0xFF137333),
+                              color: c.successFg,
                               fontWeight: FontWeight.w600,
                               fontSize: 12,
                             ),
@@ -218,7 +222,7 @@ if (success && mounted) {
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 40),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF4F8FF), // Light blue background
+                        color: c.surfaceTint,
                         borderRadius: BorderRadius.circular(24),
                       ),
                       child: Center(
@@ -226,15 +230,17 @@ if (success && mounted) {
                           width: 140,
                           height: 220,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: c.cardBackground,
                             borderRadius: BorderRadius.circular(24),
                             border: Border.all(
-                              color: const Color(0xFFE8F0FE),
+                              color: c.isDark
+                                  ? Colors.white.withValues(alpha: 0.08)
+                                  : const Color(0xFFE8F0FE),
                               width: 2,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.02),
+                                color: terminalShadow,
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -248,7 +254,9 @@ if (success && mounted) {
                                 width: 40,
                                 height: 4,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFE8F0FE),
+                                  color: c.isDark
+                                      ? Colors.white.withValues(alpha: 0.12)
+                                      : const Color(0xFFE8F0FE),
                                   borderRadius: BorderRadius.circular(2),
                                 ),
                               ),
@@ -259,7 +267,7 @@ if (success && mounted) {
                                 width: 110,
                                 height: 110,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF4F8FF),
+                                  color: c.surfaceTint,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Column(
@@ -287,11 +295,11 @@ if (success && mounted) {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  _buildTerminalButton(),
+                                  _buildTerminalButton(c),
                                   const SizedBox(width: 6),
-                                  _buildTerminalButton(),
+                                  _buildTerminalButton(c),
                                   const SizedBox(width: 6),
-                                  _buildTerminalButton(),
+                                  _buildTerminalButton(c),
                                 ],
                               ),
                             ],
@@ -323,50 +331,29 @@ if (success && mounted) {
                     const SizedBox(height: 20),
 
                     // Waiting Indicator
-                    if (_isProcessing)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: c.primaryCoral,
-                            ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: c.primaryCoral,
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Processing payment...',
-                            style: textStyles.labelMedium.copyWith(
-                              color: c.primaryCoral,
-                              fontWeight: FontWeight.w600,
-                            ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _isProcessing
+                              ? 'Processing payment...'
+                              : 'Waiting for card...',
+                          style: textStyles.labelMedium.copyWith(
+                            color: c.primaryCoral,
+                            fontWeight: FontWeight.w600,
                           ),
-                        ],
-                      )
-                    else
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: c.primaryCoral,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Waiting for card...',
-                            style: textStyles.labelMedium.copyWith(
-                              color: c.primaryCoral,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
+                    ),
                     const SizedBox(height: 24),
 
                     Divider(color: c.border.withValues(alpha: 0.5), height: 1),
@@ -396,7 +383,7 @@ if (success && mounted) {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF4F8FF), // Light blue background
+                        color: c.surfaceTint,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -412,7 +399,7 @@ if (success && mounted) {
                             child: Text(
                               'Accepts Visa, Mastercard, Amex, Apple Pay and Google Pay.',
                               style: textStyles.bodySmall.copyWith(
-                                color: c.primaryCoral,
+                                color: c.textSecondary,
                                 height: 1.4,
                                 fontSize: 13,
                               ),
@@ -475,7 +462,7 @@ if (success && mounted) {
                   TextButton(
                     onPressed: _isProcessing ? null : () => context.pop(),
                     style: TextButton.styleFrom(
-                      backgroundColor: const Color(0xFFF4F8FF), // Light blue
+                      backgroundColor: c.surfaceTint,
                       foregroundColor: c.primaryCoral,
                       minimumSize: const Size(double.infinity, 54),
                       shape: RoundedRectangleBorder(
@@ -510,12 +497,14 @@ if (success && mounted) {
   }
 
   // Helper widget for the terminal buttons at the bottom
-  Widget _buildTerminalButton() {
+  Widget _buildTerminalButton(AppThemeColors c) {
     return Container(
       width: 20,
       height: 6,
       decoration: BoxDecoration(
-        color: const Color(0xFFE8F0FE),
+        color: c.isDark
+            ? Colors.white.withValues(alpha: 0.12)
+            : const Color(0xFFE8F0FE),
         borderRadius: BorderRadius.circular(3),
       ),
     );

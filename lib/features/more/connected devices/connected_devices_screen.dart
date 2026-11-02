@@ -73,14 +73,14 @@ class _ConnectedDevicesScreenState extends State<ConnectedDevicesScreen> {
                         vertical: 12,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE6F4EA), // Light green
+                        color: c.successBg, // 👈 theme-aware
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
                         children: [
                           Icon(
                             Icons.check_circle_outline_rounded,
-                            color: const Color(0xFF137333),
+                            color: c.successFg, // 👈 theme-aware
                             size: 20,
                           ),
                           const SizedBox(width: 8),
@@ -88,7 +88,7 @@ class _ConnectedDevicesScreenState extends State<ConnectedDevicesScreen> {
                             child: Text(
                               'All devices connected and ready for the next sale.',
                               style: textStyles.bodySmall.copyWith(
-                                color: const Color(0xFF137333),
+                                color: c.successFg, // 👈 theme-aware
                                 fontWeight: FontWeight.w500,
                                 fontSize: 13,
                               ),
@@ -103,7 +103,7 @@ class _ConnectedDevicesScreenState extends State<ConnectedDevicesScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF4F8FF), // Light blue
+                        color: c.surfaceTint, // 👈 theme-aware
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Column(
@@ -114,7 +114,7 @@ class _ConnectedDevicesScreenState extends State<ConnectedDevicesScreen> {
                               Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: c.surfaceLight, // 👈 theme-aware
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Icon(
@@ -200,7 +200,7 @@ class _ConnectedDevicesScreenState extends State<ConnectedDevicesScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF4F8FF), // Light blue
+                        color: c.surfaceTint, // 👈 theme-aware
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Column(
@@ -211,7 +211,7 @@ class _ConnectedDevicesScreenState extends State<ConnectedDevicesScreen> {
                               Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: c.surfaceLight, // 👈 theme-aware
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Icon(

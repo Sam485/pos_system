@@ -68,8 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final bool isRegisterOpen = registerProvider.isRegisterOpen;
     final session = registerProvider.activeSession;
 
-    // 👇 FIX: Calculate net sales correctly
-    // Net Sales = Total - Discount - Refunded
+    // Net Sales = Total - Refunded
     final double todaySales = orderProvider.salesHistory
         .where(
           (o) =>
@@ -78,7 +77,6 @@ class _HomeScreenState extends State<HomeScreen> {
               o.status == OrderStatusEnum.fullyrefunded,
         )
         .fold(0.0, (sum, o) {
-          // Net = total amount actually kept by the store
           final net = o.totalAmount - o.refundedAmount;
           return sum + (net < 0 ? 0.0 : net);
         });
@@ -88,14 +86,18 @@ class _HomeScreenState extends State<HomeScreen> {
         ? todaySales / totalTransactions
         : 0.0;
 
-    // 👇 FIX: Calculate items sold from actual order items
-    // Since we don't have the order items here, use a rough estimate
-    // 👇 FIX: Use real items sold count
     final int itemsSold = orderProvider.totalItemsSold;
     final int lowStockCount = inventoryProvider.lowStockAlerts.length;
     final int customerCount = customerProvider.customers.length;
 
     final storeName = storeProvider.store?.name ?? 'Loading...';
+
+    // 👇 Theme-aware colors, resolve once per build
+    final surfaceTint = c.surfaceTint;
+    final successBg = c.successBg;
+    final warningBg = c.warningBg;
+    final successFg = c.successFg;
+    final warningFg = c.warningFg;
 
     return Scaffold(
       backgroundColor: c.background,
@@ -173,17 +175,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: isRegisterOpen
-                              ? const Color(0xFFE6F4EA)
-                              : const Color(0xFFFFF4E5),
+                          color: isRegisterOpen ? successBg : warningBg,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           isRegisterOpen ? 'Register open' : 'Register closed',
                           style: textStyles.labelSmall.copyWith(
-                            color: isRegisterOpen
-                                ? const Color(0xFF137333)
-                                : const Color(0xFFD97706),
+                            color: isRegisterOpen ? successFg : warningFg,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -203,7 +201,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF4F8FF),
+                      color: surfaceTint,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
@@ -243,21 +241,21 @@ class _HomeScreenState extends State<HomeScreen> {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFE6F4EA),
+                                color: successBg,
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.arrow_upward,
                                     size: 12,
-                                    color: Color(0xFF137333),
+                                    color: successFg,
                                   ),
                                   const SizedBox(width: 2),
                                   Text(
                                     '12.8%',
                                     style: textStyles.labelSmall.copyWith(
-                                      color: const Color(0xFF137333),
+                                      color: successFg,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -307,7 +305,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Start New Sale Button (with register guard)
+                  // Start New Sale Button
                   ElevatedButton(
                     onPressed: () {
                       if (!registerProvider.isRegisterOpen) {
@@ -440,7 +438,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF4F8FF),
+                    // 👇 theme-aware
+                    color: c.surfaceTint,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(icon, color: c.primaryCoral, size: 24),

@@ -73,7 +73,7 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
     if (_order == null) {
       return Scaffold(
         backgroundColor: c.background,
-        body: Center(child: Text('Order not found')),
+        body: const Center(child: Text('Order not found')),
       );
     }
 
@@ -137,7 +137,8 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8F9FA),
+                        // ✅ FIXED: was 0xFFF8F9FA
+                        color: c.surfaceLight,
                         borderRadius: BorderRadius.circular(24),
                       ),
                       child: Column(
@@ -317,11 +318,11 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // ── Email Notification Banner ──
+                    // ✅ FIXED: Email Notification Banner — successBg / successFg
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE6F4EA), // Light green
+                        color: c.successBg,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -329,7 +330,7 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                         children: [
                           Icon(
                             Icons.mail_outline,
-                            color: const Color(0xFF137333),
+                            color: c.successFg,
                             size: 20,
                           ),
                           const SizedBox(width: 12),
@@ -337,7 +338,7 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                             child: Text(
                               'Receipt delivered to ${_customer?.email ?? "customer"}.',
                               style: textStyles.bodySmall.copyWith(
-                                color: const Color(0xFF137333),
+                                color: c.successFg,
                                 height: 1.4,
                               ),
                             ),
@@ -397,9 +398,10 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                   ElevatedButton(
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Printing receipt...'),
-                          backgroundColor: Color(0xFF137333),
+                        SnackBar(
+                          content: const Text('Printing receipt...'),
+                          // ✅ FIXED: was const Color(0xFF137333)
+                          backgroundColor: c.successFg,
                         ),
                       );
                     },
@@ -432,7 +434,8 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                   TextButton(
                     onPressed: () => context.pop(),
                     style: TextButton.styleFrom(
-                      backgroundColor: const Color(0xFFF4F8FF),
+                      // ✅ FIXED: was 0xFFF4F8FF
+                      backgroundColor: c.surfaceTint,
                       foregroundColor: c.primaryCoral,
                       minimumSize: const Size(double.infinity, 54),
                       shape: RoundedRectangleBorder(

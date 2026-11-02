@@ -32,7 +32,6 @@ class _ReceiptPreferencesScreenState extends State<ReceiptPreferencesScreen> {
     super.dispose();
   }
 
-  // Pre-fill the footer once the settings are available
   void _populateFieldsFromProvider(SettingsProvider provider) {
     final settings = provider.settings;
     if (settings != null && !_isInitialized) {
@@ -43,8 +42,6 @@ class _ReceiptPreferencesScreenState extends State<ReceiptPreferencesScreen> {
 
   Future<void> _savePreferences() async {
     final settingsProvider = context.read<SettingsProvider>();
-
-    // 👇 FIX: Save the footer text to the provider before saving
     settingsProvider.updateReceiptFooter(_footerController.text.trim());
 
     final success = await settingsProvider.saveSettings();
@@ -73,7 +70,6 @@ class _ReceiptPreferencesScreenState extends State<ReceiptPreferencesScreen> {
     final textStyles = AppTextStylesX(context);
     final settingsProvider = context.watch<SettingsProvider>();
 
-    // Populate footer
     _populateFieldsFromProvider(settingsProvider);
     final settings = settingsProvider.settings;
 
@@ -149,7 +145,7 @@ class _ReceiptPreferencesScreenState extends State<ReceiptPreferencesScreen> {
                           horizontal: 16,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF4F8FF),
+                          color: c.surfaceTint, // 👈 theme-aware
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Column(
@@ -324,7 +320,6 @@ class _ReceiptPreferencesScreenState extends State<ReceiptPreferencesScreen> {
                     const SizedBox(height: 12),
                     TextButton(
                       onPressed: () {
-                        // Simulate printing a receipt
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text('Test receipt sent to printer'),
@@ -333,7 +328,7 @@ class _ReceiptPreferencesScreenState extends State<ReceiptPreferencesScreen> {
                         );
                       },
                       style: TextButton.styleFrom(
-                        backgroundColor: const Color(0xFFF4F8FF),
+                        backgroundColor: c.surfaceTint, // 👈 theme-aware
                         foregroundColor: c.primaryCoral,
                         minimumSize: const Size(double.infinity, 54),
                         shape: RoundedRectangleBorder(

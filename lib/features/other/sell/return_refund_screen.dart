@@ -430,7 +430,8 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF4F8FF),
+                        // ✅ FIXED: was 0xFFF4F8FF
+                        color: c.surfaceTint,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Column(
@@ -667,7 +668,10 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
           height: 56,
           margin: const EdgeInsets.only(top: 4),
           decoration: BoxDecoration(
-            color: const Color(0xFFE8EBEE),
+            // ✅ FIXED: was 0xFFE8EBEE
+            color: c.isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : const Color(0xFFE8EBEE),
             borderRadius: BorderRadius.circular(8),
           ),
           child: ClipRRect(
@@ -718,7 +722,8 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFF4E5),
+                    // ✅ FIXED: was 0xFFFFF4E5
+                    color: c.warningBg,
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
@@ -726,7 +731,8 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
                         ? 'Fully returned'
                         : '$alreadyRefundedQty already returned',
                     style: textStyles.labelSmall.copyWith(
-                      color: const Color(0xFFD97706),
+                      // ✅ FIXED: was 0xFFD97706
+                      color: c.warningFg,
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                     ),

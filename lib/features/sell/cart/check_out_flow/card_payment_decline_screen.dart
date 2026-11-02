@@ -16,7 +16,6 @@ class CardPaymentDeclineScreen extends StatefulWidget {
 }
 
 class _CardPaymentDeclineScreenState extends State<CardPaymentDeclineScreen> {
-  // Data from Router (fallback values for demo)
   String _orderId = '#1048';
   double _amount = 130.68;
   String _customerName = 'Emma Miller';
@@ -94,13 +93,13 @@ class _CardPaymentDeclineScreenState extends State<CardPaymentDeclineScreen> {
                     Container(
                       width: 80,
                       height: 80,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFFEF2F2), // Light red/pink
+                      decoration: BoxDecoration(
+                        color: c.dangerBg, // 👈 theme-aware
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.credit_card_outlined,
-                        color: Color(0xFFDC2626), // Red
+                        color: c.dangerFg, // 👈 theme-aware
                         size: 40,
                       ),
                     ),
@@ -130,7 +129,7 @@ class _CardPaymentDeclineScreenState extends State<CardPaymentDeclineScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8F9FA), // Light grey
+                        color: c.surfaceLight, // 👈 theme-aware
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Column(
@@ -198,7 +197,7 @@ class _CardPaymentDeclineScreenState extends State<CardPaymentDeclineScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFF4E5), // Light orange
+                        color: c.warningBg, // 👈 theme-aware
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -206,7 +205,7 @@ class _CardPaymentDeclineScreenState extends State<CardPaymentDeclineScreen> {
                         children: [
                           Icon(
                             Icons.warning_amber_rounded,
-                            color: const Color(0xFFD97706),
+                            color: c.warningFg, // 👈 theme-aware
                             size: 20,
                           ),
                           const SizedBox(width: 12),
@@ -214,7 +213,7 @@ class _CardPaymentDeclineScreenState extends State<CardPaymentDeclineScreen> {
                             child: Text(
                               'No payment taken. This sale is not complete and stock has not changed.',
                               style: textStyles.bodySmall.copyWith(
-                                color: const Color(0xFFD97706),
+                                color: c.warningFg, // 👈 theme-aware
                                 height: 1.4,
                                 fontSize: 13,
                               ),
@@ -246,7 +245,6 @@ class _CardPaymentDeclineScreenState extends State<CardPaymentDeclineScreen> {
                 children: [
                   ElevatedButton(
                     onPressed: () {
-                      // Retry logic: likely pop back to the card payment screen
                       context.pop();
                     },
                     style: ElevatedButton.styleFrom(
@@ -281,11 +279,10 @@ class _CardPaymentDeclineScreenState extends State<CardPaymentDeclineScreen> {
                   const SizedBox(height: 12),
                   TextButton(
                     onPressed: () {
-                      // Go back to checkout to choose another method
                       context.goNamed(RouteNames.checkoutName);
                     },
                     style: TextButton.styleFrom(
-                      backgroundColor: const Color(0xFFF4F8FF),
+                      backgroundColor: c.surfaceTint, // 👈 theme-aware
                       foregroundColor: c.primaryCoral,
                       minimumSize: const Size(double.infinity, 54),
                       shape: RoundedRectangleBorder(
@@ -310,7 +307,6 @@ class _CardPaymentDeclineScreenState extends State<CardPaymentDeclineScreen> {
     );
   }
 
-  // ── Helper Widget ──
   Widget _buildSummaryRow(
     String label,
     String value,

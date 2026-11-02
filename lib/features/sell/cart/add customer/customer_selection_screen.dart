@@ -221,9 +221,8 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              color: const Color(
-                                0xFFF8F9FA,
-                              ), // Light grey background
+                              // ✅ FIXED: was 0xFFF8F9FA
+                              color: c.surfaceLight,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Column(
@@ -309,7 +308,8 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
                       context.pop();
                     },
                     style: TextButton.styleFrom(
-                      backgroundColor: const Color(0xFFF4F8FF), // Light blue
+                      // ✅ FIXED: was 0xFFF4F8FF
+                      backgroundColor: c.surfaceTint,
                       foregroundColor: c.primaryCoral,
                       minimumSize: const Size(double.infinity, 54),
                       shape: RoundedRectangleBorder(
@@ -352,11 +352,17 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFF4F8FF) : Colors.transparent,
+          // ✅ FIXED: selected row bg — surfaceTint instead of 0xFFF4F8FF
+          color: isSelected ? c.surfaceTint : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
-          border: isSelected
-              ? Border.all(color: const Color(0xFFE8F0FE))
-              : Border.all(color: Colors.transparent),
+          border: Border.all(
+            // ✅ FIXED: selected border adapts to theme
+            color: isSelected
+                ? (c.isDark
+                      ? Colors.white.withValues(alpha: 0.10)
+                      : const Color(0xFFE8F0FE))
+                : Colors.transparent,
+          ),
         ),
         child: Row(
           children: [
@@ -365,14 +371,18 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
               width: 40,
               height: 40,
               alignment: Alignment.center,
-              decoration: const BoxDecoration(
-                color: Color(0xFFE8F0FE), // Light blue
+              decoration: BoxDecoration(
+                // ✅ FIXED: avatar bg
+                color: c.isDark
+                    ? Colors.white.withValues(alpha: 0.10)
+                    : const Color(0xFFE8F0FE),
                 shape: BoxShape.circle,
               ),
               child: Text(
                 initials,
                 style: textStyles.labelSmall.copyWith(
-                  color: const Color(0xFF1967D2),
+                  // ✅ FIXED: avatar text — was 0xFF1967D2
+                  color: c.primaryCoral,
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
                 ),

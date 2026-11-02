@@ -34,7 +34,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       }
       _isInitialized = true;
 
-      // 👇 FIX: Fetch inventory if it's empty
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final inventoryProvider = context.read<InventoryProvider>();
         if (inventoryProvider.fullInventory.isEmpty) {
@@ -67,7 +66,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       return (order[a] ?? 99).compareTo(order[b] ?? 99);
     });
 
-    // 👇 FIX: Use fullInventory, NOT lowStockAlerts
     final currentStock = _selectedVariant != null
         ? inventoryProvider.fullInventory
                   .where((i) => i.variantId == _selectedVariant!.id)
@@ -132,7 +130,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       width: double.infinity,
                       height: 300,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE8EBEE),
+                        color: c.surfaceLight, // 👈 theme-aware
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: ClipRRect(
@@ -168,17 +166,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: currentStock > 0
-                                ? const Color(0xFFE6F4EA)
-                                : const Color(0xFFFFF4E5),
+                            // 👇 theme-aware status badge
+                            color: currentStock > 0 ? c.successBg : c.warningBg,
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             currentStock > 0 ? 'In stock' : 'Out of stock',
                             style: textStyles.labelSmall.copyWith(
                               color: currentStock > 0
-                                  ? const Color(0xFF137333)
-                                  : const Color(0xFFD97706),
+                                  ? c.successFg
+                                  : c.warningFg,
                               fontWeight: FontWeight.w600,
                               fontSize: 11,
                             ),
@@ -277,9 +274,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         Text(
                           '$currentStock available at SoHo',
                           style: textStyles.bodySmall.copyWith(
-                            color: currentStock > 0
-                                ? const Color(0xFF137333)
-                                : const Color(0xFFD97706),
+                            // 👈 theme-aware stock count color
+                            color: currentStock > 0 ? c.successFg : c.warningFg,
                             fontWeight: FontWeight.w500,
                             fontSize: 12,
                           ),
@@ -314,7 +310,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 decoration: BoxDecoration(
                                   color: isSelected
                                       ? c.primaryCoral
-                                      : const Color(0xFFF8F9FA),
+                                      : c.surfaceLight, // 👈 theme-aware
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
@@ -356,6 +352,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                     setState(() => _quantity--);
                                   }
                                 },
+                                c: c,
                               ),
                               Padding(
                                 padding: const EdgeInsets.symmetric(
@@ -371,12 +368,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                               _buildQuantityButton(
                                 icon: Icons.add,
                                 onTap: () {
-                                  // 🚨 Prevent exceeding stock
                                   if (currentStock == 0 ||
                                       _quantity < currentStock) {
                                     setState(() => _quantity++);
                                   }
                                 },
+                                c: c,
                               ),
                             ],
                           ),
@@ -391,8 +388,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
               child: ElevatedButton(
-                // 👇 FIX: Button is enabled unless loading.
-                // Stock checks are handled in the callback.
                 onPressed: cartProvider.isLoading
                     ? null
                     : () async {
@@ -527,12 +522,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget _buildQuantityButton({
     required IconData icon,
     required VoidCallback onTap,
+    required AppThemeColors c, // 👈 added
   }) {
     return InkWell(
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.all(12.0),
-        child: Icon(icon, size: 16),
+        // 👈 explicit color so the +/− icons are visible on dark
+        child: Icon(icon, size: 16, color: c.textPrimary),
       ),
     );
   }

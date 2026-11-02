@@ -67,6 +67,7 @@ class _CloseRegisterScreenState extends State<CloseRegisterScreen> {
   }
 
   Future<void> _closeRegister() async {
+    final c = context.colors;
     final registerProvider = context.read<RegisterProvider>();
 
     // Call provider to close register
@@ -77,9 +78,10 @@ class _CloseRegisterScreenState extends State<CloseRegisterScreen> {
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Register closed successfully'),
-          backgroundColor: Color(0xFF137333),
+        SnackBar(
+          content: const Text('Register closed successfully'),
+          // ✅ FIXED: was const Color(0xFF137333)
+          backgroundColor: c.successFg,
         ),
       );
       // Navigate back to home
@@ -88,7 +90,8 @@ class _CloseRegisterScreenState extends State<CloseRegisterScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(registerProvider.error ?? 'Failed to close register'),
-          backgroundColor: Colors.red,
+          // ✅ FIXED: was Colors.red
+          backgroundColor: c.dangerFg,
         ),
       );
     }
@@ -193,7 +196,8 @@ class _CloseRegisterScreenState extends State<CloseRegisterScreen> {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF4F8FF), // Light blue
+                        // ✅ FIXED: was 0xFFF4F8FF
+                        color: c.surfaceTint,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Column(
@@ -327,9 +331,8 @@ class _CloseRegisterScreenState extends State<CloseRegisterScreen> {
                         vertical: 12,
                       ),
                       decoration: BoxDecoration(
-                        color: _isBalanced
-                            ? const Color(0xFFE6F4EA)
-                            : const Color(0xFFFFF4E5),
+                        // ✅ FIXED: successBg / warningBg
+                        color: _isBalanced ? c.successBg : c.warningBg,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -338,9 +341,8 @@ class _CloseRegisterScreenState extends State<CloseRegisterScreen> {
                             _isBalanced
                                 ? Icons.check_circle_outline_rounded
                                 : Icons.warning_amber_rounded,
-                            color: _isBalanced
-                                ? const Color(0xFF137333)
-                                : const Color(0xFFD97706),
+                            // ✅ FIXED: successFg / warningFg
+                            color: _isBalanced ? c.successFg : c.warningFg,
                             size: 20,
                           ),
                           const SizedBox(width: 8),
@@ -349,9 +351,8 @@ class _CloseRegisterScreenState extends State<CloseRegisterScreen> {
                                 ? 'Balanced · Difference \$0.00'
                                 : 'Difference: \$${_difference.abs().toStringAsFixed(2)} ${_difference > 0 ? 'over' : 'short'}',
                             style: textStyles.bodySmall.copyWith(
-                              color: _isBalanced
-                                  ? const Color(0xFF137333)
-                                  : const Color(0xFFD97706),
+                              // ✅ FIXED: successFg / warningFg
+                              color: _isBalanced ? c.successFg : c.warningFg,
                               fontWeight: FontWeight.w600,
                               fontSize: 13,
                             ),

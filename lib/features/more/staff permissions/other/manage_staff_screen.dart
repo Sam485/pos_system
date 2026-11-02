@@ -59,6 +59,7 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
   Future<void> _saveChanges() async {
     if (_staff == null) return;
 
+    final c = context.colors;
     final staffProvider = context.read<StaffProvider>();
     final success = await staffProvider.updateStaff(_staff!.id, {
       'name': _nameController.text.trim(),
@@ -69,9 +70,10 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Staff member updated successfully'),
-          backgroundColor: Color(0xFF137333),
+        SnackBar(
+          content: const Text('Staff member updated successfully'),
+          // ✅ FIXED: was const Color(0xFF137333)
+          backgroundColor: c.successFg,
         ),
       );
       context.safePop();
@@ -79,7 +81,8 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(staffProvider.error ?? 'Failed to update staff member'),
-          backgroundColor: Colors.red,
+          // ✅ FIXED: was Colors.red
+          backgroundColor: c.dangerFg,
         ),
       );
     }
@@ -89,22 +92,31 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
   Future<void> _deleteStaff() async {
     if (_staff == null) return;
 
+    final c = context.colors;
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Remove staff member?'),
+        // ✅ FIXED: dialog surfaces use palette
+        backgroundColor: c.cardBackground,
+        title: Text(
+          'Remove staff member?',
+          style: TextStyle(color: c.textPrimary),
+        ),
         content: Text(
           'Are you sure you want to remove ${_staff!.name}? This action cannot be undone.',
+          style: TextStyle(color: c.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text('Cancel', style: TextStyle(color: c.textSecondary)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
             style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFFDC2626),
+              // ✅ FIXED: was const Color(0xFFDC2626)
+              foregroundColor: c.dangerFg,
             ),
             child: const Text('Remove'),
           ),
@@ -119,9 +131,10 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Staff member removed'),
-          backgroundColor: Color(0xFF137333),
+        SnackBar(
+          content: const Text('Staff member removed'),
+          // ✅ FIXED: was const Color(0xFF137333)
+          backgroundColor: c.successFg,
         ),
       );
       context.safePop();
@@ -129,7 +142,8 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(staffProvider.error ?? 'Failed to remove staff member'),
-          backgroundColor: Colors.red,
+          // ✅ FIXED: was Colors.red
+          backgroundColor: c.dangerFg,
         ),
       );
     }
@@ -202,14 +216,18 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
                             width: 80,
                             height: 80,
                             alignment: Alignment.center,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFE8F0FE),
+                            decoration: BoxDecoration(
+                              // ✅ FIXED: avatar bg — was 0xFFE8F0FE
+                              color: c.isDark
+                                  ? Colors.white.withValues(alpha: 0.10)
+                                  : const Color(0xFFE8F0FE),
                               shape: BoxShape.circle,
                             ),
                             child: Text(
                               initials,
                               style: textStyles.heading2.copyWith(
-                                color: const Color(0xFF1967D2),
+                                // ✅ FIXED: avatar text — was 0xFF1967D2
+                                color: c.primaryCoral,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 28,
                               ),
@@ -320,13 +338,23 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
                             ),
                           ],
                         ),
+                        // ✅ FIXED: Switch — old `activeThumbColor` /
+                        // `inactiveThumbColor` params don't exist on
+                        // modern Flutter. Use `thumbColor` + `trackColor`
+                        // MaterialStateProperty, and theme-aware surface
+                        // for the inactive track.
                         Switch(
                           value: _isActive,
                           onChanged: (val) => setState(() => _isActive = val),
-                          activeThumbColor: c.textLight,
-                          activeTrackColor: c.primaryCoral,
-                          inactiveThumbColor: c.textLight,
-                          inactiveTrackColor: c.surfaceLight,
+                          thumbColor: WidgetStateProperty.resolveWith(
+                            (states) => c.textLight,
+                          ),
+                          trackColor: WidgetStateProperty.resolveWith((states) {
+                            if (states.contains(WidgetState.selected)) {
+                              return c.primaryCoral;
+                            }
+                            return c.surfaceLight;
+                          }),
                         ),
                       ],
                     ),
@@ -336,7 +364,8 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
                     Text(
                       'DANGER ZONE',
                       style: textStyles.labelSmall.copyWith(
-                        color: const Color(0xFFDC2626),
+                        // ✅ FIXED: was const Color(0xFFDC2626)
+                        color: c.dangerFg,
                         letterSpacing: 1.0,
                         fontWeight: FontWeight.w600,
                       ),
@@ -345,8 +374,10 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
                     TextButton(
                       onPressed: staffProvider.isLoading ? null : _deleteStaff,
                       style: TextButton.styleFrom(
-                        backgroundColor: const Color(0xFFFEF2F2), // Light red
-                        foregroundColor: const Color(0xFFDC2626),
+                        // ✅ FIXED: was 0xFFFEF2F2
+                        backgroundColor: c.dangerBg,
+                        // ✅ FIXED: was 0xFFDC2626
+                        foregroundColor: c.dangerFg,
                         minimumSize: const Size(double.infinity, 54),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -355,7 +386,8 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
                       child: Text(
                         'Remove staff member',
                         style: textStyles.labelMedium.copyWith(
-                          color: const Color(0xFFDC2626),
+                          // ✅ FIXED: was 0xFFDC2626
+                          color: c.dangerFg,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),
@@ -430,7 +462,8 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFF4F8FF) : Colors.transparent,
+          // ✅ FIXED: was 0xFFF4F8FF
+          color: isSelected ? c.surfaceTint : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? c.primaryCoral : c.border,

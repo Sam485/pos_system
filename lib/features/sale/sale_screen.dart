@@ -50,10 +50,8 @@ class _SaleScreenState extends State<SaleScreen> {
     final orderProvider = context.watch<OrderProvider>();
     final customerProvider = context.watch<CustomerProvider>();
 
-    // 👇 Use filteredSales from provider
     final baseSales = orderProvider.filteredSales;
 
-    // Then apply search & chip filters on top
     final filteredSales = baseSales.where((sale) {
       final customer = customerProvider.customers.firstWhere(
         (c) => c.id == sale.customerId,
@@ -78,12 +76,10 @@ class _SaleScreenState extends State<SaleScreen> {
 
       if (!matchesSearch) return false;
 
-      // 👇 Filter by status
       if (_selectedFilterIndex == 1) {
         return sale.status == OrderStatusEnum.completed;
       }
       if (_selectedFilterIndex == 2) {
-        // Show both partially and fully refunded
         return sale.status == OrderStatusEnum.partitallyrefunded ||
             sale.status == OrderStatusEnum.fullyrefunded;
       }
@@ -91,7 +87,6 @@ class _SaleScreenState extends State<SaleScreen> {
       return true;
     }).toList();
 
-    // 👇 Net sales should be (total - refunded)
     final double totalSales = filteredSales.fold(
       0.0,
       (sum, o) => sum + (o.totalAmount - o.refundedAmount),
@@ -142,6 +137,7 @@ class _SaleScreenState extends State<SaleScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
                   child: TextFormField(
                     controller: _searchController,
+                    style: textStyles.bodyMedium,
                     decoration: InputDecoration(
                       hintText: 'Search order or customer',
                       hintStyle: textStyles.bodyMedium.copyWith(
@@ -386,7 +382,8 @@ class _SaleScreenState extends State<SaleScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF4F8FF),
+        // 👇 theme-aware
+        color: c.surfaceTint,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -432,28 +429,27 @@ class _SaleScreenState extends State<SaleScreen> {
         ? 'Guest customer'
         : '${customer.firstName} ${customer.lastName}';
 
-    // 👇 Check for all refund states
     final isFullyRefunded = sale.status == OrderStatusEnum.fullyrefunded;
     final isPartiallyRefunded =
         sale.status == OrderStatusEnum.partitallyrefunded;
     final isRefunded = isFullyRefunded || isPartiallyRefunded;
 
-    // 👇 Set UI colors based on state
+    // 👇 Theme-aware status colors
     Color statusColor;
     Color textColor;
     String statusLabel;
 
     if (isFullyRefunded) {
-      statusColor = const Color(0xFFFEE2E2); // Light red
-      textColor = const Color(0xFFDC2626); // Dark red
+      statusColor = c.dangerBg;
+      textColor = c.dangerFg;
       statusLabel = 'Fully refunded';
     } else if (isPartiallyRefunded) {
-      statusColor = const Color(0xFFFFF4E5); // Light orange
-      textColor = const Color(0xFFD97706); // Dark orange
+      statusColor = c.warningBg;
+      textColor = c.warningFg;
       statusLabel = 'Partially refunded';
     } else {
-      statusColor = const Color(0xFFE6F4EA); // Light green
-      textColor = const Color(0xFF137333); // Dark green
+      statusColor = c.successBg;
+      textColor = c.successFg;
       statusLabel = 'Completed';
     }
 
@@ -487,7 +483,6 @@ class _SaleScreenState extends State<SaleScreen> {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                // 👇 Show Net Amount
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [

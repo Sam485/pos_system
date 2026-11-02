@@ -23,7 +23,6 @@ class _CartScreenState extends State<CartScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<CartProvider>().loadCart();
-      // 👇 Ensure discounts are loaded
       final settingsProvider = context.read<SettingsProvider>();
       if (settingsProvider.discounts.isEmpty) {
         settingsProvider.fetchSettings();
@@ -31,7 +30,6 @@ class _CartScreenState extends State<CartScreen> {
     });
   }
 
-  // 👇 NEW: Show discount picker bottom sheet
   void _showDiscountPicker() {
     final cartProvider = context.read<CartProvider>();
     final settingsProvider = context.read<SettingsProvider>();
@@ -41,7 +39,7 @@ class _CartScreenState extends State<CartScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: c.background,
+      backgroundColor: c.cardBackground, // 👈 theme-aware sheet bg
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -54,7 +52,6 @@ class _CartScreenState extends State<CartScreen> {
           builder: (context, scrollController) {
             return Column(
               children: [
-                // Handle
                 Padding(
                   padding: const EdgeInsets.only(top: 12, bottom: 8),
                   child: Container(
@@ -88,7 +85,6 @@ class _CartScreenState extends State<CartScreen> {
                     controller: scrollController,
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
                     children: [
-                      // 👇 No discount option
                       _buildDiscountOption(
                         title: 'No discount',
                         subtitle: 'Remove any applied discount',
@@ -101,7 +97,6 @@ class _CartScreenState extends State<CartScreen> {
                         textStyles: textStyles,
                       ),
                       const SizedBox(height: 8),
-                      // 👇 Existing discounts
                       ...settingsProvider.discounts.map((discount) {
                         final isSelected =
                             cartProvider.discountName == discount.name;
@@ -112,7 +107,6 @@ class _CartScreenState extends State<CartScreen> {
                             subtitle: discount.description,
                             isSelected: isSelected,
                             onTap: () {
-                              // 👇 Calculate discount amount from subtotal
                               double amount = 0.0;
                               if (discount.type == 'percentage') {
                                 amount =
@@ -121,12 +115,9 @@ class _CartScreenState extends State<CartScreen> {
                               } else {
                                 amount = discount.value;
                               }
-
-                              // 👇 Guard: Don't allow discount larger than subtotal
                               if (amount > cartProvider.subtotal) {
                                 amount = cartProvider.subtotal;
                               }
-
                               cartProvider.applyDiscount(
                                 name: discount.name,
                                 amount: amount,
@@ -165,7 +156,10 @@ class _CartScreenState extends State<CartScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFF4F8FF) : const Color(0xFFF8F9FA),
+          // 👈 theme-aware selected/unselected
+          color: isSelected
+              ? c.primaryCoral.withValues(alpha: 0.10)
+              : c.surfaceLight,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? c.primaryCoral : Colors.transparent,
@@ -279,7 +273,7 @@ class _CartScreenState extends State<CartScreen> {
                   : CustomScrollView(
                       physics: const ClampingScrollPhysics(),
                       slivers: [
-                        // 1. Customer Banner (Dynamic)
+                        // 1. Customer Banner
                         SliverToBoxAdapter(
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
@@ -298,7 +292,7 @@ class _CartScreenState extends State<CartScreen> {
                                   vertical: 16,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF4F8FF),
+                                  color: c.surfaceTint, // 👈 theme-aware
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Row(
@@ -308,15 +302,18 @@ class _CartScreenState extends State<CartScreen> {
                                         width: 40,
                                         height: 40,
                                         alignment: Alignment.center,
-                                        decoration: const BoxDecoration(
-                                          color: Color(0xFFE8F0FE),
+                                        decoration: BoxDecoration(
+                                          // 👈 theme-aware avatar bg
+                                          color: c.primaryCoral.withValues(
+                                            alpha: 0.15,
+                                          ),
                                           shape: BoxShape.circle,
                                         ),
                                         child: Text(
                                           '${customer.firstName.isNotEmpty ? customer.firstName[0] : ''}${customer.lastName.isNotEmpty ? customer.lastName[0] : ''}'
                                               .toUpperCase(),
                                           style: textStyles.labelSmall.copyWith(
-                                            color: const Color(0xFF1967D2),
+                                            color: c.primaryCoral, // 👈
                                             fontWeight: FontWeight.w700,
                                             fontSize: 14,
                                           ),
@@ -391,7 +388,7 @@ class _CartScreenState extends State<CartScreen> {
                         ),
                         const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-                        // 👇 3. Order Discount (Tappable to open picker)
+                        // 3. Order Discount
                         SliverToBoxAdapter(
                           child: Padding(
                             padding: const EdgeInsets.symmetric(
@@ -437,7 +434,7 @@ class _CartScreenState extends State<CartScreen> {
                                   child: Container(
                                     padding: const EdgeInsets.all(16),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFF8F9FA),
+                                      color: c.surfaceLight, // 👈 theme-aware
                                       borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Row(
@@ -560,7 +557,7 @@ class _CartScreenState extends State<CartScreen> {
                                     '-\$${cartProvider.discountAmount.toStringAsFixed(2)}',
                                     c,
                                     textStyles,
-                                    valueColor: const Color(0xFF137333),
+                                    valueColor: c.successFg, // 👈 theme-aware
                                   ),
                                   const SizedBox(height: 8),
                                 ],
@@ -725,7 +722,7 @@ class _CartScreenState extends State<CartScreen> {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: const Color(0xFFE8EBEE),
+              color: c.surfaceLight, // 👈 theme-aware
               borderRadius: BorderRadius.circular(8),
             ),
             child: ClipRRect(
@@ -789,6 +786,7 @@ class _CartScreenState extends State<CartScreen> {
                           provider.removeItem(item.id);
                         }
                       },
+                      c: c, // 👈
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -807,6 +805,7 @@ class _CartScreenState extends State<CartScreen> {
                               item.id,
                               item.quantity + 1,
                             ),
+                      c: c, // 👈
                       color: isMaxStock ? c.textMuted : null,
                     ),
                   ],
@@ -818,7 +817,7 @@ class _CartScreenState extends State<CartScreen> {
                   child: Text(
                     'Max stock reached',
                     style: textStyles.labelSmall.copyWith(
-                      color: const Color(0xFFD97706),
+                      color: c.warningFg, // 👈 theme-aware
                       fontSize: 10,
                     ),
                   ),
@@ -833,13 +832,15 @@ class _CartScreenState extends State<CartScreen> {
   Widget _buildQuantityButton({
     required IconData icon,
     required VoidCallback? onTap,
+    required AppThemeColors c, // 👈 added
     Color? color,
   }) {
     return InkWell(
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Icon(icon, size: 16, color: color ?? Colors.black),
+        // 👈 default now uses theme-aware text color instead of Colors.black
+        child: Icon(icon, size: 16, color: color ?? c.textPrimary),
       ),
     );
   }

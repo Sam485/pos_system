@@ -148,7 +148,8 @@ class _StaffPermissionsScreenState extends State<StaffPermissionsScreen> {
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF4F8FF), // Light blue
+                            // ✅ FIXED: was 0xFFF4F8FF
+                            color: c.surfaceTint,
                             borderRadius: BorderRadius.circular(16),
                           ),
                           child: Column(
@@ -284,14 +285,18 @@ class _StaffPermissionsScreenState extends State<StaffPermissionsScreen> {
             width: 40,
             height: 40,
             alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: Color(0xFFE8F0FE), // Light blue
+            decoration: BoxDecoration(
+              // ✅ FIXED: avatar bg — was 0xFFE8F0FE
+              color: c.isDark
+                  ? Colors.white.withValues(alpha: 0.10)
+                  : const Color(0xFFE8F0FE),
               shape: BoxShape.circle,
             ),
             child: Text(
               initials,
               style: textStyles.labelSmall.copyWith(
-                color: const Color(0xFF1967D2),
+                // ✅ FIXED: avatar text — was 0xFF1967D2
+                color: c.primaryCoral,
                 fontWeight: FontWeight.w700,
                 fontSize: 14,
               ),

@@ -62,8 +62,9 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                     // Large Mail Icon
                     Container(
                       padding: const EdgeInsets.all(20),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFF4F8FF), // Light blue circle
+                      decoration: BoxDecoration(
+                        // ✅ FIXED: was 0xFFF4F8FF
+                        color: c.surfaceTint,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -99,7 +100,8 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF4F8FF), // Light blue background
+                        // ✅ FIXED: was 0xFFF4F8FF
+                        color: c.surfaceTint,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Column(
@@ -136,8 +138,9 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                           children: [
                             Container(
                               padding: const EdgeInsets.all(8),
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFF4F8FF),
+                              decoration: BoxDecoration(
+                                // ✅ FIXED: was 0xFFF4F8FF
+                                color: c.surfaceTint,
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
@@ -185,7 +188,8 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF4F8FF), // Light blue background
+                        // ✅ FIXED: was 0xFFF4F8FF
+                        color: c.surfaceTint,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -201,7 +205,8 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                             child: Text(
                               'For your security, a reset link can only be used once.',
                               style: textStyles.bodySmall.copyWith(
-                                color: c.primaryCoral,
+                                // ✅ FIXED: was c.primaryCoral — low contrast on tint
+                                color: c.textSecondary,
                                 height: 1.4,
                                 fontSize: 13,
                               ),
@@ -252,7 +257,8 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                       // Resend logic
                     },
                     style: TextButton.styleFrom(
-                      backgroundColor: const Color(0xFFF4F8FF),
+                      // ✅ FIXED: was 0xFFF4F8FF
+                      backgroundColor: c.surfaceTint,
                       foregroundColor: c.primaryCoral,
                       minimumSize: const Size(double.infinity, 54),
                       shape: RoundedRectangleBorder(

@@ -160,10 +160,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF4F8FF),
+                          color: c.surfaceTint, // 👈 theme-aware
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: const Color(0xFFE8F0FE),
+                            color: c.primaryCoral.withValues(alpha: 0.2),
+                            // 👈 replaces 0xFFE8F0FE border
                             width: 1,
                           ),
                         ),
@@ -173,8 +174,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               width: 40,
                               height: 40,
                               alignment: Alignment.center,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFE8F0FE),
+                              decoration: BoxDecoration(
+                                // 👈 theme-aware avatar bg
+                                color: c.primaryCoral.withValues(alpha: 0.15),
                                 shape: BoxShape.circle,
                               ),
                               child: customer != null
@@ -182,7 +184,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                       '${customer.firstName.isNotEmpty ? customer.firstName[0] : ''}${customer.lastName.isNotEmpty ? customer.lastName[0] : ''}'
                                           .toUpperCase(),
                                       style: textStyles.labelSmall.copyWith(
-                                        color: const Color(0xFF1967D2),
+                                        color: c.primaryCoral, // 👈
                                         fontWeight: FontWeight.w700,
                                         fontSize: 14,
                                       ),
@@ -301,7 +303,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               '-\$${discountAmount.toStringAsFixed(2)}',
                               c,
                               textStyles,
-                              valueColor: const Color(0xFF137333),
+                              valueColor: c.successFg, // 👈 theme-aware
                             ),
                           ],
 
@@ -402,7 +404,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 children: [
                   ElevatedButton(
                     onPressed: () {
-                      // 👇 FIX: Pass ALL data needed for the payment screen
                       final paymentExtra = {
                         'amount': totalDue,
                         'customerId': customer?.id,
@@ -411,8 +412,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             : 'Guest',
                         'customerEmail': customer?.email,
                         'itemsSold': totalItems,
-                        'items': cartProvider
-                            .cartItemsJson, // 👈 Map<String, dynamic>
+                        'items': cartProvider.cartItemsJson,
                         'subtotal': subtotal,
                         'discount_amount': discountAmount,
                         'tax_amount': taxAmount,
@@ -539,7 +539,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFF4F8FF) : Colors.transparent,
+          // 👈 theme-aware selected bg
+          color: isSelected
+              ? c.primaryCoral.withValues(alpha: 0.10)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? c.primaryCoral : c.border,
@@ -551,9 +554,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
+                // 👈 theme-aware icon chip
                 color: isSelected
-                    ? const Color(0xFFE8F0FE)
-                    : const Color(0xFFF8F9FA),
+                    ? c.primaryCoral.withValues(alpha: 0.15)
+                    : c.surfaceLight,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(

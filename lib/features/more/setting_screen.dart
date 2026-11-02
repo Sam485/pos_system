@@ -7,7 +7,9 @@ import 'package:pos_system/core/theme/app_colors.dart';
 import 'package:pos_system/core/theme/app_text_style_x.dart';
 import 'package:pos_system/providers/register_provider.dart';
 import 'package:pos_system/providers/cart_provider.dart';
-import 'package:pos_system/providers/store_provider.dart'; // 👈 Added
+import 'package:pos_system/providers/store_provider.dart';
+import 'package:pos_system/providers/theme_provider.dart';
+import 'package:pos_system/providers/language_provider.dart';
 
 class SettingScreen extends StatefulWidget {
   const SettingScreen({super.key});
@@ -21,7 +23,7 @@ class _SettingScreenState extends State<SettingScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<StoreProvider>().fetchStore(); // Fetch store data
+      context.read<StoreProvider>().fetchStore();
     });
   }
 
@@ -31,13 +33,14 @@ class _SettingScreenState extends State<SettingScreen> {
     final textStyles = AppTextStylesX(context);
 
     final registerProvider = context.watch<RegisterProvider>();
-    final storeProvider = context.watch<StoreProvider>(); // 👈 Watch it
+    final storeProvider = context.watch<StoreProvider>();
+    final themeProvider = context.watch<ThemeProvider>();
+    final languageProvider = context.watch<LanguageProvider>();
     final store = storeProvider.store;
 
     final session = registerProvider.activeSession;
     final isOpen = registerProvider.isRegisterOpen;
 
-    // Show loading if store not yet fetched
     if (storeProvider.isLoading && store == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -91,7 +94,7 @@ class _SettingScreenState extends State<SettingScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF4F8FF),
+                      color: c.surfaceTint, // 👈 theme-aware
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Row(
@@ -113,7 +116,6 @@ class _SettingScreenState extends State<SettingScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // 👇 Use live data
                               Text(
                                 store?.name ?? 'Loading...',
                                 style: textStyles.heading2.copyWith(
@@ -133,8 +135,8 @@ class _SettingScreenState extends State<SettingScreen> {
                                   Container(
                                     width: 8,
                                     height: 8,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFF137333),
+                                    decoration: BoxDecoration(
+                                      color: c.successFg, // 👈 theme-aware
                                       shape: BoxShape.circle,
                                     ),
                                   ),
@@ -142,7 +144,7 @@ class _SettingScreenState extends State<SettingScreen> {
                                   Text(
                                     'All systems online',
                                     style: textStyles.labelSmall.copyWith(
-                                      color: const Color(0xFF137333),
+                                      color: c.successFg, // 👈 theme-aware
                                       fontWeight: FontWeight.w600,
                                       fontSize: 12,
                                     ),
@@ -159,7 +161,7 @@ class _SettingScreenState extends State<SettingScreen> {
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-              // ── Store Operations Section ──
+              // ── Store Operations ──
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -180,7 +182,6 @@ class _SettingScreenState extends State<SettingScreen> {
                   _buildMenuTile(
                     icon: Icons.store_outlined,
                     title: 'Store details',
-                    // 👇 Show currency + timezone from live data
                     subtitle: store != null
                         ? '${store.currency} · ${store.timeZone}'
                         : 'Loading...',
@@ -220,7 +221,46 @@ class _SettingScreenState extends State<SettingScreen> {
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
-              // ── Team & Account Section ──
+              // ── Preferences Section ──
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Text(
+                    'PREFERENCES',
+                    style: textStyles.labelSmall.copyWith(
+                      color: c.textSecondary,
+                      letterSpacing: 1.0,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+              SliverList(
+                delegate: SliverChildListDelegate([
+                  _buildMenuTile(
+                    icon: _themeIcon(themeProvider.themeMode),
+                    title: 'Theme',
+                    subtitle: _themeLabel(themeProvider.themeMode),
+                    c: c,
+                    textStyles: textStyles,
+                    onTap: () => _showThemeSheet(context, themeProvider),
+                  ),
+                  _buildMenuTile(
+                    icon: Icons.translate_rounded,
+                    title: 'Language',
+                    subtitle: languageProvider.currentLanguageName,
+                    c: c,
+                    textStyles: textStyles,
+                    showDivider: false,
+                    onTap: () => _showLanguageSheet(context, languageProvider),
+                  ),
+                ]),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+              // ── Team & Account ──
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -293,6 +333,107 @@ class _SettingScreenState extends State<SettingScreen> {
     );
   }
 
+  // ── Theme helpers ──
+  IconData _themeIcon(ThemeMode mode) => switch (mode) {
+    ThemeMode.light => Icons.light_mode_outlined,
+    ThemeMode.dark => Icons.dark_mode_outlined,
+    ThemeMode.system => Icons.brightness_auto_outlined,
+  };
+
+  String _themeLabel(ThemeMode mode) => switch (mode) {
+    ThemeMode.light => 'Light',
+    ThemeMode.dark => 'Dark',
+    ThemeMode.system => 'System default',
+  };
+
+  void _showThemeSheet(BuildContext context, ThemeProvider provider) {
+    final c = context.colors;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: c.cardBackground, // 👈 dark-mode friendly
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final sheetStyles = AppTextStylesX(ctx);
+        final sheetColors = ctx.colors;
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Text(
+                'Choose theme',
+                style: sheetStyles.heading2.copyWith(fontSize: 18),
+              ),
+              const SizedBox(height: 8),
+              for (final m in ThemeMode.values)
+                RadioListTile<ThemeMode>(
+                  value: m,
+                  groupValue: provider.themeMode,
+                  activeColor: sheetColors.primaryCoral, // 👈 theme-aware
+                  title: Text(_themeLabel(m), style: sheetStyles.bodyMedium),
+                  onChanged: (v) async {
+                    if (v != null) {
+                      await provider.setThemeMode(v);
+                    }
+                    if (ctx.mounted) Navigator.pop(ctx);
+                  },
+                ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showLanguageSheet(BuildContext context, LanguageProvider provider) {
+    final c = context.colors;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: c.cardBackground, // 👈 dark-mode friendly
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final sheetStyles = AppTextStylesX(ctx);
+        final sheetColors = ctx.colors;
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 12),
+              Text(
+                'Choose language',
+                style: sheetStyles.heading2.copyWith(fontSize: 18),
+              ),
+              const SizedBox(height: 8),
+              for (final code in LanguageProvider.languageNames.keys)
+                RadioListTile<String>(
+                  value: code,
+                  groupValue: provider.currentLanguage,
+                  activeColor: sheetColors.primaryCoral, // 👈 theme-aware
+                  title: Text(
+                    LanguageProvider.languageNames[code] ?? code,
+                    style: sheetStyles.bodyMedium,
+                  ),
+                  onChanged: (v) async {
+                    if (v != null) {
+                      await provider.setLanguage(v);
+                    }
+                    if (ctx.mounted) Navigator.pop(ctx);
+                  },
+                ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // ── Menu tile ──
   Widget _buildMenuTile({
     required IconData icon,
     required String title,
@@ -316,7 +457,7 @@ class _SettingScreenState extends State<SettingScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF4F8FF),
+                    color: c.surfaceTint, // 👈 theme-aware
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(icon, color: c.primaryCoral, size: 22),

@@ -1,5 +1,6 @@
 // core/routes/app_router.dart
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pos_system/features/auth/forget_password_screen.dart';
@@ -33,12 +34,12 @@ import 'package:pos_system/features/other/sell/transaction_detail_screen.dart';
 import 'package:pos_system/features/sale/function/sale_filter_date_range_screen.dart';
 import 'package:pos_system/features/sale/sale_screen.dart';
 import 'package:pos_system/features/sell/cart/add%20customer/customer_selection_screen.dart';
-import 'package:pos_system/features/sell/cart/apply%20discount/apply_discount_screen.dart';
 import 'package:pos_system/features/sell/cart/cart_screen.dart';
 import 'package:pos_system/features/sell/cart/check_out_flow/card_payment_screen.dart';
-import 'package:pos_system/features/sell/cart/check_out_flow/carrd_payment_decline_screen.dart';
+import 'package:pos_system/features/sell/cart/check_out_flow/card_payment_decline_screen.dart';
 import 'package:pos_system/features/sell/cart/check_out_flow/cash_payment_screen.dart';
 import 'package:pos_system/features/sell/cart/check_out_flow/checkout_screen.dart';
+import 'package:pos_system/features/sell/cart/check_out_flow/khqr_payment_sheet.dart';
 import 'package:pos_system/features/sell/cart/check_out_flow/sale_complete_screen.dart';
 import 'package:pos_system/features/sell/cart/order%20note/order_note_screen.dart';
 import 'package:pos_system/features/sell/detail/product_detail_screen.dart';
@@ -54,10 +55,19 @@ final _rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
 final GoRouter appRouter = GoRouter(
   navigatorKey: _rootNavigatorKey,
-  initialLocation: RouteNames.home, // '/'
+  initialLocation: RouteNames.home,
   debugLogDiagnostics: false,
 
   onException: (context, state, router) {
+    if (kDebugMode) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: state.error ?? Exception('Unknown route: ${state.uri}'),
+          library: 'app_router',
+          context: ErrorDescription('while routing to ${state.uri}'),
+        ),
+      );
+    }
     debugPrint('Router exception: ${state.error} on ${state.uri}');
     if (state.uri.toString() != RouteNames.home) {
       router.go(RouteNames.home);
@@ -165,7 +175,42 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const CardPaymentScreen(),
     ),
 
-    // ── KHQR PAYMENT REMOVED (used via showKhqrPaymentScreen helper) ──
+    // ── KHQR PAYMENT ──
+    // KhqrPaymentScreen requires runtime params (qrString, md5, onSuccess)
+    // that can't be serialized into a URL. We pass them via `state.extra`
+    // as a Map<String, dynamic>.
+    //
+    // Push it from checkout_screen.dart like:
+    //   context.pushNamed(
+    //     RouteNames.khQRPaymentName,
+    //     extra: {
+    //       'amount': totalDue,
+    //       'qrString': qrString,   // from your backend
+    //       'md5': md5,             // from your backend
+    //       'onSuccess': () { ... }, // Dart closure
+    //     },
+    //   );
+    GoRoute(
+      path: RouteNames.khQRPayment,
+      name: RouteNames.khQRPaymentName,
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>? ?? {};
+
+        final amount = (extra['amount'] as num?)?.toDouble() ?? 0.0;
+        final qrString = extra['qrString'] as String? ?? '';
+        final md5 = extra['md5'] as String? ?? '';
+        final onSuccess = extra['onSuccess'] as VoidCallback? ?? () {};
+
+        return KhqrPaymentScreen(
+          amount: amount,
+          qrString: qrString,
+          md5: md5,
+          onSuccess: onSuccess,
+        );
+      },
+    ),
+
     GoRoute(
       path: RouteNames.saleComplete,
       name: RouteNames.saleCompleteName,
@@ -190,12 +235,7 @@ final GoRouter appRouter = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const RefundCompleteScreen(),
     ),
-    GoRoute(
-      path: RouteNames.applyDiscount,
-      name: RouteNames.applyDiscountName,
-      parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const ApplyDiscountScreen(),
-    ),
+
     GoRoute(
       path: RouteNames.orderNote,
       name: RouteNames.orderNoteName,
@@ -293,7 +333,7 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const NotificationScreen(),
     ),
     GoRoute(
-      path: RouteNames.cardPayment,
+      path: RouteNames.cardPaymentDecline,
       name: RouteNames.cardPaymentDeclineName,
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const CardPaymentDeclineScreen(),

@@ -83,11 +83,12 @@ class _RefundCompleteScreenState extends State<RefundCompleteScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const SizedBox(height: 16),
+                    // ✅ FIXED: success icon bg — surfaceTint (was 0xFFF4F8FF)
                     Container(
                       width: 80,
                       height: 80,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFF4F8FF),
+                      decoration: BoxDecoration(
+                        color: c.surfaceTint,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -117,19 +118,20 @@ class _RefundCompleteScreenState extends State<RefundCompleteScreen> {
                     ),
                     const SizedBox(height: 12),
 
+                    // ✅ FIXED: "Partially refunded" badge — warningBg / warningFg
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFF4E5),
+                        color: c.warningBg,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
                         'Partially refunded',
                         style: textStyles.labelSmall.copyWith(
-                          color: const Color(0xFFD97706),
+                          color: c.warningFg,
                           fontWeight: FontWeight.w600,
                           fontSize: 12,
                         ),
@@ -137,11 +139,12 @@ class _RefundCompleteScreenState extends State<RefundCompleteScreen> {
                     ),
                     const SizedBox(height: 32),
 
+                    // ✅ FIXED: detail card bg — surfaceLight (was 0xFFF8F9FA)
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8F9FA),
+                        color: c.surfaceLight,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Column(
@@ -265,7 +268,8 @@ class _RefundCompleteScreenState extends State<RefundCompleteScreen> {
                   TextButton(
                     onPressed: () => context.goNamed('sales'),
                     style: TextButton.styleFrom(
-                      backgroundColor: const Color(0xFFF4F8FF),
+                      // ✅ FIXED: was 0xFFF4F8FF
+                      backgroundColor: c.surfaceTint,
                       foregroundColor: c.primaryCoral,
                       minimumSize: const Size(double.infinity, 54),
                       shape: RoundedRectangleBorder(

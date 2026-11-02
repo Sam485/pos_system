@@ -5,47 +5,37 @@ import 'package:flutter/material.dart';
 // ══════════════════════════════════════════════════════════════════
 abstract class AppColors {
   // ── Backgrounds ──────────────────────────────────────────────
-  static const Color background = Color(0xFFFFFFFF); // White
+  static const Color background = Color(0xFFFFFFFF);
   static const Color cardBackground = Color(0xFFFFFFFF);
-  static const Color surfaceLight = Color(0xFFF5F7FA); // Very light blue-grey
+  static const Color surfaceLight = Color(0xFFF5F7FA);
 
   // ── Brand / Accent ───────────────────────────────────────────
-  static const Color primaryCoral = Color(
-    0xFF2674DC,
-  ); // Replaced with Primary Blue
-  static const Color primaryOrange = Color(
-    0xFF162B40,
-  ); // Replaced with Dark Navy Blue
-  static const Color deepGreen = Color(
-    0xFF0F172A,
-  ); // Replaced with very dark blue/black
-  static const Color green = Color(
-    0xFF20826B,
-  ); // Matched to the green in your image
-  static const Color accentGreen = Color(0xFF162B40); // Deep navy for contrast
-  static const Color lightMint = Color(0xFFEDF8F3); // Soft mint background
+  static const Color primaryCoral = Color(0xFF2674DC);
+  static const Color primaryOrange = Color(0xFF162B40);
+  static const Color deepGreen = Color(0xFF0F172A);
+  static const Color green = Color(0xFF20826B);
+  static const Color accentGreen = Color(0xFF162B40);
+  static const Color lightMint = Color(0xFFEDF8F3);
 
   // ── Interactive Elements ─────────────────────────────────────
   static const Color searchBar = Color(0xFFF5F7FA);
-  static const Color notification = Color(0xFF2674DC); // Changed to Blue
-  static const Color favoriteActive = Color(0xFF2674DC); // Changed to Blue
-  static const Color favoriteInactive = Color(0xFF738397); // Muted blue-grey
+  static const Color notification = Color(0xFF2674DC);
+  static const Color favoriteActive = Color(0xFF2674DC);
+  static const Color favoriteInactive = Color(0xFF738397);
 
   // ── Text ─────────────────────────────────────────────────────
-  static const Color textPrimary = Color(
-    0xFF162B40,
-  ); // Dark Navy for text on white
-  static const Color textSecondary = Color(0xFF526173); // Muted text
+  static const Color textPrimary = Color(0xFF162B40);
+  static const Color textSecondary = Color(0xFF526173);
   static const Color textLight = Color(0xFFFFFFFF);
   static const Color textMuted = Color(0xFF9BA8B5);
 
   // ── Border & Dividers ────────────────────────────────────────
-  static const Color border = Color(0xFFE5EBF2); // Light blue-grey border
+  static const Color border = Color(0xFFE5EBF2);
   static const Color borderLight = Color(0xFFF0F4F8);
 
   // ── Nav ──────────────────────────────────────────────────────
   static const Color navBackground = Color(0xFFFFFFFF);
-  static const Color navActive = Color(0xFF2674DC); // Blue
+  static const Color navActive = Color(0xFF2674DC);
   static const Color navInactive = Color(0xFF9BA8B5);
 
   // ── Transparent ──────────────────────────────────────────────
@@ -54,10 +44,6 @@ abstract class AppColors {
 
 // ══════════════════════════════════════════════════════════════════
 // ThemeExtension — the runtime-aware palette
-//
-// Access it in any widget with:
-//   final c = Theme.of(context).extension<AppThemeColors>()!;
-//   Container(color: c.background)
 // ══════════════════════════════════════════════════════════════════
 @immutable
 class AppThemeColors extends ThemeExtension<AppThemeColors> {
@@ -152,40 +138,83 @@ class AppThemeColors extends ThemeExtension<AppThemeColors> {
   );
 
   // ── Dark ──────────────────────────────────────────────────────
-  // Uses the dark shades and specific hex codes from your image
-  //
   static const AppThemeColors dark = AppThemeColors(
-    // Backgrounds — Dark UI (using 162B40 and 738397 from image)
     background: Color(0xFF162B40),
-    cardBackground: Color(0xFF1E344A), // Slightly lighter navy for elevation
+    cardBackground: Color(0xFF1E344A),
     surfaceLight: Color(0xFF2A4259),
 
-    // Brand
-    primaryCoral: Color(0xFF2674DC), // The bright blue from the image
-    primaryOrange: Color(0xFF738397), // Muted blue-grey
+    primaryCoral: Color(0xFF2674DC),
+    primaryOrange: Color(0xFF738397),
     deepGreen: Color(0xFF0B1320),
-    green: Color(0xFF20826B), // The dark green from the image
+    green: Color(0xFF20826B),
     accentGreen: Color(0xFF2674DC),
-    lightMint: Color(0xFF1E344A), // Dark mint alternative
-    // Interactive
+    lightMint: Color(0xFF1E344A),
+
     searchBar: Color(0xFF1E344A),
     notification: Color(0xFF2674DC),
     favoriteActive: Color(0xFF2674DC),
-    favoriteInactive: Color(0xFF738397), // From image
-    // Text
-    textPrimary: Color(0xFFFFFFFF), // FFFFFF from image
-    textSecondary: Color(0xFFEDF5FF), // EDF5FF from image
+    favoriteInactive: Color(0xFF738397),
+
+    textPrimary: Color(0xFFFFFFFF),
+    textSecondary: Color(0xFFEDF5FF),
     textLight: Color(0xFFFFFFFF),
-    textMuted: Color(0xFF738397), // 738397 from image
-    // Border
+    textMuted: Color(0xFF738397),
+
     border: Color(0xFF2A4259),
     borderLight: Color(0xFF1E344A),
 
-    // Nav
     navBackground: Color(0xFF162B40),
     navActive: Color(0xFF2674DC),
     navInactive: Color(0xFF738397),
   );
+
+  // ══════════════════════════════════════════════════════════════
+  // ✨ NEW — Theme-aware derived colors
+  //
+  // These fix the "white card on dark mode" bug. Use them anywhere
+  // you previously hardcoded Color(0xFFF4F8FF), Color(0xFFE6F4EA),
+  // or Color(0xFFFFF4E5).
+  // ══════════════════════════════════════════════════════════════
+
+  /// True when this palette is the dark variant.
+  /// Derived from [background] brightness so no extra constructor
+  /// field is required.
+  bool get isDark => background.computeLuminance() < 0.5;
+
+  /// Soft tint for cards / icon backgrounds — replaces the hardcoded
+  /// `Color(0xFFF4F8FF)`.
+  ///
+  /// Light: pale blue-grey (matches your original design)
+  /// Dark:  subtle white overlay on the dark navy background
+  Color get surfaceTint =>
+      isDark ? Colors.white.withValues(alpha: 0.05) : const Color(0xFFF4F8FF);
+
+  /// Success badge background (e.g. "Register open").
+  Color get successBg => isDark
+      ? const Color(0xFF137333).withValues(alpha: 0.22)
+      : const Color(0xFFE6F4EA);
+
+  /// Success badge foreground / text.
+  Color get successFg =>
+      isDark ? const Color(0xFF6EE7B7) : const Color(0xFF137333);
+
+  /// Warning badge background (e.g. "Register closed").
+  Color get warningBg => isDark
+      ? const Color(0xFFD97706).withValues(alpha: 0.22)
+      : const Color(0xFFFFF4E5);
+
+  /// Warning badge foreground / text.
+  Color get warningFg =>
+      isDark ? const Color(0xFFFBBF24) : const Color(0xFFD97706);
+
+  /// Danger badge background (e.g. "Fully refunded").
+  Color get dangerBg => isDark
+      ? const Color(0xFFDC2626).withValues(alpha: 0.22)
+      : const Color(0xFFFEE2E2);
+
+  /// Danger badge foreground / text.
+  Color get dangerFg =>
+      isDark ? const Color(0xFFFCA5A5) : const Color(0xFFDC2626);
 
   // ══════════════════════════════════════════════════════════════
   // ThemeExtension required overrides
@@ -277,10 +306,6 @@ class AppThemeColors extends ThemeExtension<AppThemeColors> {
 
 // ══════════════════════════════════════════════════════════════════
 // Convenience helper — read the palette from any BuildContext
-//
-// Usage:
-//   final c = context.colors;
-//   Container(color: c.background)
 // ══════════════════════════════════════════════════════════════════
 extension AppColorsX on BuildContext {
   AppThemeColors get colors =>

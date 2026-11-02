@@ -54,8 +54,10 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
     }
   }
 
-  // 👇 NEW: Edit tax rate
+  // 👇 Edit tax rate dialog
   void _editTaxRate() {
+    final c = context.colors;
+    final textStyles = AppTextStylesX(context);
     final settingsProvider = context.read<SettingsProvider>();
     final currentRate = (settingsProvider.settings?.taxRate ?? 0.10) * 100;
     final controller = TextEditingController(
@@ -64,35 +66,64 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Sales tax rate'),
-        content: TextField(
-          controller: controller,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(
-            suffixText: '%',
-            border: OutlineInputBorder(),
+      builder: (ctx) {
+        final dc = ctx.colors;
+        final ds = AppTextStylesX(ctx);
+        return AlertDialog(
+          backgroundColor: dc.cardBackground, // 👈 dark-friendly
+          title: Text(
+            'Sales tax rate',
+            style: ds.heading2.copyWith(fontSize: 18),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+          content: TextField(
+            controller: controller,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            style: ds.bodyLarge,
+            decoration: InputDecoration(
+              suffixText: '%',
+              suffixStyle: ds.bodyLarge,
+              filled: true,
+              fillColor: dc.surfaceLight, // 👈 dark-friendly
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: dc.primaryCoral, width: 1.5),
+              ),
+            ),
           ),
-          TextButton(
-            onPressed: () {
-              final newRate = double.tryParse(controller.text) ?? 10.0;
-              settingsProvider.updateTaxRate(newRate / 100);
-              Navigator.pop(context);
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('Cancel', style: TextStyle(color: dc.textSecondary)),
+            ),
+            TextButton(
+              onPressed: () {
+                final newRate = double.tryParse(controller.text) ?? 10.0;
+                settingsProvider.updateTaxRate(newRate / 100);
+                Navigator.pop(ctx);
+              },
+              child: Text(
+                'Save',
+                style: TextStyle(
+                  color: dc.primaryCoral,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
-  // 👇 NEW: Create discount
+  // 👇 Create discount bottom sheet
   void _createDiscount() {
     final nameController = TextEditingController();
     final valueController = TextEditingController();
@@ -101,98 +132,149 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          left: 20,
-          right: 20,
-          top: 20,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Create a discount',
-              style: Theme.of(context).textTheme.headlineSmall,
+      backgroundColor: context.colors.cardBackground, // 👈 dark-friendly
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final sc = ctx.colors;
+        final st = AppTextStylesX(ctx);
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) => Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+              left: 20,
+              right: 20,
+              top: 20,
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'Name',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: valueController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: 'Value',
-                      border: OutlineInputBorder(),
+                Text(
+                  'Create a discount',
+                  style: st.heading2.copyWith(fontSize: 20),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: nameController,
+                  style: st.bodyLarge,
+                  decoration: _sheetInputDecoration(sc, label: 'Name'),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: valueController,
+                        keyboardType: TextInputType.number,
+                        style: st.bodyLarge,
+                        decoration: _sheetInputDecoration(sc, label: 'Value'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: sc.surfaceLight,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: type,
+                          dropdownColor: sc.cardBackground,
+                          style: st.bodyLarge,
+                          icon: Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: sc.textMuted,
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'percentage',
+                              child: Text('%'),
+                            ),
+                            DropdownMenuItem(value: 'fixed', child: Text('\$')),
+                          ],
+                          onChanged: (val) {
+                            setSheetState(() => type = val ?? 'percentage');
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () {
+                    final provider = ctx.read<SettingsProvider>();
+                    provider.createDiscount({
+                      'name': nameController.text,
+                      'description': type == 'percentage'
+                          ? '${valueController.text}% off · Whole order'
+                          : '\$${valueController.text} off',
+                      'type': type,
+                      'value': double.tryParse(valueController.text) ?? 0,
+                    });
+                    Navigator.pop(ctx);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: sc.primaryCoral,
+                    foregroundColor: sc.textLight,
+                    minimumSize: const Size(double.infinity, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: Text(
+                    'Create',
+                    style: st.labelMedium.copyWith(
+                      color: sc.textLight,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                DropdownButton<String>(
-                  value: type,
-                  items: const [
-                    DropdownMenuItem(value: 'percentage', child: Text('%')),
-                    DropdownMenuItem(value: 'fixed', child: Text('\$')),
-                  ],
-                  onChanged: (val) => type = val ?? 'percentage',
-                ),
               ],
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                final provider = context.read<SettingsProvider>();
-                provider.createDiscount({
-                  'name': nameController.text,
-                  'description': type == 'percentage'
-                      ? '${valueController.text}% off · Whole order'
-                      : '\$${valueController.text} off',
-                  'type': type,
-                  'value': double.tryParse(valueController.text) ?? 0,
-                });
-                Navigator.pop(context);
-              },
-              child: const Text('Create'),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
-  // 👇 NEW: Delete discount
+  // 👇 Delete discount dialog
   void _deleteDiscount(String id, String name) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete discount?'),
-        content: Text('Are you sure you want to delete "$name"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+      builder: (ctx) {
+        final dc = ctx.colors;
+        final ds = AppTextStylesX(ctx);
+        return AlertDialog(
+          backgroundColor: dc.cardBackground,
+          title: Text(
+            'Delete discount?',
+            style: ds.heading2.copyWith(fontSize: 18),
           ),
-          TextButton(
-            onPressed: () {
-              context.read<SettingsProvider>().deleteDiscount(id);
-              Navigator.pop(context);
-            },
-            style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFFDC2626),
+          content: Text(
+            'Are you sure you want to delete "$name"?',
+            style: ds.bodyMedium,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('Cancel', style: TextStyle(color: dc.textSecondary)),
             ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+            TextButton(
+              onPressed: () {
+                ctx.read<SettingsProvider>().deleteDiscount(id);
+                Navigator.pop(ctx);
+              },
+              style: TextButton.styleFrom(foregroundColor: dc.dangerFg),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -262,7 +344,7 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF4F8FF),
+                          color: c.surfaceTint, // 👈 theme-aware
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Column(
@@ -277,7 +359,6 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
                                     fontSize: 16,
                                   ),
                                 ),
-                                // 👇 NEW: Tappable to edit tax rate
                                 GestureDetector(
                                   onTap: _editTaxRate,
                                   child: Row(
@@ -433,7 +514,7 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
                       TextButton(
                         onPressed: _createDiscount,
                         style: TextButton.styleFrom(
-                          backgroundColor: const Color(0xFFF4F8FF),
+                          backgroundColor: c.surfaceTint, // 👈 theme-aware
                           foregroundColor: c.primaryCoral,
                           minimumSize: const Size(double.infinity, 54),
                           shape: RoundedRectangleBorder(
@@ -542,7 +623,7 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF4F8FF),
+                  color: c.surfaceTint, // 👈 theme-aware
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, color: c.primaryCoral, size: 20),
@@ -580,6 +661,32 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
         if (showDivider)
           Divider(color: c.border.withValues(alpha: 0.5), height: 1),
       ],
+    );
+  }
+
+  // Shared input decoration for the "create discount" sheet
+  InputDecoration _sheetInputDecoration(
+    AppThemeColors c, {
+    required String label,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(color: c.textSecondary),
+      filled: true,
+      fillColor: c.surfaceLight,
+      contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: c.primaryCoral, width: 1.5),
+      ),
     );
   }
 }

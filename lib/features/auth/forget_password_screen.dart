@@ -170,7 +170,8 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF4F8FF), // Light blue background
+                        // ✅ FIXED: was 0xFFF4F8FF
+                        color: c.surfaceTint,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -186,7 +187,9 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                             child: Text(
                               'Use the email linked to your fold staff account.',
                               style: textStyles.bodySmall.copyWith(
-                                color: c.primaryCoral,
+                                // ✅ FIXED: was c.primaryCoral — hard to read
+                                // on the tinted banner, especially in dark mode
+                                color: c.textSecondary,
                                 height: 1.4,
                                 fontSize: 13,
                               ),
@@ -241,7 +244,10 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                   TextButton(
                     onPressed: () => Navigator.pop(context),
                     style: TextButton.styleFrom(
-                      backgroundColor: c.surfaceLight,
+                      // ✅ FIXED: was c.surfaceLight (same as input fields,
+                      // didn't read as a button); use surfaceTint for the
+                      // standard light-tinted secondary button style
+                      backgroundColor: c.surfaceTint,
                       foregroundColor: c.primaryCoral,
                       minimumSize: const Size(double.infinity, 54),
                       shape: RoundedRectangleBorder(

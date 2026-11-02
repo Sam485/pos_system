@@ -30,11 +30,9 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
     text: 'Delivery PO-0246',
   );
 
-  // Data from Router
   ProductModel? _product;
   bool _isInitialized = false;
 
-  // ── Active Selection State ──
   VariantModel? _selectedVariant;
   InventoryModel? _selectedInventory;
 
@@ -74,7 +72,6 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
     setState(() {});
   }
 
-  // ── Dynamic Calculations ──
   int get _currentStock => _selectedInventory?.quantityAvailable ?? 0;
 
   int get _newStock {
@@ -87,7 +84,6 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
     return _isAddAction ? qty : -qty;
   }
 
-  // ── Handle Variant Switching ──
   void _onSizeSelected(
     String size,
     InventoryProvider provider,
@@ -98,7 +94,6 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
       orElse: () => productVariants.first,
     );
 
-    // Always get the freshest inventory from provider
     final newInventory = provider.fullInventory.firstWhere(
       (i) => i.variantId == newVariant.id,
       orElse: () => InventoryModel(
@@ -116,7 +111,6 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
     });
   }
 
-  // ── Show Add Variant Bottom Sheet ──
   void _showAddVariantSheet(BuildContext context) {
     if (_product == null) return;
 
@@ -126,7 +120,6 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => _AddVariantSheet(product: _product!),
     ).then((_) {
-      // 👇 Refresh BOTH lists so low stock alerts are updated
       context.read<InventoryProvider>().fetchFullInventory();
       context.read<InventoryProvider>().fetchLowStockAlerts();
     });
@@ -138,19 +131,16 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
     final textStyles = AppTextStylesX(context);
     final inventoryProvider = context.watch<InventoryProvider>();
 
-    // 👇 1. Derive variants FIRST
     final productVariants = inventoryProvider.variants
         .where((v) => v.productId == _product?.id)
         .toList();
 
-    // 👇 2. If the selected variant is no longer in the list, reset it
     if (_selectedVariant != null &&
         !productVariants.any((v) => v.id == _selectedVariant!.id)) {
       _selectedVariant = null;
       _selectedInventory = null;
     }
 
-    // 👇 3. If no variant is selected, default to the first
     if (_selectedVariant == null && productVariants.isNotEmpty) {
       _selectedVariant = productVariants.first;
       _selectedInventory = inventoryProvider.fullInventory.firstWhere(
@@ -165,7 +155,6 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
       );
     }
 
-    // 👇 4. Keep selected inventory in sync with the provider's latest data
     if (_selectedVariant != null) {
       final latestInventory = inventoryProvider.fullInventory.firstWhere(
         (i) => i.variantId == _selectedVariant!.id,
@@ -179,14 +168,12 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
               lowStockThreshold: 5,
             ),
       );
-      // Only update if the quantity changed to avoid unnecessary setState
       if (_selectedInventory?.quantityAvailable !=
           latestInventory.quantityAvailable) {
         _selectedInventory = latestInventory;
       }
     }
 
-    // 👇 5. Calculate the TRUE total for the product header
     final productInventory = inventoryProvider.fullInventory
         .where((inv) => productVariants.any((v) => v.id == inv.variantId))
         .toList();
@@ -195,7 +182,6 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
       (sum, item) => sum + item.quantityAvailable,
     );
 
-    // Extract unique sizes dynamically
     final availableSizes = productVariants.map((v) => v.size).toSet().toList();
     availableSizes.sort((a, b) {
       const order = {
@@ -266,7 +252,6 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
               ),
             ),
 
-            // Main Content
             Expanded(
               child: CustomScrollView(
                 physics: const ClampingScrollPhysics(),
@@ -284,7 +269,7 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
                             width: 72,
                             height: 72,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFE8EBEE),
+                              color: c.surfaceLight, // 👈 theme-aware
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: ClipRRect(
@@ -345,7 +330,7 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
                   ),
                   const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-                  // Stock by Variant
+                  // Stock by Variant header
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -431,7 +416,6 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
                             (v) => v.size == size,
                           );
 
-                          // Use fullInventory to get the correct stock
                           final stockForSize = inventoryProvider.fullInventory
                               .firstWhere(
                                 (i) => i.variantId == variantForSize.id,
@@ -454,9 +438,10 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
                             child: Container(
                               width: 60,
                               decoration: BoxDecoration(
+                                // 👇 theme-aware selection tint
                                 color: isSelected
-                                    ? const Color(0xFFE8F0FE)
-                                    : const Color(0xFFF8F9FA),
+                                    ? c.primaryCoral.withValues(alpha: 0.12)
+                                    : c.surfaceLight,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
                                   color: isSelected
@@ -613,7 +598,7 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF4F8FF),
+                              color: c.surfaceTint, // 👈 theme-aware
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Column(
@@ -695,6 +680,8 @@ class _ManageStockScreenState extends State<ManageStockScreen> {
                             _newStock,
                           );
                           ScaffoldMessenger.of(context).showSnackBar(
+                            // SnackBar on its own colored surface — white
+                            // text stays readable in both modes
                             const SnackBar(
                               content: Text('Stock updated successfully'),
                               backgroundColor: Color(0xFF137333),
@@ -872,7 +859,7 @@ class _AddVariantSheetState extends State<_AddVariantSheet> {
     });
 
     if (success && mounted) {
-      Navigator.of(context).pop(); // Close the sheet
+      Navigator.of(context).pop();
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -905,7 +892,6 @@ class _AddVariantSheetState extends State<_AddVariantSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Handle
               Center(
                 child: Container(
                   width: 40,
@@ -918,7 +904,6 @@ class _AddVariantSheetState extends State<_AddVariantSheet> {
               ),
               const SizedBox(height: 20),
 
-              // Title
               Text(
                 'Add new variant',
                 style: textStyles.heading2.copyWith(fontSize: 22),
@@ -930,7 +915,6 @@ class _AddVariantSheetState extends State<_AddVariantSheet> {
               ),
               const SizedBox(height: 24),
 
-              // Color
               Text(
                 'Color',
                 style: textStyles.labelSmall.copyWith(
@@ -946,7 +930,6 @@ class _AddVariantSheetState extends State<_AddVariantSheet> {
               ),
               const SizedBox(height: 16),
 
-              // Size
               Text(
                 'Size',
                 style: textStyles.labelSmall.copyWith(
@@ -965,6 +948,7 @@ class _AddVariantSheetState extends State<_AddVariantSheet> {
                   child: DropdownButton<String>(
                     value: _selectedSize,
                     isExpanded: true,
+                    dropdownColor: c.cardBackground, // 👈 dark-friendly menu
                     icon: Icon(
                       Icons.keyboard_arrow_down_rounded,
                       color: c.textMuted,
@@ -981,7 +965,6 @@ class _AddVariantSheetState extends State<_AddVariantSheet> {
               ),
               const SizedBox(height: 16),
 
-              // SKU
               Text(
                 'SKU',
                 style: textStyles.labelSmall.copyWith(
@@ -997,7 +980,6 @@ class _AddVariantSheetState extends State<_AddVariantSheet> {
               ),
               const SizedBox(height: 16),
 
-              // Price & Initial Stock
               Row(
                 children: [
                   Expanded(
@@ -1055,7 +1037,6 @@ class _AddVariantSheetState extends State<_AddVariantSheet> {
               ),
               const SizedBox(height: 24),
 
-              // Save button
               ElevatedButton(
                 onPressed: inventoryProvider.isLoading ? null : _saveVariant,
                 style: ElevatedButton.styleFrom(

@@ -15,7 +15,6 @@ class OpenRegisterScreen extends StatefulWidget {
 }
 
 class _OpenRegisterScreenState extends State<OpenRegisterScreen> {
-  // Controllers for the text fields
   final TextEditingController _amountController = TextEditingController(
     text: '250.00',
   );
@@ -30,7 +29,6 @@ class _OpenRegisterScreenState extends State<OpenRegisterScreen> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_isInitialized) {
-      // Get the register ID passed from the previous screen
       final extra = GoRouterState.of(context).extra;
       if (extra is String) {
         _registerId = extra;
@@ -51,10 +49,8 @@ class _OpenRegisterScreenState extends State<OpenRegisterScreen> {
     final c = context.colors;
     final textStyles = AppTextStylesX(context);
 
-    // Watch the provider to get register details and loading state
     final registerProvider = context.watch<RegisterProvider>();
 
-    // Find the selected register from the provider list
     final register = registerProvider.registers.firstWhere(
       (r) => r.id == _registerId,
       orElse: () => registerProvider.registers.isNotEmpty
@@ -105,7 +101,6 @@ class _OpenRegisterScreenState extends State<OpenRegisterScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 16),
-                    // Page Title
                     Text(
                       'Start on a good note.',
                       style: textStyles.heading1.copyWith(
@@ -137,8 +132,7 @@ class _OpenRegisterScreenState extends State<OpenRegisterScreen> {
                         decimal: true,
                       ),
                       style: textStyles.bodyLarge,
-                      onChanged: (_) =>
-                          setState(() {}), // Rebuild to update bottom button
+                      onChanged: (_) => setState(() {}),
                       decoration: InputDecoration(
                         prefixIcon: Icon(
                           Icons.money_outlined,
@@ -223,9 +217,7 @@ class _OpenRegisterScreenState extends State<OpenRegisterScreen> {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: const Color(
-                          0xFFF5F8FF,
-                        ), // Very light blue from image
+                        color: c.surfaceTint, // 👈 theme-aware
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Column(
@@ -270,7 +262,7 @@ class _OpenRegisterScreenState extends State<OpenRegisterScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF5F8FF), // Light blue background
+                        color: c.surfaceTint, // 👈 theme-aware
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(

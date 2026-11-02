@@ -107,11 +107,12 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     const SizedBox(height: 16),
+                    // ✅ FIXED: success icon bg — surfaceTint (was 0xFFF4F8FF)
                     Container(
                       width: 80,
                       height: 80,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFF4F8FF),
+                      decoration: BoxDecoration(
+                        color: c.surfaceTint,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -140,7 +141,8 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF8F9FA),
+                        // ✅ FIXED: was hardcoded 0xFFF8F9FA
+                        color: c.surfaceLight,
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Column(
@@ -271,13 +273,15 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                                 content: Text(
                                   'Receipt sent to ${_emailController.text}',
                                 ),
-                                backgroundColor: const Color(0xFF137333),
+                                // ✅ FIXED: success snackbar — use palette
+                                backgroundColor: c.successFg,
                               ),
                             );
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF4F8FF),
+                          // ✅ FIXED: was 0xFFF4F8FF
+                          backgroundColor: c.surfaceTint,
                           foregroundColor: c.primaryCoral,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -427,7 +431,8 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                       );
                     },
                     style: TextButton.styleFrom(
-                      backgroundColor: const Color(0xFFF4F8FF),
+                      // ✅ FIXED: was 0xFFF4F8FF
+                      backgroundColor: c.surfaceTint,
                       foregroundColor: c.primaryCoral,
                       minimumSize: const Size(double.infinity, 54),
                       shape: RoundedRectangleBorder(
