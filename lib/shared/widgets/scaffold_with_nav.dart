@@ -58,7 +58,7 @@ class _NavItemData {
   });
 }
 
-// ── Custom bottom nav bar ─────────────────────────────────────────
+// ── Custom bottom nav bar — Facebook-style ────────────────────────
 class _BottomNav extends StatelessWidget {
   final int currentIndex;
   final void Function(int) onTap;
@@ -67,7 +67,7 @@ class _BottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 👇 Rebuild when language changes
+    // Rebuild when language changes
     context.watch<LanguageProvider>();
 
     final c = context.colors;
@@ -104,17 +104,11 @@ class _BottomNav extends StatelessWidget {
       decoration: BoxDecoration(
         color: c.background,
         border: Border(
-          top: BorderSide(color: c.border.withValues(alpha: 0.5), width: 1),
+          top: BorderSide(color: c.border.withValues(alpha: 0.5), width: 0.5),
         ),
       ),
-      padding: EdgeInsets.only(
-        top: 12,
-        bottom: MediaQuery.of(context).padding.bottom + 12,
-        left: 8,
-        right: 8,
-      ),
+      padding: EdgeInsets.only(top: 6, bottom: 6, left: 4, right: 4),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: List.generate(items.length, (index) {
           return _NavItem(
             data: items[index],
@@ -127,7 +121,7 @@ class _BottomNav extends StatelessWidget {
   }
 }
 
-// ── Nav item widget ───────────────────────────────────────────────
+// ── Nav item widget — Facebook-style ──────────────────────────────
 class _NavItem extends StatelessWidget {
   final _NavItemData item;
   final bool isActive;
@@ -146,38 +140,37 @@ class _NavItem extends StatelessWidget {
 
     final activeColor = c.primaryCoral;
     final inactiveColor = c.textMuted;
+    final color = isActive ? activeColor : inactiveColor;
 
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              decoration: BoxDecoration(
-                color: isActive ? const Color(0xFFF4F8FF) : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
                 isActive ? item.activeIcon : item.inactiveIcon,
-                size: 24,
-                color: isActive ? activeColor : inactiveColor,
+                size: 26,
+                color: color,
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              context.t(item.labelKey),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: textStyles.labelSmall.copyWith(
-                fontSize: 11,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
-                color: isActive ? activeColor : inactiveColor,
+              const SizedBox(height: 2),
+              Text(
+                context.t(item.labelKey),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: textStyles.labelSmall.copyWith(
+                  fontSize: 10,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                  color: color,
+                  height: 1.1,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

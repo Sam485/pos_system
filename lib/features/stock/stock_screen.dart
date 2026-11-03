@@ -48,6 +48,15 @@ class _StockScreenState extends State<StockScreen> {
     super.dispose();
   }
 
+  // 👇 Pull-to-refresh handler — waits for both fetches to complete
+  //    so the spinner stays visible until data lands.
+  Future<void> _refresh() async {
+    await Future.wait([
+      context.read<ProductProvider>().fetchProducts(),
+      context.read<InventoryProvider>().fetchFullInventory(),
+    ]);
+  }
+
   @override
   Widget build(BuildContext context) {
     // 👇 Rebuild when language changes
@@ -166,233 +175,248 @@ class _StockScreenState extends State<StockScreen> {
 
             // ── Main Scrollable Content ──
             Expanded(
-              child: Skeletonizer(
-                enabled: isLoading,
-                child: CustomScrollView(
-                  physics: const ClampingScrollPhysics(),
-                  slivers: [
-                    // Search Bar
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: TextFormField(
-                          controller: _searchController,
-                          style: textStyles.bodyMedium,
-                          decoration: InputDecoration(
-                            hintText: context.t('stock_search_hint'),
-                            hintStyle: textStyles.bodyMedium.copyWith(
-                              color: c.textMuted,
-                            ),
-                            prefixIcon: Icon(
-                              Icons.search_rounded,
-                              color: c.textMuted,
-                            ),
-                            suffixIcon: _searchQuery.isNotEmpty
-                                ? IconButton(
-                                    icon: Icon(
-                                      Icons.close_rounded,
-                                      color: c.textMuted,
-                                      size: 20,
-                                    ),
-                                    onPressed: () {
-                                      _searchController.clear();
-                                    },
-                                  )
-                                : Icon(
-                                    Icons.document_scanner_outlined,
-                                    color: c.primaryCoral,
-                                  ),
-                            filled: true,
-                            fillColor: c.surfaceLight,
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 14,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide(
-                                color: c.primaryCoral,
-                                width: 1.5,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
+              // 👇 Wrap the whole scroll view in RefreshIndicator
+              child: RefreshIndicator(
+                onRefresh: _refresh,
+                color: c.primaryCoral,
+                backgroundColor: c.background,
+                child: Skeletonizer(
+                  enabled: isLoading,
+                  child: CustomScrollView(
+                    // 👇 Always scrollable so pull-to-refresh works
+                    //    even when the list is short / empty.
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: ClampingScrollPhysics(),
                     ),
-                    const SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-                    // Summary Cards
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: _buildSummaryCard(
-                                title: '$totalProducts',
-                                subtitle: context.t('stock_summary_products'),
-                                bgColor: c.surfaceTint,
-                                textColor: c.textPrimary,
-                                textStyles: textStyles,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildSummaryCard(
-                                title: '$totalUnits',
-                                subtitle: context.t('stock_summary_units'),
-                                bgColor: c.surfaceTint,
-                                textColor: c.textPrimary,
-                                textStyles: textStyles,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildSummaryCard(
-                                title: '$lowStockCount',
-                                subtitle: context.t('stock_summary_low'),
-                                bgColor: c.warningBg,
-                                textColor: c.warningFg,
-                                textStyles: textStyles,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-                    // Filter Chips
-                    SliverToBoxAdapter(
-                      child: SizedBox(
-                        height: 38,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          physics: const ClampingScrollPhysics(),
-                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                          children: [
-                            _buildFilterChip(
-                              context.t('stock_filter_all'),
-                              isActive: _selectedFilterIndex == 0,
-                              onTap: () =>
-                                  setState(() => _selectedFilterIndex = 0),
-                              c: c,
-                              textStyles: textStyles,
-                            ),
-                            _buildFilterChip(
-                              context.tp('stock_filter_low', {
-                                'count': '$lowStockCount',
-                              }),
-                              isActive: _selectedFilterIndex == 1,
-                              onTap: () =>
-                                  setState(() => _selectedFilterIndex = 1),
-                              c: c,
-                              textStyles: textStyles,
-                            ),
-                            _buildFilterChip(
-                              context.tp('stock_filter_out', {
-                                'count': '$outOfStockCount',
-                              }),
-                              isActive: _selectedFilterIndex == 2,
-                              onTap: () =>
-                                  setState(() => _selectedFilterIndex = 2),
-                              c: c,
-                              textStyles: textStyles,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-                    // List Header
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                _searchQuery.isNotEmpty
-                                    ? context.tp('stock_list_results_for', {
-                                        'count': '${filteredProducts.length}',
-                                        'query': _searchQuery,
-                                      })
-                                    : context.tp('stock_list_count', {
-                                        'count': '${filteredProducts.length}',
-                                      }),
-                                style: textStyles.bodySmall.copyWith(
-                                  color: c.textSecondary,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-                    // Product List
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      sliver: SliverList(
-                        delegate: SliverChildBuilderDelegate((context, index) {
-                          final product = filteredProducts[index];
-                          final stockItems =
-                              inventoryByProduct[product.id] ?? [];
-                          return _buildInventoryItem(
-                            product,
-                            stockItems,
-                            c,
-                            textStyles,
-                          );
-                        }, childCount: filteredProducts.length),
-                      ),
-                    ),
-
-                    // Empty State
-                    if (filteredProducts.isEmpty && !isLoading)
+                    slivers: [
+                      // Search Bar
                       SliverToBoxAdapter(
                         child: Padding(
-                          padding: const EdgeInsets.all(40.0),
-                          child: Center(
-                            child: Column(
-                              children: [
-                                Icon(
-                                  _searchQuery.isNotEmpty
-                                      ? Icons.search_off_rounded
-                                      : Icons.inventory_2_outlined,
-                                  size: 48,
-                                  color: c.textMuted.withValues(alpha: 0.5),
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                          child: TextFormField(
+                            controller: _searchController,
+                            style: textStyles.bodyMedium,
+                            decoration: InputDecoration(
+                              hintText: context.t('stock_search_hint'),
+                              hintStyle: textStyles.bodyMedium.copyWith(
+                                color: c.textMuted,
+                              ),
+                              prefixIcon: Icon(
+                                Icons.search_rounded,
+                                color: c.textMuted,
+                              ),
+                              suffixIcon: _searchQuery.isNotEmpty
+                                  ? IconButton(
+                                      icon: Icon(
+                                        Icons.close_rounded,
+                                        color: c.textMuted,
+                                        size: 20,
+                                      ),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                      },
+                                    )
+                                  : Icon(
+                                      Icons.document_scanner_outlined,
+                                      color: c.primaryCoral,
+                                    ),
+                              filled: true,
+                              fillColor: c.surfaceLight,
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 14,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: c.primaryCoral,
+                                  width: 1.5,
                                 ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  _searchQuery.isNotEmpty
-                                      ? context.tp('stock_empty_search', {
-                                          'query': _searchQuery,
-                                        })
-                                      : context.t('stock_empty_filter'),
-                                  textAlign: TextAlign.center,
-                                  style: textStyles.bodyMedium.copyWith(
-                                    color: c.textMuted,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ),
                         ),
                       ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-                    const SliverToBoxAdapter(child: SizedBox(height: 40)),
-                  ],
+                      // Summary Cards
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _buildSummaryCard(
+                                  title: '$totalProducts',
+                                  subtitle: context.t('stock_summary_products'),
+                                  bgColor: c.surfaceTint,
+                                  textColor: c.textPrimary,
+                                  textStyles: textStyles,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildSummaryCard(
+                                  title: '$totalUnits',
+                                  subtitle: context.t('stock_summary_units'),
+                                  bgColor: c.surfaceTint,
+                                  textColor: c.textPrimary,
+                                  textStyles: textStyles,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildSummaryCard(
+                                  title: '$lowStockCount',
+                                  subtitle: context.t('stock_summary_low'),
+                                  bgColor: c.warningBg,
+                                  textColor: c.warningFg,
+                                  textStyles: textStyles,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+                      // Filter Chips
+                      SliverToBoxAdapter(
+                        child: SizedBox(
+                          height: 38,
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            physics: const ClampingScrollPhysics(),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20.0,
+                            ),
+                            children: [
+                              _buildFilterChip(
+                                context.t('stock_filter_all'),
+                                isActive: _selectedFilterIndex == 0,
+                                onTap: () =>
+                                    setState(() => _selectedFilterIndex = 0),
+                                c: c,
+                                textStyles: textStyles,
+                              ),
+                              _buildFilterChip(
+                                context.tp('stock_filter_low', {
+                                  'count': '$lowStockCount',
+                                }),
+                                isActive: _selectedFilterIndex == 1,
+                                onTap: () =>
+                                    setState(() => _selectedFilterIndex = 1),
+                                c: c,
+                                textStyles: textStyles,
+                              ),
+                              _buildFilterChip(
+                                context.tp('stock_filter_out', {
+                                  'count': '$outOfStockCount',
+                                }),
+                                isActive: _selectedFilterIndex == 2,
+                                onTap: () =>
+                                    setState(() => _selectedFilterIndex = 2),
+                                c: c,
+                                textStyles: textStyles,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+                      // List Header
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  _searchQuery.isNotEmpty
+                                      ? context.tp('stock_list_results_for', {
+                                          'count': '${filteredProducts.length}',
+                                          'query': _searchQuery,
+                                        })
+                                      : context.tp('stock_list_count', {
+                                          'count': '${filteredProducts.length}',
+                                        }),
+                                  style: textStyles.bodySmall.copyWith(
+                                    color: c.textSecondary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+                      // Product List
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        sliver: SliverList(
+                          delegate: SliverChildBuilderDelegate((
+                            context,
+                            index,
+                          ) {
+                            final product = filteredProducts[index];
+                            final stockItems =
+                                inventoryByProduct[product.id] ?? [];
+                            return _buildInventoryItem(
+                              product,
+                              stockItems,
+                              c,
+                              textStyles,
+                            );
+                          }, childCount: filteredProducts.length),
+                        ),
+                      ),
+
+                      // Empty State
+                      if (filteredProducts.isEmpty && !isLoading)
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.all(40.0),
+                            child: Center(
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    _searchQuery.isNotEmpty
+                                        ? Icons.search_off_rounded
+                                        : Icons.inventory_2_outlined,
+                                    size: 48,
+                                    color: c.textMuted.withValues(alpha: 0.5),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    _searchQuery.isNotEmpty
+                                        ? context.tp('stock_empty_search', {
+                                            'query': _searchQuery,
+                                          })
+                                        : context.t('stock_empty_filter'),
+                                    textAlign: TextAlign.center,
+                                    style: textStyles.bodyMedium.copyWith(
+                                      color: c.textMuted,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+
+                      const SliverToBoxAdapter(child: SizedBox(height: 40)),
+                    ],
+                  ),
                 ),
               ),
             ),

@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pos_system/core/extensions/context_extensions.dart';
+import 'package:pos_system/providers/language_provider.dart'; // 👈 language watch
 import 'package:provider/provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:pos_system/core/routes/route_names.dart';
@@ -44,6 +45,15 @@ class _SaleScreenState extends State<SaleScreen> {
     super.dispose();
   }
 
+  // 👇 Pull-to-refresh handler — waits for both fetches to complete
+  //    so the spinner stays visible until data lands.
+  Future<void> _refresh() async {
+    await Future.wait([
+      context.read<OrderProvider>().fetchSalesHistory(),
+      context.read<CustomerProvider>().fetchCustomers(),
+    ]);
+  }
+
   // Helper for the date range label — displays localized version
   String _localizedDateRange(String englishValue) {
     switch (englishValue) {
@@ -62,6 +72,8 @@ class _SaleScreenState extends State<SaleScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<LanguageProvider>(); // 👈 rebuild on language change
+
     final c = context.colors;
     final textStyles = AppTextStylesX(context);
     final orderProvider = context.watch<OrderProvider>();
@@ -117,246 +129,260 @@ class _SaleScreenState extends State<SaleScreen> {
       backgroundColor: c.background,
       body: SafeArea(
         bottom: false,
-        child: Skeletonizer(
-          enabled: orderProvider.isLoading || customerProvider.isLoading,
-          child: CustomScrollView(
-            physics: const ClampingScrollPhysics(),
-            slivers: [
-              // Top App Bar
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20.0,
-                    vertical: 12.0,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        context.t('sales_title'),
-                        style: textStyles.heading2.copyWith(fontSize: 24),
-                      ),
-                      IconButton(
-                        onPressed: () {},
-                        icon: Icon(
-                          Icons.download_rounded,
-                          color: c.primaryCoral,
-                          size: 26,
-                        ),
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(),
-                      ),
-                    ],
-                  ),
-                ),
+        // 👇 Wrap the whole scroll view in RefreshIndicator
+        child: RefreshIndicator(
+          onRefresh: _refresh,
+          color: c.primaryCoral,
+          backgroundColor: c.background,
+          child: Skeletonizer(
+            enabled: orderProvider.isLoading || customerProvider.isLoading,
+            child: CustomScrollView(
+              // 👇 Always scrollable so pull-to-refresh works even
+              //    when the list is short / empty.
+              physics: const AlwaysScrollableScrollPhysics(
+                parent: ClampingScrollPhysics(),
               ),
-
-              // Search Bar
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: TextFormField(
-                    controller: _searchController,
-                    style: textStyles.bodyMedium,
-                    decoration: InputDecoration(
-                      hintText: context.t('sales_search_hint'),
-                      hintStyle: textStyles.bodyMedium.copyWith(
-                        color: c.textMuted,
-                      ),
-                      prefixIcon: Icon(
-                        Icons.search_rounded,
-                        color: c.textMuted,
-                      ),
-                      suffixIcon: Icon(
-                        Icons.document_scanner_outlined,
-                        color: c.primaryCoral,
-                      ),
-                      filled: true,
-                      fillColor: c.surfaceLight,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                          color: c.primaryCoral,
-                          width: 1.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-              // Filter Chips
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  height: 38,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    physics: const ClampingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                    children: [
-                      _buildFilterChip(
-                        context.t('sales_filter_all'),
-                        _selectedFilterIndex == 0,
-                        () => setState(() => _selectedFilterIndex = 0),
-                        c,
-                        textStyles,
-                      ),
-                      _buildFilterChip(
-                        context.t('sales_filter_completed'),
-                        _selectedFilterIndex == 1,
-                        () => setState(() => _selectedFilterIndex = 1),
-                        c,
-                        textStyles,
-                      ),
-                      _buildFilterChip(
-                        context.t('sales_filter_refunded'),
-                        _selectedFilterIndex == 2,
-                        () => setState(() => _selectedFilterIndex = 2),
-                        c,
-                        textStyles,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
-
-              // Date Selector
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: InkWell(
-                    onTap: () =>
-                        context.pushNamed(RouteNames.saleFilterDateRangeName),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                      decoration: BoxDecoration(
-                        color: c.surfaceLight,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.calendar_today_outlined,
-                            color: c.primaryCoral,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            _localizedDateRange(orderProvider.filterDateRange),
-                            style: textStyles.labelMedium.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const Spacer(),
-                          Icon(
-                            Icons.keyboard_arrow_down_rounded,
-                            color: c.textMuted,
-                            size: 24,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-              // Summary Cards
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _buildSummaryCard(
-                          context.t('sales_summary_net'),
-                          '\$${totalSales.toStringAsFixed(2)}',
-                          c,
-                          textStyles,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildSummaryCard(
-                          context.t('sales_summary_transactions'),
-                          '$totalTransactions',
-                          c,
-                          textStyles,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-              // Section Header
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Text(
-                    context.tp('sales_section_header', {
-                      'count': '$totalTransactions',
-                    }),
-                    style: textStyles.labelSmall.copyWith(
-                      color: c.textSecondary,
-                      letterSpacing: 1.0,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-              // Sales List
-              if (filteredSales.isEmpty && !orderProvider.isLoading)
+              slivers: [
+                // Top App Bar
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.all(40.0),
-                    child: Center(
-                      child: Text(
-                        context.t('sales_empty'),
-                        style: textStyles.bodyMedium.copyWith(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20.0,
+                      vertical: 12.0,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          context.t('sales_title'),
+                          style: textStyles.heading2.copyWith(fontSize: 24),
+                        ),
+                        IconButton(
+                          onPressed: () {},
+                          icon: Icon(
+                            Icons.download_rounded,
+                            color: c.primaryCoral,
+                            size: 26,
+                          ),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Search Bar
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: TextFormField(
+                      controller: _searchController,
+                      style: textStyles.bodyMedium,
+                      decoration: InputDecoration(
+                        hintText: context.t('sales_search_hint'),
+                        hintStyle: textStyles.bodyMedium.copyWith(
                           color: c.textMuted,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.search_rounded,
+                          color: c.textMuted,
+                        ),
+                        suffixIcon: Icon(
+                          Icons.document_scanner_outlined,
+                          color: c.primaryCoral,
+                        ),
+                        filled: true,
+                        fillColor: c.surfaceLight,
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 14,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: c.primaryCoral,
+                            width: 1.5,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final sale = filteredSales[index];
-                      return _buildSaleItem(
-                        sale,
-                        customerProvider,
-                        c,
-                        textStyles,
-                        guestFallback,
-                      );
-                    }, childCount: filteredSales.length),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+                // Filter Chips
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 38,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const ClampingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      children: [
+                        _buildFilterChip(
+                          context.t('sales_filter_all'),
+                          _selectedFilterIndex == 0,
+                          () => setState(() => _selectedFilterIndex = 0),
+                          c,
+                          textStyles,
+                        ),
+                        _buildFilterChip(
+                          context.t('sales_filter_completed'),
+                          _selectedFilterIndex == 1,
+                          () => setState(() => _selectedFilterIndex = 1),
+                          c,
+                          textStyles,
+                        ),
+                        _buildFilterChip(
+                          context.t('sales_filter_refunded'),
+                          _selectedFilterIndex == 2,
+                          () => setState(() => _selectedFilterIndex = 2),
+                          c,
+                          textStyles,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-              const SliverToBoxAdapter(child: SizedBox(height: 40)),
-            ],
+                // Date Selector
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: InkWell(
+                      onTap: () =>
+                          context.pushNamed(RouteNames.saleFilterDateRangeName),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          color: c.surfaceLight,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.calendar_today_outlined,
+                              color: c.primaryCoral,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              _localizedDateRange(
+                                orderProvider.filterDateRange,
+                              ),
+                              style: textStyles.labelMedium.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const Spacer(),
+                            Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                              color: c.textMuted,
+                              size: 24,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+                // Summary Cards
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _buildSummaryCard(
+                            context.t('sales_summary_net'),
+                            '\$${totalSales.toStringAsFixed(2)}',
+                            c,
+                            textStyles,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildSummaryCard(
+                            context.t('sales_summary_transactions'),
+                            '$totalTransactions',
+                            c,
+                            textStyles,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+                // Section Header
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Text(
+                      context.tp('sales_section_header', {
+                        'count': '$totalTransactions',
+                      }),
+                      style: textStyles.labelSmall.copyWith(
+                        color: c.textSecondary,
+                        letterSpacing: 1.0,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+                // Sales List
+                if (filteredSales.isEmpty && !orderProvider.isLoading)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(40.0),
+                      child: Center(
+                        child: Text(
+                          context.t('sales_empty'),
+                          style: textStyles.bodyMedium.copyWith(
+                            color: c.textMuted,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        final sale = filteredSales[index];
+                        return _buildSaleItem(
+                          sale,
+                          customerProvider,
+                          c,
+                          textStyles,
+                          guestFallback,
+                        );
+                      }, childCount: filteredSales.length),
+                    ),
+                  ),
+
+                const SliverToBoxAdapter(child: SizedBox(height: 40)),
+              ],
+            ),
           ),
         ),
       ),
