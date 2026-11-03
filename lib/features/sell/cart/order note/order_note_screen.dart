@@ -69,7 +69,7 @@ class _OrderNoteScreenState extends State<OrderNoteScreen> {
                     children: [
                       Text(
                         context.t('order_note_title'),
-                        style: textStyles.heading2.copyWith(fontSize: 24),
+                        style: textStyles.heading2.copyWith(fontSize: 20),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -100,7 +100,7 @@ class _OrderNoteScreenState extends State<OrderNoteScreen> {
                     Text(
                       context.t('order_note_heading'),
                       style: textStyles.heading1.copyWith(
-                        fontSize: 26,
+                        fontSize: 22,
                         letterSpacing: -0.5,
                       ),
                     ),

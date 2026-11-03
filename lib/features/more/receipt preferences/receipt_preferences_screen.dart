@@ -107,7 +107,7 @@ class _ReceiptPreferencesScreenState extends State<ReceiptPreferencesScreen> {
                       children: [
                         Text(
                           context.t('receipt_pref_title'),
-                          style: textStyles.heading2.copyWith(fontSize: 24),
+                          style: textStyles.heading2.copyWith(fontSize: 20),
                         ),
                         const SizedBox(height: 2),
                         Text(
@@ -159,7 +159,7 @@ class _ReceiptPreferencesScreenState extends State<ReceiptPreferencesScreen> {
                             Text(
                               'fold',
                               style: textStyles.heading1.copyWith(
-                                fontSize: 32,
+                                fontSize: 28,
                                 fontWeight: FontWeight.w500,
                                 letterSpacing: -1,
                               ),

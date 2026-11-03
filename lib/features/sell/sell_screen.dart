@@ -279,7 +279,7 @@ class _SellScreenState extends State<SellScreen> {
                                       'count': '${_selectedUrls.length}',
                                     })
                                   : context.t('sell_title_new'),
-                              style: textStyles.heading2.copyWith(fontSize: 24),
+                              style: textStyles.heading2.copyWith(fontSize: 20),
                             ),
                             const SizedBox(height: 4),
                             Text(

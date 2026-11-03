@@ -41,7 +41,7 @@ class _ConnectedDevicesScreenState extends State<ConnectedDevicesScreen> {
                     children: [
                       Text(
                         'Connected devices',
-                        style: textStyles.heading2.copyWith(fontSize: 24),
+                        style: textStyles.heading2.copyWith(fontSize: 20),
                       ),
                       const SizedBox(height: 2),
                       Text(

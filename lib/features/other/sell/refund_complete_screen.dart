@@ -60,7 +60,7 @@ class _RefundCompleteScreenState extends State<RefundCompleteScreen> {
                 children: [
                   Text(
                     context.t('refund_complete_title'),
-                    style: textStyles.heading2.copyWith(fontSize: 24),
+                    style: textStyles.heading2.copyWith(fontSize: 20),
                   ),
                   IconButton(
                     onPressed: () => context.goNamed('sales'),
@@ -111,7 +111,7 @@ class _RefundCompleteScreenState extends State<RefundCompleteScreen> {
                     Text(
                       '\$${refundedAmount.toStringAsFixed(2)}',
                       style: textStyles.heading1.copyWith(
-                        fontSize: 36,
+                        fontSize: 22,
                         fontWeight: FontWeight.w500,
                         letterSpacing: -0.5,
                       ),

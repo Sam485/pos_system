@@ -47,7 +47,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                     children: [
                       Text(
                         context.t('help_title'),
-                        style: textStyles.heading2.copyWith(fontSize: 24),
+                        style: textStyles.heading2.copyWith(fontSize: 20),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -76,7 +76,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
                     Text(
                       context.t('help_heading'),
                       style: textStyles.heading1.copyWith(
-                        fontSize: 26,
+                        fontSize: 22,
                         height: 1.2,
                         letterSpacing: -0.5,
                       ),

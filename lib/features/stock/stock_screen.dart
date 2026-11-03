@@ -149,7 +149,7 @@ class _StockScreenState extends State<StockScreen> {
                     children: [
                       Text(
                         context.t('stock_title'),
-                        style: textStyles.heading2.copyWith(fontSize: 24),
+                        style: textStyles.heading2.copyWith(fontSize: 20),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -423,7 +423,7 @@ class _StockScreenState extends State<StockScreen> {
           Text(
             title,
             style: textStyles.heading1.copyWith(
-              fontSize: 24,
+              fontSize: 20,
               fontWeight: FontWeight.w600,
               color: textColor,
             ),

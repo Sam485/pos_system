@@ -200,7 +200,7 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
                   const SizedBox(width: 12),
                   Text(
                     context.t('manage_staff_title'),
-                    style: textStyles.heading2.copyWith(fontSize: 24),
+                    style: textStyles.heading2.copyWith(fontSize: 20),
                   ),
                 ],
               ),
@@ -242,7 +242,7 @@ class _ManageStaffScreenState extends State<ManageStaffScreen> {
                           const SizedBox(height: 16),
                           Text(
                             _staff!.name,
-                            style: textStyles.heading2.copyWith(fontSize: 22),
+                            style: textStyles.heading2.copyWith(fontSize: 18),
                           ),
                           const SizedBox(height: 4),
                           Text(

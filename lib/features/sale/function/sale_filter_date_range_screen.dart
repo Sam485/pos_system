@@ -227,7 +227,7 @@ class _SaleFilterDateRangeScreenState extends State<SaleFilterDateRangeScreen> {
                     children: [
                       Text(
                         context.t('sale_filter_title'),
-                        style: textStyles.heading2.copyWith(fontSize: 24),
+                        style: textStyles.heading2.copyWith(fontSize: 20),
                       ),
                       const SizedBox(height: 2),
                       Text(

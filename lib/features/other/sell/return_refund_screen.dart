@@ -223,7 +223,7 @@ class _ReturnRefundScreenState extends State<ReturnRefundScreen> {
                     children: [
                       Text(
                         context.t('return_refund_title'),
-                        style: textStyles.heading2.copyWith(fontSize: 24),
+                        style: textStyles.heading2.copyWith(fontSize: 20),
                       ),
                       const SizedBox(height: 2),
                       Text(

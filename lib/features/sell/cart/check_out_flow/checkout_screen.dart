@@ -73,7 +73,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   const SizedBox(height: 24),
                   Text(
                     context.t('checkout_guard_title'),
-                    style: textStyles.heading2.copyWith(fontSize: 22),
+                    style: textStyles.heading2.copyWith(fontSize: 20),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -145,7 +145,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     children: [
                       Text(
                         context.t('checkout_title'),
-                        style: textStyles.heading2.copyWith(fontSize: 24),
+                        style: textStyles.heading2.copyWith(fontSize: 20),
                       ),
                       const SizedBox(height: 2),
                       Text(

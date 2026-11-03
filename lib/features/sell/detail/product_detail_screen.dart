@@ -110,7 +110,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   const SizedBox(width: 12),
                   Text(
                     context.t('product_detail_title'),
-                    style: textStyles.heading2.copyWith(fontSize: 24),
+                    style: textStyles.heading2.copyWith(fontSize: 20),
                   ),
                   const Spacer(),
                   IconButton(

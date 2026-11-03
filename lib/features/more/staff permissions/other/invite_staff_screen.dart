@@ -92,7 +92,7 @@ class _InviteStaffScreenState extends State<InviteStaffScreen> {
                   const SizedBox(width: 12),
                   Text(
                     context.t('invite_title'),
-                    style: textStyles.heading2.copyWith(fontSize: 24),
+                    style: textStyles.heading2.copyWith(fontSize: 20),
                   ),
                 ],
               ),
@@ -112,7 +112,7 @@ class _InviteStaffScreenState extends State<InviteStaffScreen> {
                     Text(
                       context.t('invite_heading'),
                       style: textStyles.heading1.copyWith(
-                        fontSize: 26,
+                        fontSize: 22,
                         letterSpacing: -0.5,
                       ),
                     ),

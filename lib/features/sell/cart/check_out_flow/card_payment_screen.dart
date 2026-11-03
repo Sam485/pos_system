@@ -141,7 +141,7 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
                     children: [
                       Text(
                         context.t('card_payment_title'),
-                        style: textStyles.heading2.copyWith(fontSize: 24),
+                        style: textStyles.heading2.copyWith(fontSize: 20),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -215,7 +215,7 @@ class _CardPaymentScreenState extends State<CardPaymentScreen> {
                     Text(
                       '\$${_amount.toStringAsFixed(2)}',
                       style: textStyles.heading1.copyWith(
-                        fontSize: 40,
+                        fontSize: 30,
                         fontWeight: FontWeight.w500,
                         letterSpacing: -0.5,
                       ),

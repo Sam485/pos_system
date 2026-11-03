@@ -67,7 +67,7 @@ class _SettingScreenState extends State<SettingScreen> {
                     children: [
                       Text(
                         context.t('settings_title'),
-                        style: textStyles.heading2.copyWith(fontSize: 24),
+                        style: textStyles.heading2.copyWith(fontSize: 20),
                       ),
                       IconButton(
                         onPressed: () =>

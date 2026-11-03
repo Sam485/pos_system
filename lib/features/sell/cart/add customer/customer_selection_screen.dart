@@ -81,7 +81,7 @@ class _CustomerSelectionScreenState extends State<CustomerSelectionScreen> {
                   const SizedBox(width: 12),
                   Text(
                     context.t('customer_select_title'),
-                    style: textStyles.heading2.copyWith(fontSize: 24),
+                    style: textStyles.heading2.copyWith(fontSize: 20),
                   ),
                 ],
               ),

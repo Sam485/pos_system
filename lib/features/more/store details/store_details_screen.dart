@@ -137,7 +137,7 @@ class _StoreDetailsScreenState extends State<StoreDetailsScreen> {
                     children: [
                       Text(
                         context.t('store_details_title'),
-                        style: textStyles.heading2.copyWith(fontSize: 24),
+                        style: textStyles.heading2.copyWith(fontSize: 20),
                       ),
                       const SizedBox(height: 2),
                       Text(

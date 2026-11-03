@@ -142,7 +142,7 @@ class _TransactionDetailScreenState extends State<TransactionDetailScreen> {
                         context.tp('txn_detail_title', {
                           'orderNumber': order.orderNumber,
                         }),
-                        style: textStyles.heading2.copyWith(fontSize: 22),
+                        style: textStyles.heading2.copyWith(fontSize: 20),
                       ),
                       const SizedBox(height: 2),
                       Text(

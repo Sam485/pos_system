@@ -97,7 +97,7 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                 children: [
                   Text(
                     context.t('sale_complete_title'),
-                    style: textStyles.heading2.copyWith(fontSize: 24),
+                    style: textStyles.heading2.copyWith(fontSize: 20),
                   ),
                   IconButton(
                     onPressed: () => context.goNamed(RouteNames.homeName),
@@ -139,7 +139,7 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                     Text(
                       context.t('sale_complete_heading'),
                       style: textStyles.heading1.copyWith(
-                        fontSize: 28,
+                        fontSize: 24,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -172,7 +172,7 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                                   ),
                                 }),
                                 style: textStyles.labelMedium.copyWith(
-                                  fontSize: 16,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -180,7 +180,7 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                                 '\$${_amount.toStringAsFixed(2)}',
                                 style: textStyles.heading1.copyWith(
                                   color: c.primaryCoral,
-                                  fontSize: 24,
+                                  fontSize: 18,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),

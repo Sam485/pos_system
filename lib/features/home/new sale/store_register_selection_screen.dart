@@ -97,7 +97,7 @@ class _StoreRegisterSelectionScreenState
                     Text(
                       context.t('register_get_store_ready'),
                       style: textStyles.heading1.copyWith(
-                        fontSize: 28,
+                        fontSize: 24,
                         letterSpacing: -0.5,
                       ),
                     ),

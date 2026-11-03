@@ -333,7 +333,7 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
                       children: [
                         Text(
                           context.t('taxes_title'),
-                          style: textStyles.heading2.copyWith(fontSize: 24),
+                          style: textStyles.heading2.copyWith(fontSize: 20),
                         ),
                         const SizedBox(height: 2),
                         Text(

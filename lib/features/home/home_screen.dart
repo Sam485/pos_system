@@ -129,7 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         children: [
                           Text(
                             storeName,
-                            style: textStyles.heading2.copyWith(fontSize: 22),
+                            style: textStyles.heading2.copyWith(fontSize: 20),
                           ),
                           const SizedBox(height: 4),
                           Text(
@@ -161,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Text(
                     context.t('home_greeting'),
                     style: textStyles.heading1.copyWith(
-                      fontSize: 28,
+                      fontSize: 24,
                       letterSpacing: -0.5,
                     ),
                   ),
@@ -230,7 +230,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Text(
                           '\$${todaySales.toStringAsFixed(2)}',
                           style: textStyles.displayLarge.copyWith(
-                            fontSize: 40,
+                            fontSize: 30,
                             fontWeight: FontWeight.w600,
                             letterSpacing: -1.0,
                           ),
@@ -349,7 +349,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     context.t('home_glance_title'),
                     style: textStyles.heading2.copyWith(fontSize: 20),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 14),
 
                   _buildGlanceItem(
                     icon: Icons.inventory_2_outlined,
@@ -408,7 +408,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Text(
           value,
           style: textStyles.labelMedium.copyWith(
-            fontSize: 18,
+            fontSize: 16,
             fontWeight: FontWeight.w700,
           ),
         ),

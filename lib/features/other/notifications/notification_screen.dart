@@ -56,7 +56,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   Expanded(
                     child: Text(
                       context.t('notif_title'),
-                      style: textStyles.heading2.copyWith(fontSize: 24),
+                      style: textStyles.heading2.copyWith(fontSize: 20),
                     ),
                   ),
                   if (provider.unreadCount > 0)

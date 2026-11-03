@@ -417,7 +417,7 @@ class _SaleScreenState extends State<SaleScreen> {
           Text(
             value,
             style: textStyles.heading1.copyWith(
-              fontSize: 26,
+              fontSize: 20,
               fontWeight: FontWeight.w600,
             ),
           ),

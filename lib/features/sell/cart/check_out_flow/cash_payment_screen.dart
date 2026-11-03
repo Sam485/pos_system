@@ -188,7 +188,7 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
                     children: [
                       Text(
                         context.t('cash_payment_title'),
-                        style: textStyles.heading2.copyWith(fontSize: 24),
+                        style: textStyles.heading2.copyWith(fontSize: 20),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -225,7 +225,7 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
                     Text(
                       '\$${_totalDue.toStringAsFixed(2)}',
                       style: textStyles.heading1.copyWith(
-                        fontSize: 36,
+                        fontSize: 30,
                         fontWeight: FontWeight.w500,
                         letterSpacing: -0.5,
                       ),
@@ -267,7 +267,7 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
                               _inputAmount.isEmpty ? '0.00' : _inputAmount,
                               textAlign: TextAlign.right,
                               style: textStyles.heading1.copyWith(
-                                fontSize: 32,
+                                fontSize: 28,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -363,7 +363,7 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
                               color: isSufficient
                                   ? c.primaryCoral
                                   : c.warningFg,
-                              fontSize: 28,
+                              fontSize: 24,
                               fontWeight: FontWeight.w700,
                               letterSpacing: -0.5,
                             ),
