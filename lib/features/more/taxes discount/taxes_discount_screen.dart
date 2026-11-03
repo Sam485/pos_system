@@ -512,7 +512,7 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
                                 context.t('taxes_require_approval_title'),
                                 style: textStyles.labelMedium.copyWith(
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 15,
+                                  fontSize: 12,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -520,7 +520,7 @@ class _TaxesDiscountScreenState extends State<TaxesDiscountScreen> {
                                 context.t('taxes_require_approval_sub'),
                                 style: textStyles.bodySmall.copyWith(
                                   color: c.textMuted,
-                                  fontSize: 13,
+                                  fontSize: 10,
                                 ),
                               ),
                             ],

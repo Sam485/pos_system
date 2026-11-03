@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pos_system/core/extensions/context_extensions.dart';
+import 'package:pos_system/providers/language_provider.dart'; // 👈 for LanguageProvider
 import 'package:provider/provider.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
 import 'package:pos_system/core/theme/app_text_style_x.dart';
@@ -62,8 +63,44 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
     }
   }
 
+  // ── Safe per-item helpers ───────────────────────────────────
+
+  /// Units of this line that the customer kept (quantity − returned).
+  int _keptQty(Map<String, dynamic> item) {
+    final qty = (item['quantity'] as num?)?.toInt() ?? 0;
+    final returned = (item['returned_qty'] as num?)?.toInt() ?? 0;
+    final kept = qty - returned;
+    return kept < 0 ? 0 : kept;
+  }
+
+  /// Units of this line that were returned.
+  int _returnedQty(Map<String, dynamic> item) {
+    final qty = (item['quantity'] as num?)?.toInt() ?? 0;
+    final returned = (item['returned_qty'] as num?)?.toInt() ?? 0;
+    if (returned <= 0) return 0;
+    return returned > qty ? qty : returned;
+  }
+
+  /// True when every unit on this line was returned.
+  bool _isFullyReturned(Map<String, dynamic> item) => _keptQty(item) == 0;
+
+  /// Line total reflecting what was kept.
+  double _keptLineTotal(Map<String, dynamic> item) {
+    final unitPrice = (item['unit_price'] as num?)?.toDouble() ?? 0.0;
+    return unitPrice * _keptQty(item);
+  }
+
+  /// Original line total (quantity × unit price, ignoring returns).
+  double _originalLineTotal(Map<String, dynamic> item) {
+    final qty = (item['quantity'] as num?)?.toInt() ?? 0;
+    final unitPrice = (item['unit_price'] as num?)?.toDouble() ?? 0.0;
+    return unitPrice * qty;
+  }
+
   @override
   Widget build(BuildContext context) {
+    context.watch<LanguageProvider>(); // rebuild on language change
+
     final c = context.colors;
     final textStyles = AppTextStylesX(context);
     final inventoryProvider = context.watch<InventoryProvider>();
@@ -78,9 +115,40 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
     }
 
     final order = _order!;
-    final orderItems = orderProvider.orderItems;
+    final rawItems = orderProvider.orderItems;
+
+    // Split items by return status.
+    final activeItems = rawItems.where((i) => !_isFullyReturned(i)).toList();
+    final returnedItems = rawItems.where(_isFullyReturned).toList();
+
+    // Any return at all (partial or full)?
+    final anyReturned = rawItems.any((i) => _returnedQty(i) > 0);
+
+    // ── Totals computed from line items — no dependency on
+    //    OrderModel.refundedAmount, so nothing can crash here.
+    final originalLineSum = rawItems.fold<double>(
+      0.0,
+      (sum, item) => sum + _originalLineTotal(item),
+    );
+    final keptLineSum = rawItems.fold<double>(
+      0.0,
+      (sum, item) => sum + _keptLineTotal(item),
+    );
+    final refundedTotal = originalLineSum - keptLineSum;
+
+    // Subtotal reflects what was kept when there were returns,
+    // otherwise falls back to the backend's stored value.
+    final effectiveSubtotal = anyReturned ? keptLineSum : order.subTotal;
+
+    final originalTotal = order.totalAmount;
+    final netTotal = anyReturned
+        ? (originalTotal - refundedTotal)
+        : originalTotal;
+
     final date =
-        '${order.createdAt.month} ${order.createdAt.day}, ${order.createdAt.year} · ${order.createdAt.hour}:${order.createdAt.minute.toString().padLeft(2, '0')} ${order.createdAt.hour >= 12 ? 'PM' : 'AM'}';
+        '${order.createdAt.month} ${order.createdAt.day}, ${order.createdAt.year} · '
+        '${order.createdAt.hour}:${order.createdAt.minute.toString().padLeft(2, '0')} '
+        '${order.createdAt.hour >= 12 ? 'PM' : 'AM'}';
 
     return Scaffold(
       backgroundColor: c.background,
@@ -170,16 +238,29 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                               fontSize: 12,
                             ),
                           ),
+
+                          // Refund status badge
+                          if (anyReturned) ...[
+                            const SizedBox(height: 12),
+                            _buildRefundBadge(
+                              isFullyRefunded:
+                                  activeItems.isEmpty && rawItems.isNotEmpty,
+                              c: c,
+                              textStyles: textStyles,
+                            ),
+                          ],
+
                           const SizedBox(height: 24),
 
-                          // Customer & Items
+                          // Customer line
                           Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
                               context.tp('receipt_customer_line', {
                                 'orderNumber': order.orderNumber,
                                 'customer':
-                                    '${_customer?.firstName ?? context.t('receipt_guest')} ${_customer?.lastName ?? ""}'
+                                    '${_customer?.firstName ?? context.t('receipt_guest')} '
+                                            '${_customer?.lastName ?? ""}'
                                         .trim(),
                               }),
                               style: textStyles.labelMedium.copyWith(
@@ -189,14 +270,15 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                           ),
                           const SizedBox(height: 16),
 
-                          // If items haven't loaded yet, show a spinner
-                          if (orderItems.isEmpty)
+                          // Item list / loading spinner
+                          if (rawItems.isEmpty)
                             const Padding(
                               padding: EdgeInsets.symmetric(vertical: 20),
                               child: Center(child: CircularProgressIndicator()),
                             )
-                          else
-                            ...orderItems.map((item) {
+                          else ...[
+                            // Only render kept items
+                            ...activeItems.map((item) {
                               final variant = inventoryProvider.getVariantById(
                                 item['variant_id'],
                               );
@@ -215,6 +297,13 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                                   variant?.name ??
                                   context.t('receipt_item_default_name');
 
+                              final keptQty = _keptQty(item);
+                              final returnedQty = _returnedQty(item);
+                              final lineTotal = _keptLineTotal(item);
+                              final unitPrice =
+                                  (item['unit_price'] as num?)?.toDouble() ??
+                                  0.0;
+
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 12),
                                 child: Row(
@@ -229,7 +318,7 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                                         children: [
                                           Text(
                                             context.tp('receipt_item_line', {
-                                              'quantity': '${item['quantity']}',
+                                              'quantity': '$keptQty',
                                               'name': itemName,
                                             }),
                                             style: textStyles.bodyMedium,
@@ -238,24 +327,79 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                                             context.tp('receipt_item_variant', {
                                               'color': variant?.color ?? '',
                                               'size': variant?.size ?? '',
-                                              'price':
-                                                  (item['unit_price'] as num)
-                                                      .toStringAsFixed(2),
+                                              'price': unitPrice
+                                                  .toStringAsFixed(2),
                                             }),
                                             style: textStyles.bodySmall
                                                 .copyWith(color: c.textMuted),
                                           ),
+                                          // "(N returned)" note — safe now
+                                          if (returnedQty > 0)
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                top: 2,
+                                              ),
+                                              child: Text(
+                                                context.tp(
+                                                  'receipt_item_returned_note',
+                                                  {'count': '$returnedQty'},
+                                                ),
+                                                style: textStyles.bodySmall
+                                                    .copyWith(
+                                                      color: c.warningFg,
+                                                      fontSize: 11,
+                                                    ),
+                                              ),
+                                            ),
                                         ],
                                       ),
                                     ),
                                     Text(
-                                      '\$${(item['total_price'] as num).toStringAsFixed(2)}',
+                                      '\$${lineTotal.toStringAsFixed(2)}',
                                       style: textStyles.bodyMedium,
                                     ),
                                   ],
                                 ),
                               );
                             }),
+
+                            // Fully-returned items collapse into one note
+                            if (returnedItems.isNotEmpty) ...[
+                              const SizedBox(height: 4),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: c.warningBg,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.info_outline,
+                                      size: 14,
+                                      color: c.warningFg,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        context.tp(
+                                          'receipt_items_returned_count',
+                                          {'count': '${returnedItems.length}'},
+                                        ),
+                                        style: textStyles.bodySmall.copyWith(
+                                          color: c.warningFg,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
 
                           const SizedBox(height: 16),
                           Divider(
@@ -267,7 +411,7 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                           // Totals
                           _buildSummaryRow(
                             context.t('receipt_subtotal'),
-                            '\$${order.subTotal.toStringAsFixed(2)}',
+                            '\$${effectiveSubtotal.toStringAsFixed(2)}',
                             c,
                             textStyles,
                           ),
@@ -283,19 +427,34 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                             c,
                             textStyles,
                           ),
+
+                          // Refund line
+                          if (anyReturned) ...[
+                            const SizedBox(height: 4),
+                            _buildSummaryRow(
+                              context.t('receipt_refunded_line'),
+                              '-\$${refundedTotal.toStringAsFixed(2)}',
+                              c,
+                              textStyles,
+                              valueColor: c.warningFg,
+                            ),
+                          ],
+
                           const SizedBox(height: 12),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                context.t('receipt_total_paid'),
+                                anyReturned
+                                    ? context.t('receipt_net_paid')
+                                    : context.t('receipt_total_paid'),
                                 style: textStyles.labelMedium.copyWith(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 16,
                                 ),
                               ),
                               Text(
-                                '\$${order.totalAmount.toStringAsFixed(2)}',
+                                '\$${netTotal.toStringAsFixed(2)}',
                                 style: textStyles.heading2.copyWith(
                                   color: c.primaryCoral,
                                   fontSize: 22,
@@ -311,13 +470,13 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                           ),
                           const SizedBox(height: 16),
 
-                          // Payment Method
+                          // Payment method
                           _buildSummaryRow(
                             context.tp('receipt_card_line', {
                               'brand': _payment?['card_brand'] ?? 'Visa',
                               'last4': _payment?['card_last_four'] ?? '4242',
                             }),
-                            '\$${order.totalAmount.toStringAsFixed(2)}',
+                            '\$${netTotal.toStringAsFixed(2)}',
                             c,
                             textStyles,
                           ),
@@ -492,12 +651,38 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
     );
   }
 
+  // ── Refund status badge ─────────────────────────────────────
+  Widget _buildRefundBadge({
+    required bool isFullyRefunded,
+    required AppThemeColors c,
+    required AppTextStylesX textStyles,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: c.warningBg,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        isFullyRefunded
+            ? context.t('sales_status_fully_refunded')
+            : context.t('sales_status_partially_refunded'),
+        style: textStyles.labelSmall.copyWith(
+          color: c.warningFg,
+          fontWeight: FontWeight.w600,
+          fontSize: 11,
+        ),
+      ),
+    );
+  }
+
   Widget _buildSummaryRow(
     String label,
     String value,
     AppThemeColors c,
-    AppTextStylesX textStyles,
-  ) {
+    AppTextStylesX textStyles, {
+    Color? valueColor,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -509,7 +694,10 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
           ),
           Text(
             value,
-            style: textStyles.labelMedium.copyWith(fontWeight: FontWeight.w600),
+            style: textStyles.labelMedium.copyWith(
+              fontWeight: FontWeight.w600,
+              color: valueColor,
+            ),
           ),
         ],
       ),

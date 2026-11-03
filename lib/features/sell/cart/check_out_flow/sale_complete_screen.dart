@@ -348,7 +348,7 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                               children: [
                                 Icon(
                                   Icons.print_outlined,
-                                  size: 18,
+                                  size: 11,
                                   color: c.primaryCoral,
                                 ),
                                 const SizedBox(width: 8),
@@ -380,7 +380,7 @@ class _SaleCompleteScreenState extends State<SaleCompleteScreen> {
                               children: [
                                 Icon(
                                   Icons.share_outlined,
-                                  size: 18,
+                                  size: 11,
                                   color: c.primaryCoral,
                                 ),
                                 const SizedBox(width: 8),

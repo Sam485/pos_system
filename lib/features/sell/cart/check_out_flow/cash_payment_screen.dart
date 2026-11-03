@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pos_system/core/extensions/context_extensions.dart';
+import 'package:pos_system/providers/language_provider.dart'; // 👈 for context.watch
 import 'package:provider/provider.dart';
 import 'package:pos_system/core/routes/route_names.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
@@ -16,6 +17,9 @@ class CashPaymentScreen extends StatefulWidget {
 }
 
 class _CashPaymentScreenState extends State<CashPaymentScreen> {
+  // ── Cap for manual cash entry ────────────────────────────────
+  static const double _maxCashInput = 9999.99;
+
   double _totalDue = 0.0;
   String? _customerId;
   String? _customerName;
@@ -46,8 +50,17 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
     }
   }
 
+  // ── Sets the input only if it's within [0, _maxCashInput] ─────
+  void _setInputAmount(String raw) {
+    final parsed = double.tryParse(raw) ?? 0.0;
+    if (parsed > _maxCashInput) return;
+    setState(() => _inputAmount = raw);
+  }
+
   void _onKeyTap(String value) {
     String current = _inputAmount;
+
+    // Starting fresh from the "exact amount" default
     if (current == _totalDue.toStringAsFixed(2)) {
       current = '';
     }
@@ -73,6 +86,12 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
           current += value;
         }
       }
+    }
+
+    // 👇 Enforce the 9999.99 cap
+    final proposed = double.tryParse(current) ?? 0.0;
+    if (proposed > _maxCashInput) {
+      return;
     }
 
     setState(() {
@@ -135,6 +154,8 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<LanguageProvider>(); // 👈 rebuild on language change
+
     final c = context.colors;
     final textStyles = AppTextStylesX(context);
 
@@ -260,27 +281,26 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
                       children: [
                         _buildQuickAmountPill(
                           label: context.t('cash_payment_quick_exact'),
-                          onTap: () => setState(
-                            () => _inputAmount = _totalDue.toStringAsFixed(2),
-                          ),
+                          onTap: () =>
+                              _setInputAmount(_totalDue.toStringAsFixed(2)),
                           c: c,
                           textStyles: textStyles,
                         ),
                         _buildQuickAmountPill(
                           label: '\$140',
-                          onTap: () => setState(() => _inputAmount = '140.00'),
+                          onTap: () => _setInputAmount('140.00'),
                           c: c,
                           textStyles: textStyles,
                         ),
                         _buildQuickAmountPill(
                           label: '\$150',
-                          onTap: () => setState(() => _inputAmount = '150.00'),
+                          onTap: () => _setInputAmount('150.00'),
                           c: c,
                           textStyles: textStyles,
                         ),
                         _buildQuickAmountPill(
                           label: '\$200',
-                          onTap: () => setState(() => _inputAmount = '200.00'),
+                          onTap: () => _setInputAmount('200.00'),
                           c: c,
                           textStyles: textStyles,
                         ),
@@ -295,50 +315,57 @@ class _CashPaymentScreenState extends State<CashPaymentScreen> {
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                isSufficient
-                                    ? context.t('cash_payment_change_title')
-                                    : context.t(
-                                        'cash_payment_insufficient_title',
-                                      ),
-                                style: textStyles.labelMedium.copyWith(
-                                  color: changeColor,
-                                  fontWeight: FontWeight.w600,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  isSufficient
+                                      ? context.t('cash_payment_change_title')
+                                      : context.t(
+                                          'cash_payment_insufficient_title',
+                                        ),
+                                  style: textStyles.labelMedium.copyWith(
+                                    color: changeColor,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14, // 👈 slightly larger label
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                _customerName != null && isSufficient
-                                    ? context.tp(
-                                        'cash_payment_hand_change_named',
-                                        {'name': _customerName!},
-                                      )
-                                    : isSufficient
-                                    ? context.t(
-                                        'cash_payment_hand_change_generic',
-                                      )
-                                    : context.t(
-                                        'cash_payment_insufficient_hint',
-                                      ),
-                                style: textStyles.bodySmall.copyWith(
-                                  color: changeColor.withValues(alpha: 0.8),
-                                  fontSize: 10,
+                                const SizedBox(height: 4),
+                                Text(
+                                  _customerName != null && isSufficient
+                                      ? context.tp(
+                                          'cash_payment_hand_change_named',
+                                          {'name': _customerName!},
+                                        )
+                                      : isSufficient
+                                      ? context.t(
+                                          'cash_payment_hand_change_generic',
+                                        )
+                                      : context.t(
+                                          'cash_payment_insufficient_hint',
+                                        ),
+                                  style: textStyles.bodySmall.copyWith(
+                                    color: changeColor.withValues(alpha: 0.8),
+                                    fontSize: 10,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
+                          const SizedBox(width: 12),
+                          // 👇 Bumped to 28 / w700 to match the total-due number
                           Text(
                             '\$${isSufficient ? _changeToGive.toStringAsFixed(2) : '0.00'}',
-                            style: textStyles.heading2.copyWith(
+                            style: textStyles.heading1.copyWith(
                               color: isSufficient
                                   ? c.primaryCoral
                                   : c.warningFg,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 28,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.5,
                             ),
                           ),
                         ],

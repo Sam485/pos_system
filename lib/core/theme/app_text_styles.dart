@@ -8,14 +8,13 @@ abstract class AppTextStyles {
   // Font families — both declared in pubspec.yaml.
   // ══════════════════════════════════════════════════════════════
   static const String _latinFamily = 'PlusJakartaSans';
-  static const String _khmerFamily = 'NotoSerifKhmer';
+  static const String _khmerFamily = 'Battambang'; // 👈 changed
 
   /// Picks the right family for the active language.
   static String familyFor(String languageCode) =>
       languageCode == 'km' ? _khmerFamily : _latinFamily;
 
   /// Central TextStyle factory.
-  /// [languageCode] determines the font family.
   static TextStyle _s(
     String languageCode, {
     required double fontSize,
@@ -37,10 +36,8 @@ abstract class AppTextStyles {
   }
 
   // ══════════════════════════════════════════════════════════════
-  // Static getters — ENGLISH fallbacks (kept for gradual migration
-  // and for code that doesn't have a BuildContext, e.g. tests).
+  // Static getters — ENGLISH fallbacks.
   // ══════════════════════════════════════════════════════════════
-
   static TextStyle get displayLarge => displayLargeFor('en');
   static TextStyle get displayMedium => displayMediumFor('en');
   static TextStyle get heading1 => heading1For('en');
@@ -57,11 +54,8 @@ abstract class AppTextStyles {
   static TextStyle get bannerSubtitle => bannerSubtitleFor('en');
 
   // ══════════════════════════════════════════════════════════════
-  // Language-aware getters — these are the ones to use going
-  // forward (via AppTextStylesX which supplies the language code).
+  // Language-aware getters
   // ══════════════════════════════════════════════════════════════
-
-  // ── Display ──────────────────────────────────────────────────
   static TextStyle displayLargeFor(String lang) => _s(
     lang,
     fontSize: 28,
@@ -79,7 +73,6 @@ abstract class AppTextStyles {
     height: 1.3,
   );
 
-  // ── Headings ─────────────────────────────────────────────────
   static TextStyle heading1For(String lang) => _s(
     lang,
     fontSize: 18,
@@ -94,7 +87,6 @@ abstract class AppTextStyles {
     color: AppColors.textPrimary,
   );
 
-  // ── Body ─────────────────────────────────────────────────────
   static TextStyle bodyLargeFor(String lang) => _s(
     lang,
     fontSize: 15,
@@ -119,7 +111,6 @@ abstract class AppTextStyles {
     height: 1.5,
   );
 
-  // ── Label ────────────────────────────────────────────────────
   static TextStyle labelMediumFor(String lang) => _s(
     lang,
     fontSize: 13,
@@ -134,7 +125,6 @@ abstract class AppTextStyles {
     color: AppColors.textSecondary,
   );
 
-  // ── Price ────────────────────────────────────────────────────
   static TextStyle priceFor(String lang) => _s(
     lang,
     fontSize: 16,
@@ -157,7 +147,6 @@ abstract class AppTextStyles {
     decoration: TextDecoration.lineThrough,
   );
 
-  // ── Banner (text on dark gradients) ──────────────────────────
   static TextStyle bannerTitleFor(String lang) => _s(
     lang,
     fontSize: 24,
@@ -175,9 +164,8 @@ abstract class AppTextStyles {
   );
 
   // ══════════════════════════════════════════════════════════════
-  // THEME-AWARE variants — pass in the color (used by AppTextStylesX).
+  // Theme-aware variants
   // ══════════════════════════════════════════════════════════════
-
   static TextStyle displayLargeOn(String lang, Color color) =>
       displayLargeFor(lang).copyWith(color: color);
 

@@ -70,9 +70,10 @@ flutter:
   assets:
     - assets/images/
     - assets/images/products/
+    - assets/fonts/
 
   fonts:
-    # ── English / Latin primary ────────────────────────────────
+    # ── English / Latin primary ───────────────────────────────
     - family: PlusJakartaSans
       fonts:
         - asset: assets/fonts/PlusJakartaSans-Regular.ttf
@@ -86,14 +87,12 @@ flutter:
         - asset: assets/fonts/PlusJakartaSans-ExtraBold.ttf
           weight: 800
 
-    # ── Khmer ─────────────────────────────────────────────────
-    - family: NotoSerifKhmer
+    # ── Khmer (Battambang) ────────────────────────────────────
+    # Battambang only ships 400 and 700. Flutter falls back
+    # automatically for 500 / 600 / 800 / 900.
+    - family: Battambang
       fonts:
-        - asset: assets/fonts/NotoSerifKhmer-Regular.ttf
+        - asset: assets/fonts/Battambang-Regular.ttf
           weight: 400
-        - asset: assets/fonts/NotoSerifKhmer-Medium.ttf
-          weight: 500
-        - asset: assets/fonts/NotoSerifKhmer-SemiBold.ttf
-          weight: 600
-        - asset: assets/fonts/NotoSerifKhmer-Bold.ttf
+        - asset: assets/fonts/Battambang-Bold.ttf
           weight: 700

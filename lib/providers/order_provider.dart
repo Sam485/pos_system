@@ -129,20 +129,57 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
+  // ─────────────────────────────────────────────────────────────
+  // Fetch order items — ENRICHED with refund data
+  //
+  // Each item returned here now contains:
+  //   • returned_qty        (int)  — total units refunded so far
+  //   • is_fully_returned   (bool) — true if every unit was refunded
+  //
+  // This is what the receipt screen reads to decide what to show.
+  // ─────────────────────────────────────────────────────────────
   Future<void> fetchOrderItems(String orderId) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      // Fetch both items and their refunds
+      // Fetch items and refunds in parallel
       final results = await Future.wait([
         _apiService.getOrderItems(orderId),
         _apiService.getOrderItemRefunds(orderId),
       ]);
 
-      _orderItems = results[0];
-      _orderItemRefunds = results[1];
+      final rawItems = results[0];
+      final refunds = results[1];
+
+      // Build a lookup: order_item_id → total qty refunded
+      final Map<String, int> returnedQtyByItem = {};
+      for (final r in refunds) {
+        final itemId = r['order_item_id'] as String?;
+        final qty = (r['quantity_refunded'] as num?)?.toInt() ?? 0;
+        if (itemId != null && qty > 0) {
+          returnedQtyByItem[itemId] = (returnedQtyByItem[itemId] ?? 0) + qty;
+        }
+      }
+
+      // Enrich each item with `returned_qty` and `is_fully_returned`
+      _orderItems = rawItems.map((raw) {
+        final itemId = raw['id'] as String?;
+        final returnedQty = itemId != null
+            ? (returnedQtyByItem[itemId] ?? 0)
+            : 0;
+        final originalQty = (raw['quantity'] as num?)?.toInt() ?? 0;
+
+        return <String, dynamic>{
+          ...raw,
+          'returned_qty': returnedQty,
+          'is_fully_returned': returnedQty >= originalQty,
+        };
+      }).toList();
+
+      // Keep the raw refunds list for anything that needs it directly
+      _orderItemRefunds = refunds;
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -151,8 +188,7 @@ class OrderProvider extends ChangeNotifier {
     }
   }
 
-  // Inside providers/order_provider.dart
-
+  // ── Process Refund ──
   Future<bool> processRefund({
     required String orderId,
     required List<Map<String, dynamic>> items,
@@ -167,16 +203,10 @@ class OrderProvider extends ChangeNotifier {
         'total_refund_amount': totalRefundAmount,
       });
 
-      // 👇 Update local state immediately using item-based logic
+      // Update the local sales-history entry right away
       final index = _salesHistory.indexWhere((o) => o.id == orderId);
       if (index >= 0) {
         final currentOrder = _salesHistory[index];
-
-        // Check if all items have been returned locally
-        // Since this is a mock, we can fetch the latest order status from mock data
-        // or simulate it here. Ideally, you'd read the status from the API response.
-
-        // For now, let's calculate based on the total refund:
         final newRefundedAmount =
             currentOrder.refundedAmount + totalRefundAmount;
         final isFullyRefunded =
@@ -189,6 +219,10 @@ class OrderProvider extends ChangeNotifier {
           refundedAmount: newRefundedAmount,
         );
       }
+
+      // Refresh the enriched items list for the affected order so
+      // any open receipt reflects the return immediately.
+      await fetchOrderItems(orderId);
 
       return true;
     } catch (e) {
@@ -205,7 +239,7 @@ class OrderProvider extends ChangeNotifier {
     if (_orderItems.isNotEmpty) {
       return _orderItems.fold(
         0,
-        (sum, item) => sum + (item['quantity'] as int),
+        (sum, item) => sum + ((item['quantity'] as num?)?.toInt() ?? 0),
       );
     }
 
@@ -214,11 +248,14 @@ class OrderProvider extends ChangeNotifier {
       final items = MockData.orderItemsJson
           .where((i) => i['order_id'] == order.id)
           .toList();
-      return sum + items.fold(0, (s, item) => s + (item['quantity'] as int));
+      return sum +
+          items.fold(
+            0,
+            (s, item) => s + ((item['quantity'] as num?)?.toInt() ?? 0),
+          );
     });
   }
 
-  // Add this inside OrderProvider class
   Future<Map<String, dynamic>?> getPaymentDetails(String orderId) async {
     try {
       return await _apiService.getOrderPayment(orderId);

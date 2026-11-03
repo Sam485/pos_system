@@ -1,8 +1,11 @@
 // features/sell/cart/cart_screen.dart
 
+// At the top of features/sell/cart/cart_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pos_system/core/extensions/context_extensions.dart';
+import 'package:pos_system/providers/language_provider.dart'; // 👈 ADD
 import 'package:provider/provider.dart';
 import 'package:pos_system/core/routes/route_names.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
@@ -206,6 +209,7 @@ class _CartScreenState extends State<CartScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<LanguageProvider>(); // 👈 add this line
     final c = context.colors;
     final textStyles = AppTextStylesX(context);
     final cartProvider = context.watch<CartProvider>();

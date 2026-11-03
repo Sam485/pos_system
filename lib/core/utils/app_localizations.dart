@@ -951,6 +951,56 @@ class AppLocalizations {
       'nav_sales': 'Sales',
       'nav_stock': 'Stock',
       'nav_more': 'More',
+
+      // ── Header ──
+      'cart_title': 'Cart',
+      'cart_subtitle_items': '{count} items',
+
+      // ── Customer banner ──
+      'cart_add_customer': 'Add a customer',
+      'cart_add_customer_sub': 'Attach a profile for receipts & history',
+
+      // ── Order discount ──
+      'cart_order_discount': 'Order discount',
+      'cart_discount_apply': 'Apply',
+      'cart_discount_change': 'Change',
+      'cart_no_discount_applied': 'No discount applied',
+      'cart_discount_fallback': 'Discount',
+      'cart_tap_to_select_discount': 'Tap to select a discount',
+      'cart_discount_subtitle_percentage': '{value}% off · -\${amount}',
+      'cart_discount_subtitle_fixed': '-\${amount} off',
+
+      // ── Discount picker sheet ──
+      'cart_apply_discount_title': 'Apply a discount',
+      'cart_no_discount_title': 'No discount',
+      'cart_no_discount_subtitle': 'Charge the customer the full amount',
+
+      // ── Order note ──
+      'cart_add_order_note': 'Add an order note',
+
+      // ── Order summary ──
+      'cart_subtotal_items': 'Subtotal · {count} items',
+      'cart_discount_summary_percentage': '{name} · {value}%',
+      'cart_discount_summary_fixed': '{name}',
+      'cart_sales_tax': 'Sales tax · 10%',
+      'cart_total_due': 'Total due',
+
+      // ── Cart item ──
+      'cart_standard_variant': 'Standard variant',
+      'cart_max_stock_reached': 'Max stock reached',
+
+      // ── Empty state ──
+      'cart_empty_title': 'Your cart is empty',
+      'cart_empty_hint': 'Add products to start a new sale',
+      'cart_browse_products': 'Browse products',
+
+      // ── Bottom action ──
+      'cart_continue_to_checkout': 'Continue to checkout',
+      // ── Add to 'en' map ──
+      'receipt_item_returned_note': '({count} returned)',
+      'receipt_items_returned_count': '{count} item(s) fully returned',
+      'receipt_refunded_line': 'Refunded',
+      'receipt_net_paid': 'Net paid',
     },
 
     // ═══════════════════════════════════════════════════════════════
@@ -1904,6 +1954,55 @@ class AppLocalizations {
       'nav_sales': 'ការលក់',
       'nav_stock': 'ស្តុក',
       'nav_more': 'ផ្សេងៗ',
+      // ── Header ──
+      'cart_title': 'កន្ត្រក',
+      'cart_subtitle_items': '{count} ទំនិញ',
+
+      // ── Customer banner ──
+      'cart_add_customer': 'បន្ថែមអតិថិជន',
+      'cart_add_customer_sub': 'ភ្ជាប់ប្រវត្តិរូបសម្រាប់បង្កាន់ដៃ & ប្រវត្តិ',
+
+      // ── Order discount ──
+      'cart_order_discount': 'ការបញ្ចុះតម្លៃលើការបញ្ជាទិញ',
+      'cart_discount_apply': 'អនុវត្ត',
+      'cart_discount_change': 'ផ្លាស់ប្តូរ',
+      'cart_no_discount_applied': 'គ្មានការបញ្ចុះតម្លៃត្រូវបានអនុវត្ត',
+      'cart_discount_fallback': 'ការបញ្ចុះតម្លៃ',
+      'cart_tap_to_select_discount': 'ប៉ះដើម្បីជ្រើសរើសការបញ្ចុះតម្លៃ',
+      'cart_discount_subtitle_percentage': 'បញ្ចុះ {value}% · -\${amount}',
+      'cart_discount_subtitle_fixed': 'បញ្ចុះ -\${amount}',
+
+      // ── Discount picker sheet ──
+      'cart_apply_discount_title': 'អនុវត្តការបញ្ចុះតម្លៃ',
+      'cart_no_discount_title': 'គ្មានការបញ្ចុះតម្លៃ',
+      'cart_no_discount_subtitle': 'គិតថ្លៃអតិថិជនពេញចំនួន',
+
+      // ── Order note ──
+      'cart_add_order_note': 'បន្ថែមកំណត់ចំណាំការបញ្ជាទិញ',
+
+      // ── Order summary ──
+      'cart_subtotal_items': 'សរុបរង · {count} ទំនិញ',
+      'cart_discount_summary_percentage': '{name} · {value}%',
+      'cart_discount_summary_fixed': '{name}',
+      'cart_sales_tax': 'ពន្ធលក់ · 10%',
+      'cart_total_due': 'សរុបត្រូវបង់',
+
+      // ── Cart item ──
+      'cart_standard_variant': 'វ៉ារ្យ៉ង់ស្តង់ដារ',
+      'cart_max_stock_reached': 'ឈានដល់ស្តុកអតិបរមា',
+
+      // ── Empty state ──
+      'cart_empty_title': 'កន្ត្រករបស់អ្នកទទេ',
+      'cart_empty_hint': 'បន្ថែមទំនិញដើម្បីចាប់ផ្តើមការលក់ថ្មី',
+      'cart_browse_products': 'រកមើលទំនិញ',
+
+      // ── Bottom action ──
+      'cart_continue_to_checkout': 'បន្តទៅការបង់ប្រាក់',
+      // ── Add to 'km' map ──
+      'receipt_item_returned_note': '(បានត្រឡប់ {count})',
+      'receipt_items_returned_count': 'ទំនិញ {count} បានត្រឡប់ទាំងស្រុង',
+      'receipt_refunded_line': 'បានសងវិញ',
+      'receipt_net_paid': 'សរុបបានបង់សុទ្ធ',
     },
   };
 
