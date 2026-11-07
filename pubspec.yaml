@@ -1,38 +1,16 @@
 name: pos_system
 description: 'A new Flutter project.'
-# The following line prevents the package from being accidentally published to
-# pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: 'none'
 
-# The following defines the version and build number for your application.
-# A version number is three numbers separated by dots, like 1.2.43
-# followed by an optional build number separated by a +.
-# Version and build number can be overridden with --build-name and --build-number.
-# build by specifying --build-name and --build-number, respectively.
-# In Android, build-name is used as versionName while build-number used as versionCode.
-# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
-# In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
-# Read more about iOS versioning at
-# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-# In Windows, build-name is used as the major, minor, and patch parts
-# of the product and file versions while build-number is used as the build suffix.
 version: 1.0.0+1
 
 environment:
   sdk: ^3.12.1
 
-# Dependencies specify other packages that your package needs in order to work.
-# To automatically upgrade your package dependencies to the latest versions
-# consider running `flutter pub upgrade --major-versions`. Alternatively,
-# dependencies can be manually updated by changing the version numbers below to
-# the latest version available on pub.dev. To see which dependencies have newer
-# versions available, run `flutter pub outdated`.
 dependencies:
   flutter:
     sdk: flutter
 
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   shared_preferences: ^2.5.6
   khqr_sdk: ^1.0.6
@@ -43,29 +21,22 @@ dependencies:
   http_parser: ^4.1.2
   device_preview: ^1.3.1
   skeletonizer: ^3.0.0
-  http: ^1.2.2 # for downloading image bytes
-  path_provider: ^2.1.4 # for temp file (used by copyImageFromUrl internally)
+  http: ^1.2.2
+  path_provider: ^2.1.4
   hyper_render_clipboard: ^1.7.3
   super_clipboard: ^0.10.0-dev.2
   mobile_scanner: ^7.4.2
   firebase_messaging: ^17.0.1
   flutter_local_notifications: ^17.2.3
+  flutter_native_splash: ^2.4.8
+  cached_network_image: ^4.0.3
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  # The "flutter_lints" package below contains a set of recommended lints to
-  # encourage good coding practices. The lint set provided by the package is
-  # activated in the `analysis_options.yaml` file located at the root of your
-  # package. See that file for information about deactivating specific lint
-  # rules and activating additional ones.
   flutter_lints: ^6.0.0
 
-# For information on the generic Dart part of this file, see the
-# following page: https://dart.dev/tools/pub/pubspec
-
-# The following section is specific to Flutter packages.
 flutter:
   uses-material-design: true
 
@@ -75,7 +46,6 @@ flutter:
     - assets/fonts/
 
   fonts:
-    # ── English / Latin primary ───────────────────────────────
     - family: PlusJakartaSans
       fonts:
         - asset: assets/fonts/PlusJakartaSans-Regular.ttf
@@ -89,12 +59,31 @@ flutter:
         - asset: assets/fonts/PlusJakartaSans-ExtraBold.ttf
           weight: 800
 
-    # ── Khmer (Battambang) ────────────────────────────────────
-    # Battambang only ships 400 and 700. Flutter falls back
-    # automatically for 500 / 600 / 800 / 900.
     - family: Battambang
       fonts:
         - asset: assets/fonts/Battambang-Regular.ttf
           weight: 400
         - asset: assets/fonts/Battambang-Bold.ttf
           weight: 700
+
+# ═══════════════════════════════════════════════════════════════
+# Splash screen config — color-only (no image files required)
+# ═══════════════════════════════════════════════════════════════
+flutter_native_splash:
+  # Light mode — matches your app's light background
+  color: "#E2ECE6"
+
+  # Dark mode — matches your app's dark background
+  color_dark: "#121212"
+
+  # Android 12+ requires these — otherwise you'll get a white flash
+  # on modern Android devices, even with color_dark set above.
+  android_12:
+    color: "#E2ECE6"
+    color_dark: "#121212"
+
+  ios: true
+  android: true
+  web: false
+
+  fullscreen: false

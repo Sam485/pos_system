@@ -1,18 +1,20 @@
 // features/home/stock/stock_screen.dart
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pos_system/core/extensions/context_extensions.dart';
+import 'package:pos_system/core/theme/app_colors.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+
 import 'package:pos_system/core/routes/route_names.dart';
-import 'package:pos_system/core/theme/app_colors.dart';
 import 'package:pos_system/core/theme/app_text_style_x.dart';
+import 'package:pos_system/data/models/iventory_model.dart';
+import 'package:pos_system/data/models/product_model.dart';
 import 'package:pos_system/providers/inventory_provider.dart';
 import 'package:pos_system/providers/language_provider.dart';
 import 'package:pos_system/providers/product_provider.dart';
-import 'package:pos_system/data/models/product_model.dart';
-import 'package:pos_system/data/models/iventory_model.dart';
 
 class StockScreen extends StatefulWidget {
   const StockScreen({super.key});
@@ -32,13 +34,14 @@ class _StockScreenState extends State<StockScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       context.read<ProductProvider>().fetchProducts();
       context.read<InventoryProvider>().fetchFullInventory();
     });
     _searchController.addListener(() {
-      setState(
-        () => _searchQuery = _searchController.text.toLowerCase().trim(),
-      );
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase().trim();
+      });
     });
   }
 
@@ -48,8 +51,6 @@ class _StockScreenState extends State<StockScreen> {
     super.dispose();
   }
 
-  // 👇 Pull-to-refresh handler — waits for both fetches to complete
-  //    so the spinner stays visible until data lands.
   Future<void> _refresh() async {
     await Future.wait([
       context.read<ProductProvider>().fetchProducts(),
@@ -57,12 +58,14 @@ class _StockScreenState extends State<StockScreen> {
     ]);
   }
 
+  // ═════════════════════════════════════════════════════════════
+  // Build
+  // ═════════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
-    // 👇 Rebuild when language changes
     context.watch<LanguageProvider>();
 
-    final c = context.colors;
+    final c = AppTextStylesX(context).colors;
     final textStyles = AppTextStylesX(context);
 
     final productProvider = context.watch<ProductProvider>();
@@ -71,7 +74,7 @@ class _StockScreenState extends State<StockScreen> {
     final isLoading = productProvider.isLoading || inventoryProvider.isLoading;
 
     // ── Group full inventory by product ID ──
-    final Map<String, List<InventoryModel>> inventoryByProduct = {};
+    final inventoryByProduct = <String, List<InventoryModel>>{};
     for (final inv in inventoryProvider.fullInventory) {
       final variant = inventoryProvider.getVariantById(inv.variantId);
       if (variant != null) {
@@ -79,19 +82,19 @@ class _StockScreenState extends State<StockScreen> {
       }
     }
 
-    // ── Calculate Summary Stats ──
-    int totalProducts = productProvider.products.length;
-    int totalUnits = inventoryProvider.fullInventory.fold(
+    // ── Summary stats ──
+    final totalProducts = productProvider.products.length;
+    final totalUnits = inventoryProvider.fullInventory.fold<int>(
       0,
       (sum, item) => sum + item.quantityAvailable,
     );
 
-    int lowStockCount = 0;
-    int outOfStockCount = 0;
+    var lowStockCount = 0;
+    var outOfStockCount = 0;
 
-    for (var product in productProvider.products) {
-      final stockItems = inventoryByProduct[product.id] ?? [];
-      final totalStock = stockItems.fold(
+    for (final product in productProvider.products) {
+      final stockItems = inventoryByProduct[product.id] ?? const [];
+      final totalStock = stockItems.fold<int>(
         0,
         (sum, item) => sum + item.quantityAvailable,
       );
@@ -103,39 +106,34 @@ class _StockScreenState extends State<StockScreen> {
       }
     }
 
-    // ── Filter products (search + chip filter) ──
+    // ── Filter ──
     final filteredProducts = productProvider.products.where((product) {
       if (_searchQuery.isNotEmpty) {
         final nameMatches = product.name.toLowerCase().contains(_searchQuery);
-
-        final variants = inventoryProvider.variants
+        final variantMatches = inventoryProvider.variants
             .where((v) => v.productId == product.id)
-            .toList();
-
-        final variantMatches = variants.any(
-          (v) =>
-              v.sku.toLowerCase().contains(_searchQuery) ||
-              v.color.toLowerCase().contains(_searchQuery) ||
-              v.size.toLowerCase().contains(_searchQuery) ||
-              v.name.toLowerCase().contains(_searchQuery),
-        );
-
+            .any(
+              (v) =>
+                  v.sku.toLowerCase().contains(_searchQuery) ||
+                  v.color.toLowerCase().contains(_searchQuery) ||
+                  v.size.toLowerCase().contains(_searchQuery) ||
+                  v.name.toLowerCase().contains(_searchQuery),
+            );
         if (!nameMatches && !variantMatches) return false;
       }
 
       if (_selectedFilterIndex == 0) return true;
 
-      final stockItems = inventoryByProduct[product.id] ?? [];
-      final totalStock = stockItems.fold(
+      final stockItems = inventoryByProduct[product.id] ?? const [];
+      final totalStock = stockItems.fold<int>(
         0,
         (sum, item) => sum + item.quantityAvailable,
       );
 
       if (_selectedFilterIndex == 1) {
         return totalStock > 0 && totalStock <= 5;
-      } else {
-        return totalStock == 0;
       }
+      return totalStock == 0;
     }).toList();
 
     return Scaffold(
@@ -144,38 +142,8 @@ class _StockScreenState extends State<StockScreen> {
         bottom: false,
         child: Column(
           children: [
-            // ── Top App Bar ──
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20.0,
-                vertical: 12.0,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        context.t('stock_title'),
-                        style: textStyles.heading2.copyWith(fontSize: 20),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        context.t('stock_store_default'),
-                        style: textStyles.bodySmall.copyWith(
-                          color: c.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // ── Main Scrollable Content ──
+            _buildAppBar(c, textStyles),
             Expanded(
-              // 👇 Wrap the whole scroll view in RefreshIndicator
               child: RefreshIndicator(
                 onRefresh: _refresh,
                 color: c.primaryCoral,
@@ -183,184 +151,48 @@ class _StockScreenState extends State<StockScreen> {
                 child: Skeletonizer(
                   enabled: isLoading,
                   child: CustomScrollView(
-                    // 👇 Always scrollable so pull-to-refresh works
-                    //    even when the list is short / empty.
                     physics: const AlwaysScrollableScrollPhysics(
                       parent: ClampingScrollPhysics(),
                     ),
                     slivers: [
-                      // Search Bar
+                      // ── Search bar ──
+                      SliverToBoxAdapter(child: _buildSearchBar(c, textStyles)),
+                      const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+                      // ── Summary cards ──
                       SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                          child: TextFormField(
-                            controller: _searchController,
-                            style: textStyles.bodyMedium,
-                            decoration: InputDecoration(
-                              hintText: context.t('stock_search_hint'),
-                              hintStyle: textStyles.bodyMedium.copyWith(
-                                color: c.textMuted,
-                              ),
-                              prefixIcon: Icon(
-                                Icons.search_rounded,
-                                color: c.textMuted,
-                              ),
-                              suffixIcon: _searchQuery.isNotEmpty
-                                  ? IconButton(
-                                      icon: Icon(
-                                        Icons.close_rounded,
-                                        color: c.textMuted,
-                                        size: 20,
-                                      ),
-                                      onPressed: () {
-                                        _searchController.clear();
-                                      },
-                                    )
-                                  : Icon(
-                                      Icons.document_scanner_outlined,
-                                      color: c.primaryCoral,
-                                    ),
-                              filled: true,
-                              fillColor: c.surfaceLight,
-                              contentPadding: const EdgeInsets.symmetric(
-                                vertical: 14,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(
-                                  color: c.primaryCoral,
-                                  width: 1.5,
-                                ),
-                              ),
-                            ),
-                          ),
+                        child: _buildSummaryRow(
+                          totalProducts: totalProducts,
+                          totalUnits: totalUnits,
+                          lowStockCount: lowStockCount,
+                          c: c,
+                          textStyles: textStyles,
                         ),
                       ),
                       const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-                      // Summary Cards
+                      // ── Filter chips ──
                       SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: _buildSummaryCard(
-                                  title: '$totalProducts',
-                                  subtitle: context.t('stock_summary_products'),
-                                  bgColor: c.surfaceTint,
-                                  textColor: c.textPrimary,
-                                  textStyles: textStyles,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildSummaryCard(
-                                  title: '$totalUnits',
-                                  subtitle: context.t('stock_summary_units'),
-                                  bgColor: c.surfaceTint,
-                                  textColor: c.textPrimary,
-                                  textStyles: textStyles,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _buildSummaryCard(
-                                  title: '$lowStockCount',
-                                  subtitle: context.t('stock_summary_low'),
-                                  bgColor: c.warningBg,
-                                  textColor: c.warningFg,
-                                  textStyles: textStyles,
-                                ),
-                              ),
-                            ],
-                          ),
+                        child: _buildFilterRow(
+                          lowStockCount: lowStockCount,
+                          outOfStockCount: outOfStockCount,
+                          c: c,
+                          textStyles: textStyles,
                         ),
                       ),
                       const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-                      // Filter Chips
+                      // ── List header ──
                       SliverToBoxAdapter(
-                        child: SizedBox(
-                          height: 38,
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            physics: const ClampingScrollPhysics(),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20.0,
-                            ),
-                            children: [
-                              _buildFilterChip(
-                                context.t('stock_filter_all'),
-                                isActive: _selectedFilterIndex == 0,
-                                onTap: () =>
-                                    setState(() => _selectedFilterIndex = 0),
-                                c: c,
-                                textStyles: textStyles,
-                              ),
-                              _buildFilterChip(
-                                context.tp('stock_filter_low', {
-                                  'count': '$lowStockCount',
-                                }),
-                                isActive: _selectedFilterIndex == 1,
-                                onTap: () =>
-                                    setState(() => _selectedFilterIndex = 1),
-                                c: c,
-                                textStyles: textStyles,
-                              ),
-                              _buildFilterChip(
-                                context.tp('stock_filter_out', {
-                                  'count': '$outOfStockCount',
-                                }),
-                                isActive: _selectedFilterIndex == 2,
-                                onTap: () =>
-                                    setState(() => _selectedFilterIndex = 2),
-                                c: c,
-                                textStyles: textStyles,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-                      // List Header
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  _searchQuery.isNotEmpty
-                                      ? context.tp('stock_list_results_for', {
-                                          'count': '${filteredProducts.length}',
-                                          'query': _searchQuery,
-                                        })
-                                      : context.tp('stock_list_count', {
-                                          'count': '${filteredProducts.length}',
-                                        }),
-                                  style: textStyles.bodySmall.copyWith(
-                                    color: c.textSecondary,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
+                        child: _buildListHeader(
+                          count: filteredProducts.length,
+                          c: c,
+                          textStyles: textStyles,
                         ),
                       ),
                       const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-                      // Product List
+                      // ── Product list ──
                       SliverPadding(
                         padding: const EdgeInsets.symmetric(horizontal: 20.0),
                         sliver: SliverList(
@@ -370,7 +202,7 @@ class _StockScreenState extends State<StockScreen> {
                           ) {
                             final product = filteredProducts[index];
                             final stockItems =
-                                inventoryByProduct[product.id] ?? [];
+                                inventoryByProduct[product.id] ?? const [];
                             return _buildInventoryItem(
                               product,
                               stockItems,
@@ -381,37 +213,10 @@ class _StockScreenState extends State<StockScreen> {
                         ),
                       ),
 
-                      // Empty State
+                      // ── Empty state ──
                       if (filteredProducts.isEmpty && !isLoading)
                         SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.all(40.0),
-                            child: Center(
-                              child: Column(
-                                children: [
-                                  Icon(
-                                    _searchQuery.isNotEmpty
-                                        ? Icons.search_off_rounded
-                                        : Icons.inventory_2_outlined,
-                                    size: 48,
-                                    color: c.textMuted.withValues(alpha: 0.5),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    _searchQuery.isNotEmpty
-                                        ? context.tp('stock_empty_search', {
-                                            'query': _searchQuery,
-                                          })
-                                        : context.t('stock_empty_filter'),
-                                    textAlign: TextAlign.center,
-                                    style: textStyles.bodyMedium.copyWith(
-                                      color: c.textMuted,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                          child: _buildEmptyState(c, textStyles),
                         ),
 
                       const SliverToBoxAdapter(child: SizedBox(height: 40)),
@@ -426,7 +231,211 @@ class _StockScreenState extends State<StockScreen> {
     );
   }
 
-  // ── Helper Widgets ──
+  // ═════════════════════════════════════════════════════════════
+  // Builders
+  // ═════════════════════════════════════════════════════════════
+
+  Widget _buildAppBar(AppThemeColors c, AppTextStylesX textStyles) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                context.t('stock_title'),
+                style: textStyles.heading2.copyWith(fontSize: 20),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                context.t('stock_store_default'),
+                style: textStyles.bodySmall.copyWith(color: c.textMuted),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchBar(AppThemeColors c, AppTextStylesX textStyles) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: TextFormField(
+        controller: _searchController,
+        style: textStyles.bodyMedium.copyWith(color: c.textPrimary),
+        decoration: InputDecoration(
+          hintText: context.t('stock_search_hint'),
+          hintStyle: textStyles.bodyMedium.copyWith(color: c.textMuted),
+          prefixIcon: Icon(Icons.search_rounded, color: c.textMuted),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: Icon(Icons.close_rounded, color: c.textMuted, size: 20),
+                  onPressed: () => _searchController.clear(),
+                )
+              : Icon(Icons.document_scanner_outlined, color: c.primaryCoral),
+          filled: true,
+          fillColor: c.surfaceLight,
+          contentPadding: const EdgeInsets.symmetric(vertical: 14),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: c.primaryCoral, width: 1.5),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryRow({
+    required int totalProducts,
+    required int totalUnits,
+    required int lowStockCount,
+    required AppThemeColors c,
+    required AppTextStylesX textStyles,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildSummaryCard(
+              title: '$totalProducts',
+              subtitle: context.t('stock_summary_products'),
+              bgColor: c.surfaceTint,
+              textColor: c.textPrimary,
+              textStyles: textStyles,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildSummaryCard(
+              title: '$totalUnits',
+              subtitle: context.t('stock_summary_units'),
+              bgColor: c.surfaceTint,
+              textColor: c.textPrimary,
+              textStyles: textStyles,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildSummaryCard(
+              title: '$lowStockCount',
+              subtitle: context.t('stock_summary_low'),
+              bgColor: c.warningBg,
+              textColor: c.warningFg,
+              textStyles: textStyles,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterRow({
+    required int lowStockCount,
+    required int outOfStockCount,
+    required AppThemeColors c,
+    required AppTextStylesX textStyles,
+  }) {
+    return SizedBox(
+      height: 38,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        physics: const ClampingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+        children: [
+          _buildFilterChip(
+            context.t('stock_filter_all'),
+            isActive: _selectedFilterIndex == 0,
+            onTap: () => setState(() => _selectedFilterIndex = 0),
+            c: c,
+            textStyles: textStyles,
+          ),
+          _buildFilterChip(
+            context.tp('stock_filter_low', {'count': '$lowStockCount'}),
+            isActive: _selectedFilterIndex == 1,
+            onTap: () => setState(() => _selectedFilterIndex = 1),
+            c: c,
+            textStyles: textStyles,
+          ),
+          _buildFilterChip(
+            context.tp('stock_filter_out', {'count': '$outOfStockCount'}),
+            isActive: _selectedFilterIndex == 2,
+            onTap: () => setState(() => _selectedFilterIndex = 2),
+            c: c,
+            textStyles: textStyles,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildListHeader({
+    required int count,
+    required AppThemeColors c,
+    required AppTextStylesX textStyles,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Text(
+              _searchQuery.isNotEmpty
+                  ? context.tp('stock_list_results_for', {
+                      'count': '$count',
+                      'query': _searchQuery,
+                    })
+                  : context.tp('stock_list_count', {'count': '$count'}),
+              style: textStyles.bodySmall.copyWith(color: c.textSecondary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(AppThemeColors c, AppTextStylesX textStyles) {
+    return Padding(
+      padding: const EdgeInsets.all(40.0),
+      child: Center(
+        child: Column(
+          children: [
+            Icon(
+              _searchQuery.isNotEmpty
+                  ? Icons.search_off_rounded
+                  : Icons.inventory_2_outlined,
+              size: 48,
+              color: c.textMuted.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _searchQuery.isNotEmpty
+                  ? context.tp('stock_empty_search', {'query': _searchQuery})
+                  : context.t('stock_empty_filter'),
+              textAlign: TextAlign.center,
+              style: textStyles.bodyMedium.copyWith(color: c.textMuted),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ═════════════════════════════════════════════════════════════
+  // Reusable widgets
+  // ═════════════════════════════════════════════════════════════
 
   Widget _buildSummaryCard({
     required String title,
@@ -505,14 +514,13 @@ class _StockScreenState extends State<StockScreen> {
     AppThemeColors c,
     AppTextStylesX textStyles,
   ) {
-    final totalStock = stockItems.fold(
+    final totalStock = stockItems.fold<int>(
       0,
       (sum, item) => sum + item.quantityAvailable,
     );
 
-    // Theme-aware stock colors
-    Color stockColor;
-    String stockLabel;
+    final Color stockColor;
+    final String stockLabel;
 
     if (totalStock == 0) {
       stockColor = c.dangerFg;
@@ -549,27 +557,7 @@ class _StockScreenState extends State<StockScreen> {
         ),
         child: Row(
           children: [
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: c.surfaceLight,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(
-                  product.imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Center(
-                    child: Icon(
-                      Icons.image_outlined,
-                      color: c.textMuted.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            _buildThumbnail(product.imageUrl, c),
             const SizedBox(width: 16),
             Expanded(
               child: Column(
@@ -612,9 +600,65 @@ class _StockScreenState extends State<StockScreen> {
     );
   }
 
+  Widget _buildThumbnail(String url, AppThemeColors c) {
+    return Container(
+      width: 64,
+      height: 64,
+      decoration: BoxDecoration(
+        color: c.surfaceLight,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: _buildThumbnailContent(url, c),
+      ),
+    );
+  }
+
+  Widget _buildThumbnailContent(String url, AppThemeColors c) {
+    if (url.isEmpty) {
+      return Center(
+        child: Icon(
+          Icons.image_outlined,
+          color: c.textMuted.withValues(alpha: 0.5),
+        ),
+      );
+    }
+    if (url.startsWith('assets/')) {
+      return Image.asset(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) => Center(
+          child: Icon(
+            Icons.image_outlined,
+            color: c.textMuted.withValues(alpha: 0.5),
+          ),
+        ),
+      );
+    }
+    return CachedNetworkImage(
+      imageUrl: url,
+      fit: BoxFit.cover,
+      placeholder: (_, _) => Center(
+        child: SizedBox(
+          width: 16,
+          height: 16,
+          child: CircularProgressIndicator(strokeWidth: 2, color: c.textMuted),
+        ),
+      ),
+      errorWidget: (_, _, _) => Center(
+        child: Icon(
+          Icons.image_outlined,
+          color: c.textMuted.withValues(alpha: 0.5),
+        ),
+      ),
+    );
+  }
+
   int _getVariantCount(String productId, BuildContext context) {
-    final inventoryProvider = context.read<InventoryProvider>();
-    return inventoryProvider.variants
+    return context
+        .read<InventoryProvider>()
+        .variants
         .where((v) => v.productId == productId)
         .length;
   }

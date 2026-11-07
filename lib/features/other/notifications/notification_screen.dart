@@ -1,7 +1,6 @@
 // features/notifications/notification_screen.dart
 
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:pos_system/data/models/notificatoin_model.dart';
 import 'package:pos_system/providers/notificatoin_provider.dart';

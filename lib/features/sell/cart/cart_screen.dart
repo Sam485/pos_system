@@ -1,18 +1,18 @@
 // features/sell/cart/cart_screen.dart
 
-// At the top of features/sell/cart/cart_screen.dart
-
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pos_system/core/extensions/context_extensions.dart';
-import 'package:pos_system/providers/language_provider.dart'; // 👈 ADD
 import 'package:provider/provider.dart';
+
 import 'package:pos_system/core/routes/route_names.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
 import 'package:pos_system/core/theme/app_text_style_x.dart';
-import 'package:pos_system/providers/cart_provider.dart';
-import 'package:pos_system/providers/setting_provider.dart';
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:pos_system/data/models/cart_model.dart';
+import 'package:pos_system/providers/cart_provider.dart';
+import 'package:pos_system/providers/language_provider.dart';
+import 'package:pos_system/providers/setting_provider.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -26,6 +26,7 @@ class _CartScreenState extends State<CartScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       context.read<CartProvider>().loadCart();
       final settingsProvider = context.read<SettingsProvider>();
       if (settingsProvider.discounts.isEmpty) {
@@ -34,113 +35,135 @@ class _CartScreenState extends State<CartScreen> {
     });
   }
 
+  // ═════════════════════════════════════════════════════════════
+  // Discount picker (with PopScope protection)
+  // ═════════════════════════════════════════════════════════════
   void _showDiscountPicker() {
     final cartProvider = context.read<CartProvider>();
     final settingsProvider = context.read<SettingsProvider>();
-    final c = context.colors;
+    final c = AppTextStylesX(context).colors;
     final textStyles = AppTextStylesX(context);
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: c.cardBackground,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        return DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.6,
-          maxChildSize: 0.9,
-          minChildSize: 0.4,
-          builder: (context, scrollController) {
-            return Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 12, bottom: 8),
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: c.border,
-                      borderRadius: BorderRadius.circular(2),
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        // Recompute providers from the sheet's own context so any
+        // state changes while the sheet is open rebuild it.
+        return PopScope(
+          // No cart damage from closing the discount picker —
+          // swipe/back just closes it.
+          canPop: true,
+          child: DraggableScrollableSheet(
+            expand: false,
+            initialChildSize: 0.6,
+            maxChildSize: 0.9,
+            minChildSize: 0.4,
+            builder: (_, scrollController) {
+              return Container(
+                decoration: BoxDecoration(
+                  color: c.cardBackground,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    // ── Handle ──
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12, bottom: 8),
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: c.border,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        context.t('cart_apply_discount_title'),
-                        style: textStyles.heading2.copyWith(fontSize: 20),
+
+                    // ── Header ──
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            sheetContext.t('cart_apply_discount_title'),
+                            style: textStyles.heading2.copyWith(fontSize: 20),
+                          ),
+                          IconButton(
+                            onPressed: () => Navigator.pop(sheetContext),
+                            icon: Icon(Icons.close_rounded, color: c.textMuted),
+                          ),
+                        ],
                       ),
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: Icon(Icons.close_rounded, color: c.textMuted),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Expanded(
-                  child: ListView(
-                    controller: scrollController,
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                    children: [
-                      _buildDiscountOption(
-                        title: context.t('cart_no_discount_title'),
-                        subtitle: context.t('cart_no_discount_subtitle'),
-                        isSelected: !cartProvider.hasDiscount,
-                        onTap: () {
-                          cartProvider.removeDiscount();
-                          Navigator.pop(context);
-                        },
-                        c: c,
-                        textStyles: textStyles,
-                      ),
-                      const SizedBox(height: 8),
-                      ...settingsProvider.discounts.map((discount) {
-                        final isSelected =
-                            cartProvider.discountName == discount.name;
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: _buildDiscountOption(
-                            title: discount.name,
-                            subtitle: discount.description,
-                            isSelected: isSelected,
+                    ),
+                    const SizedBox(height: 8),
+
+                    // ── Options ──
+                    Expanded(
+                      child: ListView(
+                        controller: scrollController,
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        children: [
+                          _buildDiscountOption(
+                            title: sheetContext.t('cart_no_discount_title'),
+                            subtitle: sheetContext.t(
+                              'cart_no_discount_subtitle',
+                            ),
+                            isSelected: !cartProvider.hasDiscount,
                             onTap: () {
-                              double amount = 0.0;
-                              if (discount.type == 'percentage') {
-                                amount =
-                                    cartProvider.subtotal *
-                                    (discount.value / 100);
-                              } else {
-                                amount = discount.value;
-                              }
-                              if (amount > cartProvider.subtotal) {
-                                amount = cartProvider.subtotal;
-                              }
-                              cartProvider.applyDiscount(
-                                name: discount.name,
-                                amount: amount,
-                                isPercentage: discount.type == 'percentage',
-                                value: discount.value,
-                              );
-                              Navigator.pop(context);
+                              cartProvider.removeDiscount();
+                              Navigator.pop(sheetContext);
                             },
                             c: c,
                             textStyles: textStyles,
                           ),
-                        );
-                      }),
-                    ],
-                  ),
+                          const SizedBox(height: 8),
+                          ...settingsProvider.discounts.map((discount) {
+                            final isSelected =
+                                cartProvider.discountName == discount.name;
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: _buildDiscountOption(
+                                title: discount.name,
+                                subtitle: discount.description,
+                                isSelected: isSelected,
+                                onTap: () {
+                                  double amount = 0.0;
+                                  if (discount.type == 'percentage') {
+                                    amount =
+                                        cartProvider.subtotal *
+                                        (discount.value / 100);
+                                  } else {
+                                    amount = discount.value;
+                                  }
+                                  if (amount > cartProvider.subtotal) {
+                                    amount = cartProvider.subtotal;
+                                  }
+                                  cartProvider.applyDiscount(
+                                    name: discount.name,
+                                    amount: amount,
+                                    isPercentage: discount.type == 'percentage',
+                                    value: discount.value,
+                                  );
+                                  Navigator.pop(sheetContext);
+                                },
+                                c: c,
+                                textStyles: textStyles,
+                              ),
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            );
-          },
+              );
+            },
+          ),
         );
       },
     );
@@ -207,10 +230,14 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
+  // ═════════════════════════════════════════════════════════════
+  // Build
+  // ═════════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
-    context.watch<LanguageProvider>(); // 👈 add this line
-    final c = context.colors;
+    context.watch<LanguageProvider>();
+
+    final c = AppTextStylesX(context).colors;
     final textStyles = AppTextStylesX(context);
     final cartProvider = context.watch<CartProvider>();
 
@@ -228,7 +255,7 @@ class _CartScreenState extends State<CartScreen> {
         bottom: false,
         child: Column(
           children: [
-            // ── Top App Bar ──
+            // ── Top app bar ──────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 20.0,
@@ -272,453 +299,34 @@ class _CartScreenState extends State<CartScreen> {
               ),
             ),
 
-            // ── Main Scrollable Content ──
+            // ── Main content ─────────────────────────────────
             Expanded(
               child: cartProvider.items.isEmpty
                   ? _buildEmptyState(c, textStyles)
-                  : CustomScrollView(
-                      physics: const ClampingScrollPhysics(),
-                      slivers: [
-                        // 1. Customer Banner
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20.0,
-                            ),
-                            child: InkWell(
-                              onTap: () {
-                                context.pushNamed(
-                                  RouteNames.customerSelectionName,
-                                );
-                              },
-                              borderRadius: BorderRadius.circular(12),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 16,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: c.surfaceTint,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Row(
-                                  children: [
-                                    if (customer != null)
-                                      Container(
-                                        width: 40,
-                                        height: 40,
-                                        alignment: Alignment.center,
-                                        decoration: BoxDecoration(
-                                          color: c.primaryCoral.withValues(
-                                            alpha: 0.15,
-                                          ),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Text(
-                                          '${customer.firstName.isNotEmpty ? customer.firstName[0] : ''}${customer.lastName.isNotEmpty ? customer.lastName[0] : ''}'
-                                              .toUpperCase(),
-                                          style: textStyles.labelSmall.copyWith(
-                                            color: c.primaryCoral,
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      )
-                                    else
-                                      Icon(
-                                        Icons.person_add_alt_1_rounded,
-                                        color: c.primaryCoral,
-                                        size: 22,
-                                      ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            customer != null
-                                                ? '${customer.firstName} ${customer.lastName}'
-                                                : context.t(
-                                                    'cart_add_customer',
-                                                  ),
-                                            style: textStyles.labelMedium
-                                                .copyWith(
-                                                  color: c.primaryCoral,
-                                                  fontWeight: FontWeight.w600,
-                                                ),
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            customer != null
-                                                ? customer.email
-                                                : context.t(
-                                                    'cart_add_customer_sub',
-                                                  ),
-                                            style: textStyles.bodySmall
-                                                .copyWith(
-                                                  color: c.textSecondary,
-                                                  fontSize: 12,
-                                                ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    Icon(
-                                      Icons.chevron_right_rounded,
-                                      color: c.primaryCoral,
-                                      size: 20,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-                        // 2. Cart Items List
-                        SliverPadding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                          sliver: SliverList(
-                            delegate: SliverChildBuilderDelegate((
-                              context,
-                              index,
-                            ) {
-                              final item = cartProvider.items[index];
-                              return _buildCartItem(
-                                item,
-                                c,
-                                textStyles,
-                                cartProvider,
-                              );
-                            }, childCount: cartProvider.items.length),
-                          ),
-                        ),
-                        const SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-                        // 3. Order Discount
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20.0,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      context.t('cart_order_discount'),
-                                      style: textStyles.labelMedium.copyWith(
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    TextButton(
-                                      onPressed: _showDiscountPicker,
-                                      style: TextButton.styleFrom(
-                                        padding: EdgeInsets.zero,
-                                        minimumSize: Size.zero,
-                                        tapTargetSize:
-                                            MaterialTapTargetSize.shrinkWrap,
-                                      ),
-                                      child: Text(
-                                        cartProvider.hasDiscount
-                                            ? context.t('cart_discount_change')
-                                            : context.t('cart_discount_apply'),
-                                        style: textStyles.labelSmall.copyWith(
-                                          color: c.primaryCoral,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                InkWell(
-                                  onTap: _showDiscountPicker,
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(16),
-                                    decoration: BoxDecoration(
-                                      color: c.surfaceLight,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          Icons.local_offer_outlined,
-                                          color: c.primaryCoral,
-                                          size: 20,
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                cartProvider.hasDiscount
-                                                    ? cartProvider
-                                                              .discountName ??
-                                                          context.t(
-                                                            'cart_discount_fallback',
-                                                          )
-                                                    : context.t(
-                                                        'cart_no_discount_applied',
-                                                      ),
-                                                style: textStyles.labelMedium
-                                                    .copyWith(
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 14,
-                                                    ),
-                                              ),
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                cartProvider.hasDiscount
-                                                    ? cartProvider
-                                                              .isPercentageDiscount
-                                                          ? context.tp(
-                                                              'cart_discount_subtitle_percentage',
-                                                              {
-                                                                'value':
-                                                                    '${cartProvider.discountValue}',
-                                                                'amount': cartProvider
-                                                                    .discountAmount
-                                                                    .toStringAsFixed(
-                                                                      2,
-                                                                    ),
-                                                              },
-                                                            )
-                                                          : context.tp(
-                                                              'cart_discount_subtitle_fixed',
-                                                              {
-                                                                'amount': cartProvider
-                                                                    .discountAmount
-                                                                    .toStringAsFixed(
-                                                                      2,
-                                                                    ),
-                                                              },
-                                                            )
-                                                    : context.t(
-                                                        'cart_tap_to_select_discount',
-                                                      ),
-                                                style: textStyles.bodySmall
-                                                    .copyWith(
-                                                      color: c.textMuted,
-                                                      fontSize: 12,
-                                                    ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                        if (cartProvider.hasDiscount)
-                                          IconButton(
-                                            onPressed: () =>
-                                                cartProvider.removeDiscount(),
-                                            icon: Icon(
-                                              Icons.close_rounded,
-                                              color: c.textMuted,
-                                              size: 20,
-                                            ),
-                                            padding: EdgeInsets.zero,
-                                            constraints: const BoxConstraints(),
-                                          )
-                                        else
-                                          Icon(
-                                            Icons.chevron_right_rounded,
-                                            color: c.textMuted,
-                                            size: 20,
-                                          ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-                        // 4. Add Note Button
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20.0,
-                            ),
-                            child: InkWell(
-                              onTap: () =>
-                                  context.pushNamed(RouteNames.orderNoteName),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.note_add_outlined,
-                                    color: c.primaryCoral,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    context.t('cart_add_order_note'),
-                                    style: textStyles.labelSmall.copyWith(
-                                      color: c.primaryCoral,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
-
-                        // 5. Order Summary
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20.0,
-                            ),
-                            child: Column(
-                              children: [
-                                _buildSummaryRow(
-                                  context.tp('cart_subtotal_items', {
-                                    'count': '$totalItems',
-                                  }),
-                                  '\$${subtotal.toStringAsFixed(2)}',
-                                  c,
-                                  textStyles,
-                                ),
-                                const SizedBox(height: 8),
-                                if (cartProvider.hasDiscount) ...[
-                                  _buildSummaryRow(
-                                    cartProvider.isPercentageDiscount
-                                        ? context.tp(
-                                            'cart_discount_summary_percentage',
-                                            {
-                                              'name':
-                                                  cartProvider.discountName ??
-                                                  '',
-                                              'value':
-                                                  '${cartProvider.discountValue}',
-                                            },
-                                          )
-                                        : context.tp(
-                                            'cart_discount_summary_fixed',
-                                            {
-                                              'name':
-                                                  cartProvider.discountName ??
-                                                  '',
-                                            },
-                                          ),
-                                    '-\$${cartProvider.discountAmount.toStringAsFixed(2)}',
-                                    c,
-                                    textStyles,
-                                    valueColor: c.successFg,
-                                  ),
-                                  const SizedBox(height: 8),
-                                ],
-                                _buildSummaryRow(
-                                  context.t('cart_sales_tax'),
-                                  '\$${taxAmount.toStringAsFixed(2)}',
-                                  c,
-                                  textStyles,
-                                ),
-                                const SizedBox(height: 16),
-                                Divider(
-                                  color: c.border.withValues(alpha: 0.5),
-                                  height: 1,
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      context.t('cart_total_due'),
-                                      style: textStyles.heading2.copyWith(
-                                        fontSize: 18,
-                                      ),
-                                    ),
-                                    Text(
-                                      '\$${totalDue.toStringAsFixed(2)}',
-                                      style: textStyles.heading1.copyWith(
-                                        color: c.primaryCoral,
-                                        fontSize: 24,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SliverToBoxAdapter(child: SizedBox(height: 100)),
-                      ],
+                  : _buildCartContent(
+                      cartProvider,
+                      customer,
+                      subtotal,
+                      discountAmount,
+                      taxAmount,
+                      totalDue,
+                      totalItems,
+                      c,
+                      textStyles,
                     ),
             ),
 
-            // ── Bottom Action Button ──
+            // ── Checkout button ──────────────────────────────
             if (cartProvider.items.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-                child: ElevatedButton(
-                  onPressed: cartProvider.isLoading
-                      ? null
-                      : () {
-                          context.pushNamed(
-                            RouteNames.checkoutName,
-                            extra: {
-                              'subtotal': subtotal,
-                              'discount': discountAmount,
-                              'tax': taxAmount,
-                              'total': totalDue,
-                              'customerId': customer?.id,
-                            },
-                          );
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: c.primaryCoral,
-                    foregroundColor: c.textLight,
-                    disabledBackgroundColor: c.primaryCoral.withValues(
-                      alpha: 0.5,
-                    ),
-                    minimumSize: const Size(double.infinity, 54),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: cartProvider.isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.arrow_forward_rounded,
-                              size: 20,
-                              color: c.textLight,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              context.t('cart_continue_to_checkout'),
-                              style: textStyles.labelMedium.copyWith(
-                                color: c.textLight,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                ),
+              _buildCheckoutButton(
+                cartProvider,
+                subtotal,
+                discountAmount,
+                taxAmount,
+                totalDue,
+                customer,
+                c,
+                textStyles,
               ),
           ],
         ),
@@ -726,7 +334,428 @@ class _CartScreenState extends State<CartScreen> {
     );
   }
 
-  // ── Helper Widgets ──
+  Widget _buildCartContent(
+    CartProvider cartProvider,
+    dynamic customer,
+    double subtotal,
+    double discountAmount,
+    double taxAmount,
+    double totalDue,
+    int totalItems,
+    AppThemeColors c,
+    AppTextStylesX textStyles,
+  ) {
+    return CustomScrollView(
+      physics: const ClampingScrollPhysics(),
+      slivers: [
+        // 1. Customer banner
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: _buildCustomerBanner(customer, c, textStyles),
+          ),
+        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+        // 2. Cart items
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          sliver: SliverList(
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final item = cartProvider.items[index];
+              return _buildCartItem(item, c, textStyles, cartProvider);
+            }, childCount: cartProvider.items.length),
+          ),
+        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+        // 3. Discount section
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: _buildDiscountSection(cartProvider, c, textStyles),
+          ),
+        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+        // 4. Add note
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: InkWell(
+              onTap: () => context.pushNamed(RouteNames.orderNoteName),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.note_add_outlined,
+                    color: c.primaryCoral,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    context.t('cart_add_order_note'),
+                    style: textStyles.labelSmall.copyWith(
+                      color: c.primaryCoral,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+        // 5. Order summary
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+            child: _buildOrderSummary(
+              cartProvider,
+              subtotal,
+              discountAmount,
+              taxAmount,
+              totalDue,
+              totalItems,
+              c,
+              textStyles,
+            ),
+          ),
+        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 100)),
+      ],
+    );
+  }
+
+  Widget _buildCustomerBanner(
+    dynamic customer,
+    AppThemeColors c,
+    AppTextStylesX textStyles,
+  ) {
+    return InkWell(
+      onTap: () => context.pushNamed(RouteNames.customerSelectionName),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          color: c.surfaceTint,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            if (customer != null)
+              Container(
+                width: 40,
+                height: 40,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: c.primaryCoral.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  '${customer.firstName.isNotEmpty ? customer.firstName[0] : ''}${customer.lastName.isNotEmpty ? customer.lastName[0] : ''}'
+                      .toUpperCase(),
+                  style: textStyles.labelSmall.copyWith(
+                    color: c.primaryCoral,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
+              )
+            else
+              Icon(
+                Icons.person_add_alt_1_rounded,
+                color: c.primaryCoral,
+                size: 22,
+              ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    customer != null
+                        ? '${customer.firstName} ${customer.lastName}'
+                        : context.t('cart_add_customer'),
+                    style: textStyles.labelMedium.copyWith(
+                      color: c.primaryCoral,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    customer != null
+                        ? customer.email
+                        : context.t('cart_add_customer_sub'),
+                    style: textStyles.bodySmall.copyWith(
+                      color: c.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, color: c.primaryCoral, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDiscountSection(
+    CartProvider cartProvider,
+    AppThemeColors c,
+    AppTextStylesX textStyles,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              context.t('cart_order_discount'),
+              style: textStyles.labelMedium.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            TextButton(
+              onPressed: _showDiscountPicker,
+              style: TextButton.styleFrom(
+                padding: EdgeInsets.zero,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                cartProvider.hasDiscount
+                    ? context.t('cart_discount_change')
+                    : context.t('cart_discount_apply'),
+                style: textStyles.labelSmall.copyWith(
+                  color: c.primaryCoral,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        InkWell(
+          onTap: _showDiscountPicker,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: c.surfaceLight,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.local_offer_outlined,
+                  color: c.primaryCoral,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        cartProvider.hasDiscount
+                            ? cartProvider.discountName ??
+                                  context.t('cart_discount_fallback')
+                            : context.t('cart_no_discount_applied'),
+                        style: textStyles.labelMedium.copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        cartProvider.hasDiscount
+                            ? cartProvider.isPercentageDiscount
+                                  ? context.tp(
+                                      'cart_discount_subtitle_percentage',
+                                      {
+                                        'value':
+                                            '${cartProvider.discountValue}',
+                                        'amount': cartProvider.discountAmount
+                                            .toStringAsFixed(2),
+                                      },
+                                    )
+                                  : context.tp('cart_discount_subtitle_fixed', {
+                                      'amount': cartProvider.discountAmount
+                                          .toStringAsFixed(2),
+                                    })
+                            : context.t('cart_tap_to_select_discount'),
+                        style: textStyles.bodySmall.copyWith(
+                          color: c.textMuted,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (cartProvider.hasDiscount)
+                  IconButton(
+                    onPressed: () => cartProvider.removeDiscount(),
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: c.textMuted,
+                      size: 20,
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  )
+                else
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: c.textMuted,
+                    size: 20,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOrderSummary(
+    CartProvider cartProvider,
+    double subtotal,
+    double discountAmount,
+    double taxAmount,
+    double totalDue,
+    int totalItems,
+    AppThemeColors c,
+    AppTextStylesX textStyles,
+  ) {
+    return Column(
+      children: [
+        _buildSummaryRow(
+          context.tp('cart_subtotal_items', {'count': '$totalItems'}),
+          '\$${subtotal.toStringAsFixed(2)}',
+          c,
+          textStyles,
+        ),
+        const SizedBox(height: 8),
+        if (cartProvider.hasDiscount) ...[
+          _buildSummaryRow(
+            cartProvider.isPercentageDiscount
+                ? context.tp('cart_discount_summary_percentage', {
+                    'name': cartProvider.discountName ?? '',
+                    'value': '${cartProvider.discountValue}',
+                  })
+                : context.tp('cart_discount_summary_fixed', {
+                    'name': cartProvider.discountName ?? '',
+                  }),
+            '-\$${discountAmount.toStringAsFixed(2)}',
+            c,
+            textStyles,
+            valueColor: c.successFg,
+          ),
+          const SizedBox(height: 8),
+        ],
+        _buildSummaryRow(
+          context.t('cart_sales_tax'),
+          '\$${taxAmount.toStringAsFixed(2)}',
+          c,
+          textStyles,
+        ),
+        const SizedBox(height: 16),
+        Divider(color: c.border.withValues(alpha: 0.5), height: 1),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              context.t('cart_total_due'),
+              style: textStyles.heading2.copyWith(fontSize: 18),
+            ),
+            Text(
+              '\$${totalDue.toStringAsFixed(2)}',
+              style: textStyles.heading1.copyWith(
+                color: c.primaryCoral,
+                fontSize: 24,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCheckoutButton(
+    CartProvider cartProvider,
+    double subtotal,
+    double discountAmount,
+    double taxAmount,
+    double totalDue,
+    dynamic customer,
+    AppThemeColors c,
+    AppTextStylesX textStyles,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+      child: ElevatedButton(
+        onPressed: cartProvider.isLoading
+            ? null
+            : () {
+                context.pushNamed(
+                  RouteNames.checkoutName,
+                  extra: {
+                    'subtotal': subtotal,
+                    'discount': discountAmount,
+                    'tax': taxAmount,
+                    'total': totalDue,
+                    'customerId': customer?.id,
+                  },
+                );
+              },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: c.primaryCoral,
+          foregroundColor: c.textLight,
+          disabledBackgroundColor: c.primaryCoral.withValues(alpha: 0.5),
+          minimumSize: const Size(double.infinity, 54),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 0,
+        ),
+        child: cartProvider.isLoading
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 20,
+                    color: c.textLight,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    context.t('cart_continue_to_checkout'),
+                    style: textStyles.labelMedium.copyWith(
+                      color: c.textLight,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+
+  // ── Helper widgets ───────────────────────────────────────────
 
   Widget _buildEmptyState(AppThemeColors c, AppTextStylesX textStyles) {
     return Center(
@@ -776,6 +805,7 @@ class _CartScreenState extends State<CartScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── Image with cache ──
           Container(
             width: 64,
             height: 64,
@@ -785,13 +815,7 @@ class _CartScreenState extends State<CartScreen> {
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                item.imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Center(
-                  child: Icon(Icons.image_outlined, color: c.textMuted),
-                ),
-              ),
+              child: _buildItemThumbnail(item.imageUrl, c),
             ),
           ),
           const SizedBox(width: 16),
@@ -886,6 +910,33 @@ class _CartScreenState extends State<CartScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildItemThumbnail(String imageUrl, AppThemeColors c) {
+    if (imageUrl.isEmpty) {
+      return Center(child: Icon(Icons.image_outlined, color: c.textMuted));
+    }
+    if (imageUrl.startsWith('assets/')) {
+      return Image.asset(
+        imageUrl,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) =>
+            Center(child: Icon(Icons.image_outlined, color: c.textMuted)),
+      );
+    }
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
+      fit: BoxFit.cover,
+      placeholder: (_, _) => Center(
+        child: SizedBox(
+          width: 16,
+          height: 16,
+          child: CircularProgressIndicator(strokeWidth: 2, color: c.textMuted),
+        ),
+      ),
+      errorWidget: (_, _, _) =>
+          Center(child: Icon(Icons.image_outlined, color: c.textMuted)),
     );
   }
 

@@ -269,7 +269,7 @@ class PushNotifications {
   }
 
   static Future<void> _registerWithBackend(String token) async {
-    // TODO: POST to your backend, e.g.:
+    // 
     //
     //   final api = ServiceLocator.apiClient;
     //   await api.post('/devices', body: {

@@ -843,6 +843,13 @@ class AppLocalizations {
       'sell_snack_copied_many':
           'Copied {count} images sequentially. The clipboard keeps only the LAST image.',
       'sell_snack_copy_failed': 'Copy failed: {error}',
+      'checkout_discard_title': 'Discard customization?',
+      'checkout_discard_pending_only':
+          'You\'ve customized this item but haven\'t added it to your cart. If you close now, your selections (size, toppings, quantity) will be lost.',
+      'checkout_discard_body':
+          'Your cart items will be saved, but this checkout won\'t be completed.',
+      'keep_editing': 'Keep editing',
+      'discard': 'Discard',
       // ═══════════════════════════════════════════════════════════
       // Stock / inventory
       // ═══════════════════════════════════════════════════════════
@@ -2003,6 +2010,13 @@ class AppLocalizations {
       'receipt_items_returned_count': 'ទំនិញ {count} បានត្រឡប់ទាំងស្រុង',
       'receipt_refunded_line': 'បានសងវិញ',
       'receipt_net_paid': 'សរុបបានបង់សុទ្ធ',
+      'checkout_discard_title': 'បោះបង់ការកែសម្រួល?',
+      'checkout_discard_pending_only':
+          'អ្នកបានកែសម្រួលមុខម្ហូបនេះ ប៉ុន្តែមិនទាន់បានបន្ថែមទៅកន្ត្រក។ ប្រសិនបើអ្នកបិទឥឡូវនេះ ជម្រើសរបស់អ្នក (ទំហំ គ្រឿងផ្សំ ចំនួន) នឹងបាត់បង់។',
+      'checkout_discard_body':
+          'មុខម្ហូបក្នុងកន្ត្រករបស់អ្នកនឹងត្រូវបានរក្សាទុក ប៉ុន្តែការបង់ប្រាក់នេះនឹងមិនត្រូវបានបញ្ចប់ទេ។',
+      'keep_editing': 'បន្តកែសម្រួល',
+      'discard': 'បោះបង់',
     },
   };
 

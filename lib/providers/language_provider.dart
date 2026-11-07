@@ -1,13 +1,17 @@
+// providers/language_provider.dart
+
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LanguageProvider extends ChangeNotifier {
-  static const String _languageKey = 'app_language';
+  // Public so `main()` can read the same key when pre-loading.
+  static const String languageKey = 'app_language';
   static const String defaultLanguage = 'en';
 
-  String _currentLanguage = defaultLanguage;
+  String _currentLanguage;
+  bool _isLoaded;
 
   // Available languages
   static const List<Locale> supportedLocales = [
@@ -25,15 +29,30 @@ class LanguageProvider extends ChangeNotifier {
   String get currentLanguage => _currentLanguage;
   Locale get currentLocale => Locale(_currentLanguage);
 
-  LanguageProvider() {
-    _loadLanguage();
+  /// True once the saved preference has been loaded from disk.
+  /// Useful for showing a splash gate until language is ready.
+  bool get isLoaded => _isLoaded;
+
+  // ── Constructor ────────────────────────────────────────────────
+  // Allows pre-loading from `main()` so the first frame uses the
+  // correct language. If `initialLoaded` is false (default), falls
+  // back to async loading for backwards compatibility.
+  LanguageProvider({
+    String initialLanguage = defaultLanguage,
+    bool initialLoaded = false,
+  }) : _currentLanguage = initialLanguage,
+       _isLoaded = initialLoaded {
+    if (!_isLoaded) {
+      _loadLanguage();
+    }
   }
 
   // ── Load saved language from SharedPreferences ─────────────────
   Future<void> _loadLanguage() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final savedLanguage = prefs.getString(_languageKey);
+      final savedLanguage = prefs.getString(languageKey);
+
       if (savedLanguage != null &&
           supportedLocales.any((l) => l.languageCode == savedLanguage)) {
         _currentLanguage = savedLanguage;
@@ -47,9 +66,13 @@ class LanguageProvider extends ChangeNotifier {
         }
         await _saveLanguage(_currentLanguage);
       }
+
+      _isLoaded = true;
       notifyListeners();
     } catch (e) {
       _currentLanguage = defaultLanguage;
+      _isLoaded = true;
+      notifyListeners();
     }
   }
 
@@ -70,7 +93,7 @@ class LanguageProvider extends ChangeNotifier {
   Future<void> _saveLanguage(String languageCode) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_languageKey, languageCode);
+      await prefs.setString(languageKey, languageCode);
       // ignore: empty_catches
     } catch (e) {}
   }

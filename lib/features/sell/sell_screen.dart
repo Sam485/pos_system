@@ -2,22 +2,23 @@
 
 import 'dart:async';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:go_router/go_router.dart';
 import 'package:hyper_render_clipboard/hyper_render_clipboard.dart';
-import 'package:pos_system/core/extensions/context_extensions.dart';
+import 'package:pos_system/core/theme/app_colors.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:pos_system/core/routes/route_names.dart';
-import 'package:pos_system/core/theme/app_colors.dart';
 import 'package:pos_system/core/theme/app_text_style_x.dart';
+import 'package:pos_system/data/models/product_model.dart';
 import 'package:pos_system/providers/cart_provider.dart';
 import 'package:pos_system/providers/language_provider.dart';
 import 'package:pos_system/providers/product_provider.dart';
 import 'package:pos_system/providers/register_provider.dart';
-import 'package:pos_system/data/models/product_model.dart';
 
 class SellScreen extends StatefulWidget {
   const SellScreen({super.key});
@@ -29,14 +30,9 @@ class SellScreen extends StatefulWidget {
 class _SellScreenState extends State<SellScreen> {
   bool _redirected = false;
 
-  // ── Selection state ──
   bool _isSelectionMode = false;
   final Set<String> _selectedUrls = <String>{};
-
-  // ── Clipboard helper ──
   final SuperClipboardHandler _clipboardHandler = SuperClipboardHandler();
-
-  // ── Busy state ──
   bool _isBusy = false;
 
   @override
@@ -45,8 +41,6 @@ class _SellScreenState extends State<SellScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final registerProvider = context.read<RegisterProvider>();
-
-      // 👇 If register is closed, redirect once
       if (!registerProvider.isRegisterOpen) {
         if (!_redirected) {
           _redirected = true;
@@ -54,16 +48,13 @@ class _SellScreenState extends State<SellScreen> {
         }
         return;
       }
-
-      // 👇 Only load products if register is open
       _loadProducts();
     });
   }
 
   Future<void> _loadProducts() async {
     if (!mounted) return;
-    final provider = context.read<ProductProvider>();
-    await provider.fetchProducts();
+    await context.read<ProductProvider>().fetchProducts();
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -83,9 +74,7 @@ class _SellScreenState extends State<SellScreen> {
       } else {
         _selectedUrls.add(url);
       }
-      if (_selectedUrls.isEmpty) {
-        _isSelectionMode = false;
-      }
+      if (_selectedUrls.isEmpty) _isSelectionMode = false;
     });
   }
 
@@ -136,7 +125,6 @@ class _SellScreenState extends State<SellScreen> {
         _showSnack(context.t('sell_snack_nothing_copied'), isError: true);
         return;
       }
-
       if (copied == 1) {
         // ignore: use_build_context_synchronously
         _showSnack(context.t('sell_snack_copied_one'));
@@ -173,16 +161,15 @@ class _SellScreenState extends State<SellScreen> {
   // ─────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    // 👇 Rebuild when language changes
     context.watch<LanguageProvider>();
 
-    final c = context.colors;
+    final c = AppTextStylesX(context).colors;
     final textStyles = AppTextStylesX(context);
     final productProvider = context.watch<ProductProvider>();
     final cartProvider = context.watch<CartProvider>();
     final registerProvider = context.watch<RegisterProvider>();
 
-    // 👇 If register closed, show a clear message with a button
+    // ── Register closed guard ──────────────────────────────────
     if (!registerProvider.isRegisterOpen) {
       return Scaffold(
         backgroundColor: c.background,
@@ -240,7 +227,6 @@ class _SellScreenState extends State<SellScreen> {
       );
     }
 
-    // 👇 Use the provider's filtered products
     final displayProducts = productProvider.filteredProducts;
 
     return Scaffold(
@@ -251,7 +237,7 @@ class _SellScreenState extends State<SellScreen> {
           children: [
             Column(
               children: [
-                // ── Top App Bar ──
+                // ── Top app bar ──
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20.0,
@@ -265,9 +251,7 @@ class _SellScreenState extends State<SellScreen> {
                           icon: Icon(Icons.close_rounded, color: c.textPrimary),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
-                        )
-                      else
-                        const SizedBox.shrink(),
+                        ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Column(
@@ -326,7 +310,7 @@ class _SellScreenState extends State<SellScreen> {
                   ),
                 ),
 
-                // ── Search Bar (hidden while selecting) ──
+                // ── Search bar ──
                 if (!_isSelectionMode) ...[
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -366,7 +350,7 @@ class _SellScreenState extends State<SellScreen> {
                   const SizedBox(height: 16),
                 ],
 
-                // ── Error State ──
+                // ── Error banner ──
                 if (productProvider.error != null)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -399,7 +383,7 @@ class _SellScreenState extends State<SellScreen> {
                     ),
                   ),
 
-                // ── Product Grid ──
+                // ── Grid ──
                 Expanded(
                   child: RefreshIndicator(
                     onRefresh: _loadProducts,
@@ -418,121 +402,9 @@ class _SellScreenState extends State<SellScreen> {
 
                 // ── Bottom bar ──
                 if (_isSelectionMode)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: _isBusy ? null : _exitSelectionMode,
-                            style: OutlinedButton.styleFrom(
-                              minimumSize: const Size(0, 56),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              side: BorderSide(color: c.surfaceLight),
-                            ),
-                            child: Text(
-                              context.t('sell_cancel'),
-                              style: textStyles.labelMedium.copyWith(
-                                color: c.textSecondary,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          flex: 2,
-                          child: ElevatedButton(
-                            onPressed: _selectedUrls.isEmpty || _isBusy
-                                ? null
-                                : _copySelected,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: c.primaryCoral,
-                              foregroundColor: c.textLight,
-                              minimumSize: const Size(0, 56),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              elevation: 4,
-                              shadowColor: c.primaryCoral.withValues(
-                                alpha: 0.4,
-                              ),
-                            ),
-                            child: _isBusy
-                                ? const SizedBox(
-                                    width: 22,
-                                    height: 22,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.4,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : Text(
-                                    _selectedUrls.length <= 1
-                                        ? context.t('sell_copy_image')
-                                        : context.tp('sell_copy_images', {
-                                            'count': '${_selectedUrls.length}',
-                                          }),
-                                    style: textStyles.labelMedium.copyWith(
-                                      color: c.textLight,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
+                  _buildSelectionBottomBar(c, textStyles)
                 else if (cartProvider.itemCount > 0)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-                    child: ElevatedButton(
-                      onPressed: () => context.pushNamed(RouteNames.cartName),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: c.primaryCoral,
-                        foregroundColor: c.textLight,
-                        minimumSize: const Size(double.infinity, 56),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 4,
-                        shadowColor: c.primaryCoral.withValues(alpha: 0.4),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.shopping_bag_outlined,
-                                size: 20,
-                                color: c.textLight,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                context.tp('sell_view_cart', {
-                                  'count': '${cartProvider.itemCount}',
-                                }),
-                                style: textStyles.labelMedium.copyWith(
-                                  color: c.textLight,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Text(
-                            '\$${cartProvider.total.toStringAsFixed(2)}',
-                            style: textStyles.heading2.copyWith(
-                              color: c.textLight,
-                              fontSize: 18,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  _buildCartBottomBar(cartProvider, c, textStyles),
               ],
             ),
 
@@ -548,6 +420,124 @@ class _SellScreenState extends State<SellScreen> {
                   ),
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSelectionBottomBar(AppThemeColors c, AppTextStylesX textStyles) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: _isBusy ? null : _exitSelectionMode,
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(0, 56),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                side: BorderSide(color: c.surfaceLight),
+              ),
+              child: Text(
+                context.t('sell_cancel'),
+                style: textStyles.labelMedium.copyWith(
+                  color: c.textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 2,
+            child: ElevatedButton(
+              onPressed: _selectedUrls.isEmpty || _isBusy
+                  ? null
+                  : _copySelected,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: c.primaryCoral,
+                foregroundColor: c.textLight,
+                minimumSize: const Size(0, 56),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 4,
+                shadowColor: c.primaryCoral.withValues(alpha: 0.4),
+              ),
+              child: _isBusy
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.4,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(
+                      _selectedUrls.length <= 1
+                          ? context.t('sell_copy_image')
+                          : context.tp('sell_copy_images', {
+                              'count': '${_selectedUrls.length}',
+                            }),
+                      style: textStyles.labelMedium.copyWith(
+                        color: c.textLight,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCartBottomBar(
+    CartProvider cartProvider,
+    AppThemeColors c,
+    AppTextStylesX textStyles,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+      child: ElevatedButton(
+        onPressed: () => context.pushNamed(RouteNames.cartName),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: c.primaryCoral,
+          foregroundColor: c.textLight,
+          minimumSize: const Size(double.infinity, 56),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          elevation: 4,
+          shadowColor: c.primaryCoral.withValues(alpha: 0.4),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.shopping_bag_outlined, size: 20, color: c.textLight),
+                const SizedBox(width: 8),
+                Text(
+                  context.tp('sell_view_cart', {
+                    'count': '${cartProvider.itemCount}',
+                  }),
+                  style: textStyles.labelMedium.copyWith(
+                    color: c.textLight,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            Text(
+              '\$${cartProvider.total.toStringAsFixed(2)}',
+              style: textStyles.heading2.copyWith(
+                color: c.textLight,
+                fontSize: 18,
+              ),
+            ),
           ],
         ),
       ),
@@ -613,21 +603,33 @@ class _SellScreenState extends State<SellScreen> {
                     ],
                   ),
                 )
-              : GridView.builder(
-                  physics: const AlwaysScrollableScrollPhysics(
-                    parent: ClampingScrollPhysics(),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 20,
-                    childAspectRatio: 0.65,
-                  ),
-                  itemCount: displayProducts.length,
-                  itemBuilder: (context, index) {
-                    final product = displayProducts[index];
-                    return _buildProductCard(product, c, textStyles);
+              : LayoutBuilder(
+                  builder: (context, constraints) {
+                    // Adapt columns to available width.
+                    final width = constraints.maxWidth;
+                    final crossAxisCount = width >= 900
+                        ? 4
+                        : width >= 600
+                        ? 3
+                        : 2;
+
+                    return GridView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(
+                        parent: ClampingScrollPhysics(),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: 16,
+                        mainAxisSpacing: 20,
+                        childAspectRatio: 0.65,
+                      ),
+                      itemCount: displayProducts.length,
+                      itemBuilder: (context, index) {
+                        final product = displayProducts[index];
+                        return _buildProductCard(product, c, textStyles);
+                      },
+                    );
                   },
                 ),
         ),
@@ -645,9 +647,12 @@ class _SellScreenState extends State<SellScreen> {
 
     return GestureDetector(
       onLongPress: () {
-        if (!_isSelectionMode) _enterSelectionMode(product.imageUrl);
+        if (!_isSelectionMode && !_isBusy) {
+          _enterSelectionMode(product.imageUrl);
+        }
       },
       onTap: () {
+        if (_isBusy) return;
         if (_isSelectionMode) {
           _toggleSelection(product.imageUrl);
         } else {
@@ -663,7 +668,7 @@ class _SellScreenState extends State<SellScreen> {
                 child: Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE8EBEE),
+                    color: c.surfaceLight,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: ClipRRect(
@@ -680,16 +685,25 @@ class _SellScreenState extends State<SellScreen> {
                                   ),
                                 ),
                           )
-                        : Image.network(
-                            product.imageUrl,
+                        : CachedNetworkImage(
+                            imageUrl: product.imageUrl,
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Center(
-                                  child: Icon(
-                                    Icons.image_outlined,
-                                    color: c.textMuted,
-                                  ),
+                            placeholder: (context, url) => Center(
+                              child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: c.textMuted,
                                 ),
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => Center(
+                              child: Icon(
+                                Icons.image_outlined,
+                                color: c.textMuted,
+                              ),
+                            ),
                           ),
                   ),
                 ),
@@ -734,7 +748,7 @@ class _SellScreenState extends State<SellScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF4F8FF),
+                        color: c.primaryCoral.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(Icons.add, color: c.primaryCoral, size: 20),
@@ -750,10 +764,12 @@ class _SellScreenState extends State<SellScreen> {
               right: 8,
               child: Container(
                 decoration: BoxDecoration(
-                  color: isSelected ? c.primaryCoral : Colors.white,
+                  color: isSelected ? c.primaryCoral : c.cardBackground,
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: isSelected ? c.primaryCoral : Colors.white70,
+                    color: isSelected
+                        ? c.primaryCoral
+                        : c.textMuted.withValues(alpha: 0.3),
                     width: 2,
                   ),
                   boxShadow: const [
