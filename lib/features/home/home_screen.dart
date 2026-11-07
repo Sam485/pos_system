@@ -2,15 +2,18 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:pos_system/core/extensions/context_extensions.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+
+import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:pos_system/core/routes/route_names.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
 import 'package:pos_system/core/theme/app_text_style_x.dart';
 import 'package:pos_system/data/enum/order_status_enum.dart';
 import 'package:pos_system/providers/customer_provider.dart';
 import 'package:pos_system/providers/inventory_provider.dart';
+import 'package:pos_system/providers/language_provider.dart';
 import 'package:pos_system/providers/order_provider.dart';
 import 'package:pos_system/providers/register_provider.dart';
 import 'package:pos_system/providers/store_provider.dart';
@@ -32,6 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadDashboardData() async {
+    if (!mounted) return;
     final registerProvider = context.read<RegisterProvider>();
     final inventoryProvider = context.read<InventoryProvider>();
     final customerProvider = context.read<CustomerProvider>();
@@ -48,10 +52,26 @@ class _HomeScreenState extends State<HomeScreen> {
     ]);
   }
 
+  /// Formats today's date using the current UI language.
+  ///
+  /// - `en`: "Monday, November 7, 2026"
+  /// - `km`: Khmer-formatted date via `intl`
+  String _formatToday(String languageCode) {
+    final now = DateTime.now();
+    try {
+      return DateFormat.yMMMMEEEEd(languageCode).format(now);
+    } catch (_) {
+      return DateFormat.yMMMMEEEEd().format(now);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final c = context.colors;
+    final c = AppTextStylesX(context).colors;
     final textStyles = AppTextStylesX(context);
+
+    // Watch language so the date & all labels re-render on change.
+    final languageCode = context.watch<LanguageProvider>().currentLanguage;
 
     final registerProvider = context.watch<RegisterProvider>();
     final inventoryProvider = context.watch<InventoryProvider>();
@@ -93,7 +113,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final storeName = storeProvider.store?.name ?? context.t('home_loading');
 
-    // Theme-aware colors, resolve once per build
     final surfaceTint = c.surfaceTint;
     final successBg = c.successBg;
     final warningBg = c.warningBg;
@@ -120,7 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header
+                  // ── Header ──
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -132,8 +151,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             style: textStyles.heading2.copyWith(fontSize: 20),
                           ),
                           const SizedBox(height: 4),
+                          // 👇 REAL TODAY'S DATE, localized
                           Text(
-                            context.t('home_date_placeholder'),
+                            _formatToday(languageCode),
                             style: textStyles.labelSmall.copyWith(
                               color: c.textMuted,
                               letterSpacing: 0.5,
@@ -157,7 +177,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Greeting
+                  // ── Greeting ──
                   Text(
                     context.t('home_greeting'),
                     style: textStyles.heading1.copyWith(
@@ -167,7 +187,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 12),
 
-                  // Status Badges
+                  // ── Status badges ──
                   Row(
                     children: [
                       Container(
@@ -200,7 +220,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Sales Card
+                  // ── Sales card ──
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -308,7 +328,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Start New Sale Button
+                  // ── Start New Sale ──
                   ElevatedButton(
                     onPressed: () {
                       if (!registerProvider.isRegisterOpen) {
@@ -344,7 +364,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 32),
 
-                  // Glance Section
+                  // ── At a glance ──
                   Text(
                     context.t('home_glance_title'),
                     style: textStyles.heading2.copyWith(fontSize: 20),
