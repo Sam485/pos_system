@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:pos_system/core/extensions/context_extensions.dart';
 import 'package:pos_system/data/models/notificatoin_model.dart';
 import 'package:pos_system/providers/notificatoin_provider.dart';
+import 'package:pos_system/shared/helper/safe_pop.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
@@ -47,7 +48,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
               child: Row(
                 children: [
                   IconButton(
-                    onPressed: () => context.pop(),
+                    onPressed: () => context.safePop(),
                     icon: Icon(Icons.arrow_back, color: c.textSecondary),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),

@@ -1,11 +1,14 @@
 import 'package:device_preview/device_preview.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pos_system/core/routes/app_router.dart';
 import 'package:pos_system/core/services/api_service.dart';
+import 'package:pos_system/core/services/push_notifications.dart';
 import 'package:pos_system/core/services/service_locator.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
 import 'package:pos_system/core/theme/app_theme.dart';
+import 'package:pos_system/firebase_options.dart';
 import 'package:pos_system/providers/auth_provider.dart';
 import 'package:pos_system/providers/cart_provider.dart';
 import 'package:pos_system/providers/customer_provider.dart';
@@ -24,13 +27,31 @@ import 'package:provider/provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  ServiceLocator.setup();
+
+  try {
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    }
+  } on FirebaseException catch (e) {
+    if (e.code == 'duplicate-app') {
+      debugPrint('Firebase already initialized (native), continuing');
+    } else {
+      rethrow;
+    }
+  }
+
+  ServiceLocator.setup(); // ✅ first
+
+  await PushNotifications.init(appRouter); // ✅ now safe to use services
+
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  runApp(DevicePreview(builder: (context) => const MyApp()));
-  // runApp(const MyApp());
+
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -70,7 +91,7 @@ class MyApp extends StatelessWidget {
           final languageCode = languageProvider.currentLanguage;
 
           return MaterialApp.router(
-            title: 'Miko Delivery',
+            title: 'POS System',
             debugShowCheckedModeBanner: false,
             routerConfig: appRouter,
 
