@@ -100,6 +100,8 @@ class _BottomNav extends StatelessWidget {
       ),
     ];
 
+    final paddingBottom = MediaQuery.of(context).padding.bottom;
+
     return Container(
       decoration: BoxDecoration(
         color: c.background,
@@ -107,7 +109,12 @@ class _BottomNav extends StatelessWidget {
           top: BorderSide(color: c.border.withValues(alpha: 0.5), width: 0.5),
         ),
       ),
-      padding: EdgeInsets.only(top: 6, bottom: 6, left: 4, right: 4),
+      padding: EdgeInsets.only(
+        top: 6,
+        bottom: paddingBottom,
+        left: 4,
+        right: 4,
+      ),
       child: Row(
         children: List.generate(items.length, (index) {
           return _NavItem(
