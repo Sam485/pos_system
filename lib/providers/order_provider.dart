@@ -42,23 +42,58 @@ class OrderProvider extends ChangeNotifier {
   // ── Filtered List ──
   List<OrderModel> get filteredSales {
     return _salesHistory.where((order) {
-      // 1. Date filter
-      if (_filterFromDate != null && _filterToDate != null) {
-        if (order.createdAt.isBefore(_filterFromDate!) ||
-            order.createdAt.isAfter(
-              _filterToDate!.add(const Duration(days: 1)),
-            )) {
-          return false;
+      // 1. Date filter — resolve from either explicit dates OR the preset
+      DateTime? start = _filterFromDate;
+      DateTime? end = _filterToDate;
+
+      if (start == null && end == null) {
+        final now = DateTime.now();
+        switch (_filterDateRange) {
+          case 'Today':
+            start = DateTime(now.year, now.month, now.day);
+            end = start.add(const Duration(days: 1));
+            break;
+          case 'Yesterday':
+            start = DateTime(
+              now.year,
+              now.month,
+              now.day,
+            ).subtract(const Duration(days: 1));
+            end = start.add(const Duration(days: 1));
+            break;
+          case 'This week':
+            final monday = now.subtract(Duration(days: now.weekday - 1));
+            start = DateTime(monday.year, monday.month, monday.day);
+            end = start.add(const Duration(days: 7));
+            break;
+          default:
+            // 'Custom' with no dates → no date filtering
+            break;
         }
       }
 
-      // 2. Status filter
-      if (_filterStatus == 'Completed' && order.status.name != 'completed') {
+      if (start != null && order.createdAt.isBefore(start)) return false;
+      if (end != null &&
+          order.createdAt.isAfter(
+            end.subtract(const Duration(milliseconds: 1)),
+          )) {
         return false;
       }
-      if (_filterStatus == 'Refunded' &&
-          order.status.name != 'partiallyRefunded') {
-        return false;
+
+      // 2. Status filter
+      switch (_filterStatus) {
+        case 'Completed':
+          if (order.status != OrderStatusEnum.completed) return false;
+          break;
+        case 'Refunded':
+          if (order.status != OrderStatusEnum.partitallyrefunded &&
+              order.status != OrderStatusEnum.fullyrefunded) {
+            return false;
+          }
+          break;
+        case 'All sales':
+        default:
+          break;
       }
 
       // 3. Payment method (would need payment data, skipping for now)

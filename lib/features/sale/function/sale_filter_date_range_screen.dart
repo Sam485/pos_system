@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pos_system/core/extensions/context_extensions.dart';
+import 'package:pos_system/data/enum/order_status_enum.dart';
 import 'package:provider/provider.dart';
 import 'package:pos_system/core/theme/app_colors.dart';
 import 'package:pos_system/core/theme/app_text_style_x.dart';
@@ -92,12 +93,14 @@ class _SaleFilterDateRangeScreenState extends State<SaleFilterDateRangeScreen> {
 
   int _getMatchingCount(OrderProvider provider) {
     return provider.salesHistory.where((order) {
-      // Status — comparison against English state values
-      if (_selectedStatus == 'Completed' && order.status.name != 'completed') {
+      // Status — match against the enum, not the raw name
+      if (_selectedStatus == 'Completed' &&
+          order.status != OrderStatusEnum.completed) {
         return false;
       }
       if (_selectedStatus == 'Refunded' &&
-          order.status.name != 'partiallyRefunded') {
+          order.status != OrderStatusEnum.partitallyrefunded &&
+          order.status != OrderStatusEnum.fullyrefunded) {
         return false;
       }
 

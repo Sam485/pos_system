@@ -25,7 +25,6 @@ class SaleScreen extends StatefulWidget {
 class _SaleScreenState extends State<SaleScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  int _selectedFilterIndex = 0;
 
   @override
   void initState() {
@@ -70,6 +69,16 @@ class _SaleScreenState extends State<SaleScreen> {
     }
   }
 
+  void _setStatusFilter(OrderProvider provider, String status) {
+    provider.applyFilters(
+      dateRange: provider.filterDateRange,
+      fromDate: provider.filterFromDate,
+      toDate: provider.filterToDate,
+      status: status,
+      paymentMethod: provider.filterPaymentMethod,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     context.watch<LanguageProvider>(); // 👈 rebuild on language change
@@ -91,32 +100,22 @@ class _SaleScreenState extends State<SaleScreen> {
       lifeTimeSpend: 0,
     );
 
+    // Provider already applies date + status filters. We only layer the
+    // search-box text filter on top here.
     final baseSales = orderProvider.filteredSales;
 
     final filteredSales = baseSales.where((sale) {
+      if (_searchQuery.isEmpty) return true;
+
       final customer = customerProvider.customers.firstWhere(
         (c) => c.id == sale.customerId,
         orElse: () => guestFallback,
       );
-
       final customerName = '${customer.firstName} ${customer.lastName}'
           .toLowerCase();
-      final matchesSearch =
-          _searchQuery.isEmpty ||
-          sale.orderNumber.toLowerCase().contains(_searchQuery) ||
+
+      return sale.orderNumber.toLowerCase().contains(_searchQuery) ||
           customerName.contains(_searchQuery);
-
-      if (!matchesSearch) return false;
-
-      if (_selectedFilterIndex == 1) {
-        return sale.status == OrderStatusEnum.completed;
-      }
-      if (_selectedFilterIndex == 2) {
-        return sale.status == OrderStatusEnum.partitallyrefunded ||
-            sale.status == OrderStatusEnum.fullyrefunded;
-      }
-
-      return true;
     }).toList();
 
     final double totalSales = filteredSales.fold(
@@ -229,22 +228,22 @@ class _SaleScreenState extends State<SaleScreen> {
                       children: [
                         _buildFilterChip(
                           context.t('sales_filter_all'),
-                          _selectedFilterIndex == 0,
-                          () => setState(() => _selectedFilterIndex = 0),
+                          orderProvider.filterStatus == 'All sales',
+                          () => _setStatusFilter(orderProvider, 'All sales'),
                           c,
                           textStyles,
                         ),
                         _buildFilterChip(
                           context.t('sales_filter_completed'),
-                          _selectedFilterIndex == 1,
-                          () => setState(() => _selectedFilterIndex = 1),
+                          orderProvider.filterStatus == 'Completed',
+                          () => _setStatusFilter(orderProvider, 'Completed'),
                           c,
                           textStyles,
                         ),
                         _buildFilterChip(
                           context.t('sales_filter_refunded'),
-                          _selectedFilterIndex == 2,
-                          () => setState(() => _selectedFilterIndex = 2),
+                          orderProvider.filterStatus == 'Refunded',
+                          () => _setStatusFilter(orderProvider, 'Refunded'),
                           c,
                           textStyles,
                         ),
