@@ -119,6 +119,7 @@ class PushNotifications {
 
     // Token refresh
     _tokenRefreshSub?.cancel();
+    // ignore: deprecated_member_use
     _tokenRefreshSub = _messaging.onTokenRefresh.listen((newToken) {
       debugPrint('FCM token refreshed: $newToken');
       _cachedToken = newToken;
